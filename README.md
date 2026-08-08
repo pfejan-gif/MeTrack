@@ -10,6 +10,7 @@ Ein fokussierter, iPhone-optimierter Fitness-Tracker für den täglichen Fortsch
 
 - je drei Sätze bzw. Versuche für Plank, Liegestütze und Kniebeugen erfassen
 - Übungen wie Sit-Ups anlegen und wahlweise in Wiederholungen oder Sekunden messen
+- zeitbasierte Übungen mit einer Stoppuhr pro Satz messen, pausieren und direkt übernehmen
 - jede Übung – auch Plank, Liegestütze und Kniebeugen – deaktivieren, ohne frühere Trainingswerte zu löschen
 - Übungen nach einer deutlichen Warnung mitsamt allen historischen Werten ganz löschen
 - Gewicht und Bauchumfang dokumentieren
@@ -31,6 +32,8 @@ Ein fokussierter, iPhone-optimierter Fitness-Tracker für den täglichen Fortsch
 4. Mit **Hinzufügen** bestätigen.
 
 MeTrack öffnet sich danach im eigenen App-Fenster. Safe-Area-Abstände, Touch-Ziele und Zahlentastaturen sind für iPhone/Safari optimiert.
+
+Bei zeitbasierten Übungen erscheint unter jedem Satz ein **Timer**. Die Stoppuhr berechnet die Laufzeit aus Zeitstempeln, bleibt deshalb auch nach einem kurzen Wechsel in eine andere App korrekt und kann nach einem Reload wieder geöffnet werden. Während einer sichtbaren, laufenden Messung versucht MeTrack – sofern Safari es unterstützt – den Bildschirm wach zu halten.
 
 ## Datenschutz und Sicherung
 

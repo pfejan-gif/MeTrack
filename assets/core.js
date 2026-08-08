@@ -6,6 +6,7 @@ export const DATA_SCHEMA_VERSION = 4;
 export const SETTINGS_KEY = "metrack_settings_v1";
 export const BACKUP_VERSION = 4;
 export const SET_COUNT = 3;
+export const TIMER_MAX_MS = 86_400_000;
 export const MAX_BACKUP_ENTRIES = 5000;
 // v3 erlaubte bis zu 30 zusätzliche Übungen. Zusammen mit den drei
 // bisherigen Standardübungen müssen daher mindestens 33 migrierbar bleiben.
@@ -356,6 +357,39 @@ export function parseNumber(value) {
   if (normalized === "") return null;
   const number = Number(normalized);
   return Number.isFinite(number) ? number : null;
+}
+
+export function timerElapsedMs(timer, now = Date.now()) {
+  const accumulated = Number.isFinite(timer?.accumulatedMs)
+    ? Math.max(0, timer.accumulatedMs)
+    : 0;
+  const runningElapsed =
+    timer?.running === true && Number.isFinite(timer?.startedAt)
+      ? Math.max(0, now - timer.startedAt)
+      : 0;
+  return Math.min(TIMER_MAX_MS, accumulated + runningElapsed);
+}
+
+export function timerRecordedSeconds(elapsedMs) {
+  const value = Number.isFinite(elapsedMs) ? elapsedMs : 0;
+  return Math.round(Math.min(TIMER_MAX_MS, Math.max(0, value)) / 1000);
+}
+
+export function formatStopwatch(elapsedMs) {
+  const tenths = Math.floor(
+    Math.min(TIMER_MAX_MS, Math.max(0, Number(elapsedMs) || 0)) / 100,
+  );
+  const deciseconds = tenths % 10;
+  const totalSeconds = Math.floor(tenths / 10);
+  const seconds = totalSeconds % 60;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const minutes = totalMinutes % 60;
+  const hours = Math.floor(totalMinutes / 60);
+  const paddedSeconds = String(seconds).padStart(2, "0");
+  const paddedMinutes = String(minutes).padStart(2, "0");
+  return hours > 0
+    ? `${hours}:${paddedMinutes}:${paddedSeconds},${deciseconds}`
+    : `${paddedMinutes}:${paddedSeconds},${deciseconds}`;
 }
 
 function sanitizeWholeNumber(value, definition) {
