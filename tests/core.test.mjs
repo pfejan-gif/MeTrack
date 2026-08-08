@@ -208,6 +208,15 @@ test("legt Einträge an, ersetzt sie explizit und löscht sie", () => {
   const replaced = upsertEntry(added, day("2026-08-01", { plank: [65, null, null] }), "2026-08-01", catalog);
   assert.equal(entryMetricValue(replaced[0], plankMetric, catalog), 65);
   assert.deepEqual(removeEntry(replaced, "2026-08-01", catalog), []);
+  assert.deepEqual(
+    upsertEntry(
+      removeEntry(replaced, "2026-08-01", catalog),
+      replaced[0],
+      null,
+      catalog,
+    ),
+    replaced,
+  );
 });
 
 test("berechnet Veränderung und Tages-Serie", () => {

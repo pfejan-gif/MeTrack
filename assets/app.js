@@ -44,7 +44,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.3.4";
+const APP_VERSION = "2.3.5";
 const TIMER_KEY = "metrack_active_timer_v1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
@@ -285,8 +285,8 @@ function showToast(message, action = null) {
     button.className = "toast-action";
     button.textContent = action.label;
     button.addEventListener("click", () => {
-      action.callback();
       hideToast();
+      action.callback();
     }, { once: true });
     elements.toast.append(button);
   }
