@@ -53,6 +53,11 @@ assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
 assert.match(
   styles,
+  /\.toast\.visible\s*\{[^}]*pointer-events:\s*auto/s,
+  "Die sichtbare Snackbar muss auf Touch-Eingaben reagieren.",
+);
+assert.match(
+  styles,
   /\.set-card legend\s*\{[^}]*float:\s*left/s,
   "Legenden müssen innerhalb des Feldrahmens liegen, damit iOS die obere Linie nicht unterbricht.",
 );
