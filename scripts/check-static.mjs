@@ -138,6 +138,8 @@ assert.match(core, /DATA_SCHEMA_VERSION = 4/);
 assert.match(core, /export function timerElapsedMs/);
 assert.match(app, /navigator\.wakeLock\.request\("screen"\)/);
 assert.match(app, /TIMER_KEY = "metrack_active_timer_v1"/);
+assert.match(app, /updateViaCache:\s*"none"/);
+assert.match(app, /registration\s*\.update\(\)/);
 assert.match(html, />Übungen<\/h3>/);
 assert.doesNotMatch(html, />Eigene Übungen</);
 assert.doesNotMatch(
