@@ -704,6 +704,53 @@
       </div>
     </dialog>
 
+    <dialog
+      class="modal timer-modal"
+      id="timerDialog"
+      aria-labelledby="timerTitle"
+    >
+      <div class="timer-dialog-content">
+        <div class="timer-dialog-heading">
+          <div>
+            <p class="eyebrow">Stoppuhr</p>
+            <h2 id="timerTitle">Zeit messen</h2>
+          </div>
+          <button
+            class="icon-button compact"
+            id="timerCloseButton"
+            type="button"
+            aria-label="Timer schließen und pausieren"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="timer-readout" id="timerReadout">
+          <output id="timerDisplay" aria-label="Gemessene Zeit">00:00,0</output>
+          <span id="timerStatus">Bereit</span>
+        </div>
+
+        <div class="timer-controls">
+          <button class="button primary" id="timerStartPauseButton" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path id="timerControlIcon" d="M8 5v14l11-7Z" />
+            </svg>
+            <span id="timerStartPauseLabel">Start</span>
+          </button>
+          <button class="button secondary" id="timerResetButton" type="button">
+            Zurücksetzen
+          </button>
+        </div>
+
+        <button class="button timer-apply-button" id="timerApplyButton" type="button">
+          Zeit übernehmen
+        </button>
+        <p class="timer-wake-status" id="timerWakeStatus"></p>
+      </div>
+    </dialog>
+
     <dialog class="modal" id="importDialog" aria-labelledby="importDialogTitle">
       <form method="dialog">
         <div class="modal-icon" aria-hidden="true">

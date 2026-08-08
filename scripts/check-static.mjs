@@ -38,8 +38,11 @@ assert.match(html, /apple-mobile-web-app-capable/);
 assert.match(html, /id="updateBanner"/);
 assert.match(html, /id="exerciseDialog"/);
 assert.match(html, /id="customExerciseFields"/);
+assert.match(html, /id="timerDialog"/);
+assert.match(html, /id="timerStartPauseButton"/);
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
 assert.match(styles, /\.update-banner\s*\{/);
+assert.match(styles, /\.set-timer-button\s*\{/);
 assert.match(
   styles,
   /\.set-card legend\s*\{[^}]*float:\s*left/s,
@@ -127,6 +130,9 @@ assert.ok(
 );
 assert.match(core, /DATA_KEY = "metrack_data_v4"/);
 assert.match(core, /DATA_SCHEMA_VERSION = 4/);
+assert.match(core, /export function timerElapsedMs/);
+assert.match(app, /navigator\.wakeLock\.request\("screen"\)/);
+assert.match(app, /TIMER_KEY = "metrack_active_timer_v1"/);
 assert.match(html, />Übungen<\/h3>/);
 assert.doesNotMatch(html, />Eigene Übungen</);
 assert.doesNotMatch(
