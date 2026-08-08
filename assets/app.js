@@ -44,7 +44,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.3.6";
+const APP_VERSION = "2.3.7";
 const TIMER_KEY = "metrack_active_timer_v1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",

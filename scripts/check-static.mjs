@@ -54,6 +54,16 @@ assert.match(styles, /\.set-timer-button\s*\{/);
 assert.match(styles, /\.set-field-header\s*\{/);
 assert.match(
   styles,
+  /\.set-timer-button\s*\{[^}]*position:\s*absolute/s,
+  "Die Stoppuhr darf die kompakte Satzzeile nicht vergrößern.",
+);
+assert.doesNotMatch(
+  styles,
+  /\.set-field-header\.has-timer\s*\{[^}]*min-height/s,
+  "Zeitbasierte Satzzeilen müssen denselben Abstand wie Wiederholungen haben.",
+);
+assert.match(
+  styles,
   /\.toast\.visible\s*\{[^}]*pointer-events:\s*auto/s,
   "Die sichtbare Snackbar muss auf Touch-Eingaben reagieren.",
 );
