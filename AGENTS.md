@@ -60,17 +60,26 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 ## Architektur und Quellen der Wahrheit
 
 - `index.html`: semantische Grundstruktur, Dialoge, PWA-Metadaten und CSP.
-- `assets/app.js`: UI-Zustand, DOM-Rendering, Storage-Zugriff, Timer und PWA-
-  Updatefluss.
-- `assets/core.js`: kanonisches Datenmodell, Validierung, Migrationen,
-  Statistiken sowie Import/Export. Neue reine Logik hier implementieren und
-  direkt testen.
+- `assets/app.js`: schlanker Orchestrator, gemeinsamer UI-Zustand,
+  Storage-Zugriff, zentrale Fehlerbehandlung und Event-Verdrahtung.
+- `assets/app/`: fachliche UI-Controller für Dashboard/History, Eintragsformular,
+  Übungen, Timer, Datentransfer und PWA. Zustand und Seiteneffekte über explizite
+  Factory-Parameter übergeben; Module importieren den Orchestrator nicht zurück.
+- `assets/core.js`: stabile öffentliche Re-Export-Fassade. App und Tests
+  importieren standardmäßig hierüber, damit interne Splits kompatibel bleiben.
+- `assets/core/`: kanonisches Datenmodell, Katalog, Einträge, Statistiken,
+  Migrationen, Import/Export und Basisfunktionen. Abhängigkeiten verlaufen von
+  Konstanten über Modell/Einträge zu Statistik, Migration und Transfer – niemals
+  zurück über `assets/core.js`.
 - `assets/exercise-icons.js`: erlaubte persistente Icon-IDs und lokale Inline-
   SVG-Erzeugung.
-- `assets/styles.css`: responsive und iPhone-spezifische Darstellung.
+- `assets/styles.css`: geordneter CSS-Einstieg mit `@import`-Anweisungen.
+- `assets/styles/`: Basis, Dashboard, Training, Charts/History, Dialoge und
+  responsive Regeln. Die Importreihenfolge ist Teil des visuellen Verhaltens.
 - `service-worker.js`: App-Shell, Offline-Cache und Update-Aktivierung.
 - `manifest.webmanifest` und `assets/icons/`: installierbare PWA und App-Logo.
-- `tests/*.test.js`: Unit- und Regressionstests.
+- `tests/*.test.mjs`: fachlich getrennte Unit- und Regressionstests;
+  wiederverwendbare Fixtures liegen unter `tests/helpers/`.
 - `scripts/check-static.mjs`: statische Release-Invarianten. Eine bewusst
   geänderte Invariante muss hier zusammen mit der Implementierung aktualisiert
   werden; Checks nicht nur entfernen, um CI grün zu bekommen.
@@ -92,14 +101,14 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
   DOM getrennt, zyklische Imports und ein globaler Sammelzustand sind zu vermeiden.
 - Tests entsprechend den Fachmodulen aufteilen; Testdateien sollen dieselbe
   Zuständigkeit widerspiegeln wie der Produktionscode.
-- Die bereits großen Dateien `assets/app.js` und `assets/core.js` bei passenden
-  größeren Arbeiten schrittweise und testgesichert zerlegen. Keinen riskanten
-  Komplettumbau als Nebenänderung starten, aber ihre Größe durch neue unabhängige
-  Funktionen nicht weiter unnötig erhöhen.
+- `scripts/check-static.mjs` erzwingt für produktive JS-/CSS-Module und Tests die
+  Obergrenze von 800 Zeilen. Neue Zuständigkeiten frühzeitig auslagern, statt die
+  Grenze nur durch komprimierte Formatierung zu umgehen.
 
 ## Kanonisches Datenmodell
 
-Das aktuelle Schema ist v6. Die Konstanten in `assets/core.js` sind maßgeblich.
+Das aktuelle Schema ist v6. Die Konstanten in `assets/core/constants.js` sind
+maßgeblich und werden öffentlich über `assets/core.js` re-exportiert.
 Vereinfacht sieht ein gespeichertes Dokument so aus:
 
 ```js
@@ -144,7 +153,7 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
 ## Speicherung, Migration und Sicherungen
 
 - Aktueller Schlüssel: `metrack_data_v6`. Historische Schlüssel in
-  `assets/core.js` bleiben für Migration und Datenrettung lesbar.
+  `assets/core/constants.js` bleiben für Migration und Datenrettung lesbar.
 - Schema-Version und App-/Cache-Version sind voneinander unabhängig.
 - Migrationen schrittweise, deterministisch und idempotent implementieren.
 - Vor einer Migration Rohdaten sichern, vollständig parsen und validieren, erst

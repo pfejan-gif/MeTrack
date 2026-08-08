@@ -69,7 +69,7 @@ npm ci
 npm run verify
 ```
 
-Die Prüfung umfasst JavaScript-Syntax, relative GitHub-Pages-Pfade, Manifest und App-Shell, Icon-Abmessungen sowie Unit-Tests für Validierung, Berechnungen, CRUD, CSV und Sicherungsimporte. GitHub Actions führt dieselben Prüfungen bei Pushes und Pull Requests aus.
+Die Prüfung umfasst alle JavaScript-Module, relative GitHub-Pages-Pfade, Manifest und App-Shell, Icon-Abmessungen, die Modulgrößen-Grenze sowie Unit-Tests für Validierung, Berechnungen, CRUD, CSV und Sicherungsimporte. GitHub Actions führt dieselben Prüfungen bei Pushes und Pull Requests aus.
 
 ## Projektstruktur
 
@@ -77,14 +77,17 @@ Die Prüfung umfasst JavaScript-Syntax, relative GitHub-Pages-Pfade, Manifest un
 .
 ├── index.html                 # semantische App-Oberfläche
 ├── assets/
-│   ├── app.js                 # UI, Speicherung und PWA-Verhalten
-│   ├── core.js                # getestete Daten- und Berechnungslogik
+│   ├── app.js                 # UI-Orchestrator und Event-Verdrahtung
+│   ├── app/                   # Timer, Übungen, Dashboard, Form, Transfer und PWA
+│   ├── core.js                # stabile öffentliche Core-Fassade
+│   ├── core/                  # Modell, Einträge, Statistik und Migration/Transfer
 │   ├── exercise-icons.js      # lokale SVG-Symbolpalette
-│   ├── styles.css             # responsive iPhone-/Desktop-Oberfläche
+│   ├── styles.css             # geordneter CSS-Einstieg
+│   ├── styles/                # fachlich getrennte Oberflächenbereiche
 │   └── icons/                 # Favicon, App-Icons und Vorschau
 ├── manifest.webmanifest       # installierbare PWA
 ├── service-worker.js          # Offline-App-Shell und Updates
-├── tests/                     # Unit-Tests ohne externe Abhängigkeiten
+├── tests/                     # fachlich getrennte Unit-Tests und Fixtures
 └── .github/workflows/         # automatische Qualitätsprüfung
 ```
 
