@@ -289,6 +289,10 @@ test("bietet getrennte, eindeutige Symbolpaletten für Übungen und Dehnungen", 
   const stretchIcons = iconOptionsForKind("stretch");
   assert.equal(EXERCISE_ICONS.length, 24);
   assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 24);
+  assert.equal(
+    new Set(EXERCISE_ICONS.map((icon) => JSON.stringify(icon.shapes))).size,
+    24,
+  );
   assert.equal(exerciseIcons.length, 14);
   assert.equal(stretchIcons.length, 10);
   assert.equal(isExerciseIconAllowed("dumbbell", "seconds"), true);
