@@ -44,7 +44,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.3.1";
+const APP_VERSION = "2.3.2";
 const TIMER_KEY = "metrack_active_timer_v1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
@@ -1663,17 +1663,40 @@ function registerServiceWorker() {
     elements.updateButton.hidden = false;
     elements.updateBanner.hidden = false;
   };
-  navigator.serviceWorker.register("./service-worker.js").then((registration) => {
-    if (registration.waiting && navigator.serviceWorker.controller)
-      offerUpdate(registration.waiting);
-    registration.addEventListener("updatefound", () => {
-      const worker = registration.installing;
-      worker?.addEventListener("statechange", () => {
-        if (worker.state === "installed" && navigator.serviceWorker.controller)
-          offerUpdate(worker);
+  navigator.serviceWorker
+    .register("./service-worker.js", { updateViaCache: "none" })
+    .then((registration) => {
+      let lastUpdateCheck = 0;
+      const checkForUpdate = () => {
+        if (Date.now() - lastUpdateCheck < 60_000) return;
+        lastUpdateCheck = Date.now();
+        registration
+          .update()
+          .then(() => {
+            if (registration.waiting && navigator.serviceWorker.controller)
+              offerUpdate(registration.waiting);
+          })
+          .catch(() => {});
+      };
+      if (registration.waiting && navigator.serviceWorker.controller)
+        offerUpdate(registration.waiting);
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        worker?.addEventListener("statechange", () => {
+          if (
+            worker.state === "installed" &&
+            navigator.serviceWorker.controller
+          )
+            offerUpdate(worker);
+        });
       });
-    });
-  }).catch(() => {});
+      checkForUpdate();
+      window.addEventListener("pageshow", checkForUpdate);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") checkForUpdate();
+      });
+    })
+    .catch(() => {});
   let reloading = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (reloading) return;
