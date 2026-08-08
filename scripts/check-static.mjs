@@ -44,6 +44,10 @@ assert.doesNotMatch(html, /id="resetButton"/);
 assert.doesNotMatch(html, /Alle Daten löschen/);
 assert.doesNotMatch(html, /privat/i);
 assert.doesNotMatch(html, /privacy-card/);
+assert.doesNotMatch(
+  html,
+  /id="appVersion"[^<]*<\/span>\s*·\s*offline-fähig/i,
+);
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
 assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
