@@ -3,22 +3,30 @@ import test from "node:test";
 
 import {
   BACKUP_VERSION,
+  DATA_SCHEMA_VERSION,
   calculateStreak,
   changeFromFirst,
   changeFromPrevious,
   createBackup,
+  customExerciseValues,
+  customMetricKey,
+  entryMetricValue,
   entriesToCsv,
   hasMeasurement,
   mergeEntries,
+  mergeExerciseCatalog,
   normalizeEntries,
   parseBackup,
   parseNumber,
   removeEntry,
   sanitizeEntry,
+  sanitizeCustomExercises,
   setsKey,
   todayLocal,
   upsertEntry,
   validateEntry,
+  validateCustomExercise,
+  validateExerciseCatalog,
 } from "../assets/core.js";
 
 const entries = [
@@ -272,4 +280,191 @@ test("weist übergroße Sicherungen vor der Verarbeitung zurück", () => {
     })),
   };
   assert.throws(() => parseBackup(JSON.stringify(oversized)), /mehr als 5000/);
+});
+
+const customExercises = [
+  {
+    id: "custom-situps",
+    name: "Sit-Ups",
+    kind: "reps",
+    active: true,
+  },
+  {
+    id: "custom-wandsitz",
+    name: "Wandsitz",
+    kind: "seconds",
+    active: false,
+  },
+];
+
+test("validiert eigene Übungen und verhindert doppelte Namen", () => {
+  const situps = validateCustomExercise(customExercises[0]);
+  assert.equal(situps.valid, true);
+  assert.equal(situps.exercise.name, "Sit-Ups");
+
+  assert.equal(
+    validateCustomExercise({ ...customExercises[0], kind: "meter" }).valid,
+    false,
+  );
+  assert.equal(
+    validateExerciseCatalog([
+      customExercises[0],
+      { ...customExercises[1], name: "sit-ups" },
+    ]).valid,
+    false,
+  );
+  assert.deepEqual(sanitizeCustomExercises(customExercises), customExercises);
+});
+
+test("speichert drei Sätze eigener Übungen und berechnet den Tagesbestwert", () => {
+  const raw = {
+    date: "2026-08-08",
+    customSets: [
+      { exerciseId: "custom-situps", values: [20, 24, 22] },
+      { exerciseId: "custom-wandsitz", values: [80, null, 100] },
+    ],
+  };
+  const validation = validateEntry(raw, customExercises);
+  assert.equal(validation.valid, true);
+  assert.deepEqual(
+    customExerciseValues(validation.entry, "custom-situps"),
+    [20, 24, 22],
+  );
+  assert.equal(
+    entryMetricValue(
+      validation.entry,
+      customMetricKey("custom-situps"),
+      customExercises,
+    ),
+    24,
+  );
+  assert.equal(
+    entryMetricValue(
+      validation.entry,
+      customMetricKey("custom-wandsitz"),
+      customExercises,
+    ),
+    100,
+  );
+});
+
+test("weist Dezimalwerte und unbekannte eigene Übungen zurück", () => {
+  const fractional = validateEntry(
+    {
+      date: "2026-08-08",
+      customSets: [
+        { exerciseId: "custom-situps", values: ["20,5", null, null] },
+      ],
+    },
+    customExercises,
+  );
+  assert.equal(fractional.valid, false);
+  assert.match(fractional.errors["custom-situps-set-1"], /Ganze Zahl/);
+
+  const unknown = validateEntry(
+    {
+      date: "2026-08-08",
+      customSets: [
+        { exerciseId: "custom-unbekannt", values: [10, null, null] },
+      ],
+    },
+    customExercises,
+  );
+  assert.equal(unknown.valid, false);
+  assert.match(unknown.errors.customSets, /Übungskatalog/);
+});
+
+test("führt Teilsätze eigener Übungen ohne Datenverlust zusammen", () => {
+  const current = [
+    {
+      date: "2026-08-08",
+      customSets: [{ exerciseId: "custom-situps", values: [20, 18, 15] }],
+    },
+  ];
+  const imported = [
+    {
+      date: "2026-08-08",
+      customSets: [{ exerciseId: "custom-situps", values: [null, 25, null] }],
+    },
+  ];
+  const merged = mergeEntries(current, imported, customExercises);
+  assert.deepEqual(
+    customExerciseValues(merged[0], "custom-situps"),
+    [20, 25, 15],
+  );
+});
+
+test("zählt Tage mit ausschließlich eigenen Übungen für die Serie", () => {
+  const customOnly = [
+    {
+      date: "2026-08-07",
+      customSets: [{ exerciseId: "custom-situps", values: [20, null, null] }],
+    },
+    {
+      date: "2026-08-08",
+      customSets: [{ exerciseId: "custom-situps", values: [22, null, null] }],
+    },
+  ];
+  assert.equal(calculateStreak(customOnly, "2026-08-08", customExercises), 2);
+});
+
+test("sichert eigene Übungen in v3 und migriert v2-Sicherungen", () => {
+  const customEntries = [
+    {
+      date: "2026-08-08",
+      customSets: [{ exerciseId: "custom-wandsitz", values: [90, 100, null] }],
+    },
+  ];
+  const backup = createBackup(customEntries, customExercises, {
+    theme: "dark",
+  });
+  const restored = parseBackup(JSON.stringify(backup));
+  assert.equal(backup.version, BACKUP_VERSION);
+  assert.equal(backup.schemaVersion, DATA_SCHEMA_VERSION);
+  assert.deepEqual(restored.exercises, customExercises);
+  assert.deepEqual(
+    customExerciseValues(restored.entries[0], "custom-wandsitz"),
+    [90, 100, null],
+  );
+
+  const restoredV2 = parseBackup(
+    JSON.stringify({ app: "MeTrack", version: 2, entries }),
+  );
+  assert.deepEqual(restoredV2.exercises, []);
+  assert.deepEqual(restoredV2.entries, normalizeEntries(entries));
+});
+
+test("exportiert eigene Übungen verlustfrei ins CSV", () => {
+  const csv = entriesToCsv(
+    [
+      {
+        date: "2026-08-08",
+        customSets: [
+          { exerciseId: "custom-situps", values: [20, 18, null] },
+          { exerciseId: "custom-wandsitz", values: [90, 100, 95] },
+        ],
+      },
+    ],
+    customExercises,
+  );
+  assert.match(csv, /Sit-Ups Wiederholungen Satz 1/);
+  assert.match(csv, /Wandsitz Sekunden Bestwert/);
+  assert.match(csv, /20;18;;20;90;100;95;100/);
+});
+
+test("führt Übungskataloge sicher zusammen und erkennt Typkonflikte", () => {
+  const merged = mergeExerciseCatalog(
+    [{ ...customExercises[0], active: false }],
+    customExercises,
+  );
+  assert.equal(merged.length, 2);
+  assert.equal(merged[0].active, true);
+
+  assert.throws(
+    () =>
+      mergeExerciseCatalog(customExercises, [
+        { ...customExercises[0], kind: "seconds" },
+      ]),
+    /Typkonflikt/,
+  );
 });

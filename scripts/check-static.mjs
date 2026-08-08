@@ -33,7 +33,11 @@ assert.match(html, /viewport-fit=cover/);
 assert.match(html, /maximum-scale=1/);
 assert.match(html, /user-scalable=no/);
 assert.match(html, /apple-mobile-web-app-capable/);
+assert.match(html, /id="updateBanner"/);
+assert.match(html, /id="exerciseDialog"/);
+assert.match(html, /id="customExerciseFields"/);
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
+assert.match(styles, /\.update-banner\s*\{/);
 assert.match(
   styles,
   /\.set-card legend\s*\{[^}]*float:\s*left/s,
@@ -88,6 +92,7 @@ assert.deepEqual(pngSize("assets/icons/apple-touch-icon.png"), {
 
 const serviceWorker = read("service-worker.js");
 const app = read("assets/app.js");
+const core = read("assets/core.js");
 const packageJson = JSON.parse(read("package.json"));
 for (const asset of requiredFiles
   .slice(0, 10)
@@ -106,6 +111,13 @@ assert.ok(
 assert.ok(
   app.includes(`APP_VERSION = "${packageJson.version}"`),
   "App-Anzeige und package.json müssen dieselbe Version verwenden.",
+);
+assert.match(core, /DATA_KEY = "metrack_data_v3"/);
+assert.match(core, /DATA_SCHEMA_VERSION = 3/);
+assert.doesNotMatch(
+  app,
+  /showToast\("Eine neue MeTrack-Version/,
+  "PWA-Updates müssen den kompakten Update-Banner statt des Aktions-Toasts verwenden.",
 );
 
 console.log(`Static check passed (${requiredFiles.length} required files).`);

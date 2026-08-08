@@ -133,6 +133,44 @@
       </div>
     </header>
 
+    <aside
+      class="update-banner"
+      id="updateBanner"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    >
+      <span class="update-banner-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M20 7v5h-5M4 17v-5h5M6.1 8.2A7 7 0 0 1 18.7 7M5.3 17A7 7 0 0 0 17.9 15.8"
+          />
+        </svg>
+      </span>
+      <span class="update-banner-copy">
+        <strong>Update verfügbar</strong>
+        <small>Die neue Version ist bereit.</small>
+      </span>
+      <button
+        class="update-banner-action"
+        id="updateBannerButton"
+        type="button"
+      >
+        Aktualisieren
+      </button>
+      <button
+        class="update-banner-close"
+        id="dismissUpdateBannerButton"
+        type="button"
+        aria-label="Update-Hinweis schließen"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </aside>
+
     <main id="main-content" class="app-shell">
       <section
         class="install-card"
@@ -512,6 +550,39 @@
               </fieldset>
             </div>
 
+            <section
+              class="custom-exercises"
+              aria-labelledby="customExercisesTitle"
+            >
+              <div class="custom-exercises-heading">
+                <div>
+                  <p class="eyebrow">Dein Training</p>
+                  <h3 id="customExercisesTitle">Eigene Übungen</h3>
+                  <p>
+                    Ergänze zum Beispiel Sit-Ups als Wiederholungen oder Zeit.
+                  </p>
+                </div>
+                <button
+                  class="button secondary compact-button"
+                  id="openExerciseDialogButton"
+                  type="button"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Verwalten
+                </button>
+              </div>
+              <div class="custom-exercise-empty" id="customExerciseEmpty">
+                Noch keine eigene Übung. Tippe auf „Verwalten“, um eine
+                hinzuzufügen.
+              </div>
+              <div
+                class="set-groups custom-set-groups"
+                id="customExerciseFields"
+              ></div>
+            </section>
+
             <p class="form-error" id="formError" role="alert"></p>
             <div class="form-actions">
               <button
@@ -681,6 +752,7 @@
                     <th scope="col">Plank · 3 Sätze</th>
                     <th scope="col">Liegestütze · 3 Sätze</th>
                     <th scope="col">Kniebeugen · 3 Sätze</th>
+                    <th scope="col">Eigene Übungen</th>
                     <th scope="col">Gewicht</th>
                     <th scope="col">Bauch</th>
                     <th scope="col"><span class="sr-only">Aktionen</span></th>
@@ -731,6 +803,84 @@
     </footer>
 
     <input id="importFile" type="file" accept="application/json,.json" hidden />
+
+    <dialog
+      class="modal exercise-modal"
+      id="exerciseDialog"
+      aria-labelledby="exerciseDialogTitle"
+    >
+      <div class="exercise-dialog-content">
+        <div class="exercise-dialog-heading">
+          <div>
+            <p class="eyebrow">Training anpassen</p>
+            <h2 id="exerciseDialogTitle">Eigene Übungen</h2>
+            <p>Jede Übung erhält drei Sätze pro Tag.</p>
+          </div>
+          <button
+            class="icon-button compact"
+            id="closeExerciseDialogButton"
+            type="button"
+            aria-label="Dialog schließen"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+
+        <form id="exerciseForm" class="exercise-form" novalidate>
+          <div class="field">
+            <label for="exerciseName">Name</label>
+            <input
+              id="exerciseName"
+              name="exerciseName"
+              type="text"
+              maxlength="40"
+              autocomplete="off"
+              placeholder="z. B. Sit-Ups"
+              required
+            />
+            <small class="field-error" id="exerciseNameError"></small>
+          </div>
+
+          <fieldset class="unit-choice">
+            <legend>Was möchtest du messen?</legend>
+            <label>
+              <input type="radio" name="exerciseKind" value="reps" checked />
+              <span>
+                <strong>Wiederholungen</strong>
+                <small>z. B. 20×</small>
+              </span>
+            </label>
+            <label>
+              <input type="radio" name="exerciseKind" value="seconds" />
+              <span>
+                <strong>Zeit</strong>
+                <small>z. B. 100 Sek.</small>
+              </span>
+            </label>
+          </fieldset>
+
+          <button class="button primary exercise-add-button" type="submit">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Übung hinzufügen
+          </button>
+        </form>
+
+        <div class="exercise-manager">
+          <div class="exercise-manager-heading">
+            <h3>Deine Übungen</h3>
+            <span>Archivieren erhält alte Werte</span>
+          </div>
+          <p class="exercise-manager-empty" id="exerciseManagerEmpty">
+            Noch keine eigenen Übungen angelegt.
+          </p>
+          <div class="exercise-manager-list" id="exerciseManagerList"></div>
+        </div>
+      </div>
+    </dialog>
 
     <dialog class="modal" id="importDialog" aria-labelledby="importDialogTitle">
       <form method="dialog">

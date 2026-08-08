@@ -1,29 +1,43 @@
 import {
   BODY_METRIC_KEYS,
+  CUSTOM_EXERCISE_TYPES,
   DATA_KEY,
+  DATA_SCHEMA_VERSION,
   EXERCISE_KEYS,
+  MAX_CUSTOM_EXERCISES,
   METRICS,
   METRIC_KEYS,
+  PREVIOUS_DATA_KEY,
   SET_COUNT,
   SETTINGS_KEY,
   STORAGE_KEY,
   calculateStreak,
   createBackup,
+  customExerciseDefinition,
+  customExerciseValues,
+  customFieldName,
+  customMetricKey,
+  entryMetricValue,
   entriesToCsv,
   formatDate,
   formatNumber,
   mergeEntries,
+  mergeExerciseCatalog,
+  metricDefinition,
   normalizeEntries,
   parseBackup,
   removeEntry,
+  sanitizeCustomExercises,
   setFieldName,
   setsKey,
   todayLocal,
   upsertEntry,
+  validateCustomExercise,
   validateEntry,
+  validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.0.1";
+const APP_VERSION = "2.1.0";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
   "metrack_pre_reset_backup_v1",
@@ -39,6 +53,9 @@ const elements = {
   themeMeta: document.querySelector('meta[name="theme-color"]'),
   themeButton: $("themeButton"),
   updateButton: $("updateButton"),
+  updateBanner: $("updateBanner"),
+  updateBannerButton: $("updateBannerButton"),
+  dismissUpdateBannerButton: $("dismissUpdateBannerButton"),
   installButton: $("installButton"),
   iosInstallCard: $("iosInstallCard"),
   dismissInstallButton: $("dismissInstallButton"),
@@ -50,6 +67,16 @@ const elements = {
   discardCorruptButton: $("discardCorruptButton"),
   networkBanner: $("networkBanner"),
   entryForm: $("entryForm"),
+  customExerciseFields: $("customExerciseFields"),
+  customExerciseEmpty: $("customExerciseEmpty"),
+  openExerciseDialogButton: $("openExerciseDialogButton"),
+  exerciseDialog: $("exerciseDialog"),
+  exerciseForm: $("exerciseForm"),
+  exerciseName: $("exerciseName"),
+  exerciseNameError: $("exerciseNameError"),
+  exerciseManagerList: $("exerciseManagerList"),
+  exerciseManagerEmpty: $("exerciseManagerEmpty"),
+  closeExerciseDialogButton: $("closeExerciseDialogButton"),
   formMode: $("formMode"),
   saveButtonLabel: $("saveButtonLabel"),
   cancelEditButton: $("cancelEditButton"),
@@ -82,6 +109,7 @@ const elements = {
 
 const state = {
   entries: [],
+  exercises: [],
   metric: "plank",
   period: "30",
   historyLimit: 50,
@@ -134,7 +162,48 @@ function testStorage() {
   }
 }
 
-function loadEntries() {
+function markStorageCorrupt(raw, key) {
+  state.storageCorrupt = true;
+  state.corruptStorageValue = raw;
+  state.corruptStorageKey = key;
+  state.storageWritable = false;
+}
+
+function validateStoredEnvelope(parsed, schemaVersion) {
+  if (
+    !parsed ||
+    parsed.schemaVersion !== schemaVersion ||
+    !Array.isArray(parsed.entries)
+  ) {
+    throw new Error(`Unexpected v${schemaVersion} storage format`);
+  }
+  const rawExercises = schemaVersion >= 3 ? parsed.exercises : [];
+  if (!validateExerciseCatalog(rawExercises).valid)
+    throw new Error("Invalid exercise catalog");
+  const exercises = sanitizeCustomExercises(rawExercises);
+  if (
+    parsed.entries.some(
+      (entry) =>
+        entry?.date > todayLocal() || !validateEntry(entry, exercises).valid,
+    )
+  ) {
+    throw new Error(`Invalid v${schemaVersion} entry`);
+  }
+  const entries = normalizeEntries(parsed.entries, exercises);
+  if (parsed.entries.length > 0 && entries.length === 0)
+    throw new Error(`No valid v${schemaVersion} entries`);
+  return { entries, exercises };
+}
+
+function serializedData(entries, exercises) {
+  return JSON.stringify({
+    schemaVersion: DATA_SCHEMA_VERSION,
+    exercises: sanitizeCustomExercises(exercises),
+    entries: normalizeEntries(entries, exercises),
+  });
+}
+
+function loadData() {
   state.storageWritable = testStorage();
 
   let currentRaw;
@@ -142,36 +211,46 @@ function loadEntries() {
     currentRaw = localStorage.getItem(DATA_KEY);
   } catch {
     state.storageWritable = false;
-    return [];
+    return { entries: [], exercises: [] };
   }
   if (currentRaw !== null) {
     try {
-      const parsed = JSON.parse(currentRaw);
-      if (
-        !parsed ||
-        parsed.schemaVersion !== 2 ||
-        !Array.isArray(parsed.entries)
-      ) {
-        throw new Error("Unexpected v2 storage format");
-      }
-      if (
-        parsed.entries.some(
-          (entry) => entry?.date > todayLocal() || !validateEntry(entry).valid,
-        )
-      ) {
-        throw new Error("Invalid v2 entry");
-      }
-      const normalized = normalizeEntries(parsed.entries);
-      if (parsed.entries.length > 0 && normalized.length === 0)
-        throw new Error("No valid v2 entries");
-      return normalized;
+      return validateStoredEnvelope(
+        JSON.parse(currentRaw),
+        DATA_SCHEMA_VERSION,
+      );
     } catch {
-      state.storageCorrupt = true;
-      state.corruptStorageValue = currentRaw;
-      state.corruptStorageKey = DATA_KEY;
-      state.storageWritable = false;
-      return [];
+      markStorageCorrupt(currentRaw, DATA_KEY);
+      return { entries: [], exercises: [] };
     }
+  }
+
+  let previousRaw;
+  try {
+    previousRaw = localStorage.getItem(PREVIOUS_DATA_KEY);
+  } catch {
+    state.storageWritable = false;
+    return { entries: [], exercises: [] };
+  }
+  if (previousRaw !== null) {
+    let migrated;
+    try {
+      migrated = validateStoredEnvelope(JSON.parse(previousRaw), 2);
+    } catch {
+      markStorageCorrupt(previousRaw, PREVIOUS_DATA_KEY);
+      return { entries: [], exercises: [] };
+    }
+    if (state.storageWritable) {
+      try {
+        const envelope = serializedData(migrated.entries, []);
+        localStorage.setItem(DATA_KEY, envelope);
+        if (localStorage.getItem(DATA_KEY) !== envelope)
+          throw new Error("Migration verification failed");
+      } catch {
+        state.storageWritable = false;
+      }
+    }
+    return migrated;
   }
 
   let legacyRaw;
@@ -179,9 +258,9 @@ function loadEntries() {
     legacyRaw = localStorage.getItem(STORAGE_KEY);
   } catch {
     state.storageWritable = false;
-    return [];
+    return { entries: [], exercises: [] };
   }
-  if (legacyRaw === null) return [];
+  if (legacyRaw === null) return { entries: [], exercises: [] };
 
   let normalized;
   try {
@@ -198,43 +277,48 @@ function loadEntries() {
     if (parsed.length > 0 && normalized.length === 0)
       throw new Error("No valid entries");
   } catch {
-    state.storageCorrupt = true;
-    state.corruptStorageValue = legacyRaw;
-    state.corruptStorageKey = STORAGE_KEY;
-    state.storageWritable = false;
-    return [];
+    markStorageCorrupt(legacyRaw, STORAGE_KEY);
+    return { entries: [], exercises: [] };
   }
 
-  if (!state.storageWritable) return normalized;
+  if (!state.storageWritable) return { entries: normalized, exercises: [] };
 
   try {
-    const envelope = JSON.stringify({ schemaVersion: 2, entries: normalized });
+    const envelope = serializedData(normalized, []);
     localStorage.setItem(DATA_KEY, envelope);
     if (localStorage.getItem(DATA_KEY) !== envelope)
       throw new Error("Migration verification failed");
   } catch {
     state.storageWritable = false;
   }
-  return normalized;
+  return { entries: normalized, exercises: [] };
 }
 
-function persistEntries(nextEntries, { allowRecovery = false } = {}) {
+function persistData(
+  nextEntries,
+  nextExercises = state.exercises,
+  { allowRecovery = false } = {},
+) {
   if (state.storageCorrupt && !allowRecovery) {
     showToast("Speichern pausiert: Die vorhandenen Daten sind beschädigt.");
     return false;
   }
 
-  const normalized = normalizeEntries(nextEntries);
+  const catalogValidation = validateExerciseCatalog(nextExercises);
+  if (!catalogValidation.valid) {
+    showToast("Der Übungskatalog konnte nicht gespeichert werden.");
+    return false;
+  }
+  const exercises = sanitizeCustomExercises(nextExercises);
+  const normalized = normalizeEntries(nextEntries, exercises);
   try {
-    const serialized = JSON.stringify({
-      schemaVersion: 2,
-      entries: normalized,
-    });
+    const serialized = serializedData(normalized, exercises);
     localStorage.setItem(DATA_KEY, serialized);
     if (localStorage.getItem(DATA_KEY) !== serialized)
       throw new Error("Storage verification failed");
 
     state.entries = normalized;
+    state.exercises = exercises;
     state.storageWritable = true;
     state.storageCorrupt = false;
     state.corruptStorageValue = null;
@@ -330,10 +414,216 @@ function setText(id, value) {
   if (element) element.textContent = value;
 }
 
+function makeCustomExerciseId() {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 10);
+  return `custom-${timestamp}-${random}`;
+}
+
+function renderCustomExerciseFields() {
+  const currentValues = new Map(
+    $$('input[id^="custom-"]', elements.customExerciseFields).map((input) => [
+      input.id,
+      input.value,
+    ]),
+  );
+  elements.customExerciseFields.replaceChildren();
+  const activeExercises = state.exercises.filter((exercise) => exercise.active);
+  elements.customExerciseEmpty.hidden = activeExercises.length > 0;
+
+  for (const exercise of activeExercises) {
+    const definition = customExerciseDefinition(exercise);
+    const type = CUSTOM_EXERCISE_TYPES[exercise.kind];
+    const fieldset = document.createElement("fieldset");
+    fieldset.className = "set-card";
+
+    const legend = document.createElement("legend");
+    const badge = document.createElement("small");
+    badge.className = "custom-exercise-badge";
+    badge.textContent = "Eigene Übung";
+    const title = document.createElement("span");
+    title.textContent = exercise.name;
+    const subtitle = document.createElement("small");
+    subtitle.textContent = `3 Sätze · ${type.label}`;
+    legend.append(badge, title, subtitle);
+
+    const inputs = document.createElement("div");
+    inputs.className = "set-inputs";
+    for (let index = 0; index < SET_COUNT; index += 1) {
+      const id = customFieldName(exercise.id, index);
+      const field = document.createElement("div");
+      field.className = "field";
+      const label = document.createElement("label");
+      label.htmlFor = id;
+      label.textContent = `Satz ${index + 1}`;
+      const input = document.createElement("input");
+      input.id = id;
+      input.name = id;
+      input.type = "number";
+      input.min = String(definition.min);
+      input.max = String(definition.max);
+      input.step = "1";
+      input.inputMode = "numeric";
+      input.placeholder = exercise.kind === "seconds" ? "60" : "20";
+      input.value = currentValues.get(id) ?? "";
+      const error = document.createElement("small");
+      error.className = "field-error";
+      error.id = `${id}Error`;
+      field.append(label, input, error);
+      inputs.append(field);
+    }
+    fieldset.append(legend, inputs);
+    elements.customExerciseFields.append(fieldset);
+  }
+}
+
+function renderExerciseManager() {
+  elements.exerciseManagerList.replaceChildren();
+  elements.exerciseManagerEmpty.hidden = state.exercises.length > 0;
+  const addButton = elements.exerciseForm.querySelector(
+    'button[type="submit"]',
+  );
+  addButton.disabled = state.exercises.length >= MAX_CUSTOM_EXERCISES;
+
+  for (const exercise of state.exercises) {
+    const type = CUSTOM_EXERCISE_TYPES[exercise.kind];
+    const item = document.createElement("div");
+    item.className = `exercise-manager-item${exercise.active ? "" : " archived"}`;
+    const copy = document.createElement("div");
+    const name = document.createElement("strong");
+    name.textContent = exercise.name;
+    const detail = document.createElement("small");
+    detail.textContent = `${type.label} · ${exercise.active ? "im Formular" : "archiviert"}`;
+    copy.append(name, detail);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "exercise-toggle-button";
+    button.dataset.exerciseToggle = exercise.id;
+    button.textContent = exercise.active ? "Archivieren" : "Aktivieren";
+    button.setAttribute(
+      "aria-label",
+      `${exercise.name} ${exercise.active ? "archivieren" : "aktivieren"}`,
+    );
+    item.append(copy, button);
+    elements.exerciseManagerList.append(item);
+  }
+}
+
+function renderExerciseCatalogUi() {
+  renderCustomExerciseFields();
+  renderExerciseManager();
+}
+
+function openExerciseDialog() {
+  elements.exerciseNameError.textContent = "";
+  if (typeof elements.exerciseDialog.showModal === "function") {
+    elements.exerciseDialog.showModal();
+    setTimeout(() => elements.exerciseName.focus(), 80);
+    return;
+  }
+  const name = window.prompt("Wie heißt die neue Übung?", "Sit-Ups");
+  if (!name) return;
+  const isTimed = window.confirm(
+    "Mit Zeit messen?\n\nOK = Sekunden · Abbrechen = Wiederholungen",
+  );
+  addCustomExercise(name, isTimed ? "seconds" : "reps");
+}
+
+function addCustomExercise(name, kind) {
+  const validation = validateCustomExercise({
+    id: makeCustomExerciseId(),
+    name,
+    kind,
+    active: true,
+  });
+  if (!validation.valid) {
+    elements.exerciseNameError.textContent =
+      validation.errors.name || validation.errors.kind || "Ungültige Übung.";
+    return false;
+  }
+  const duplicate = state.exercises.some(
+    (exercise) =>
+      exercise.name.toLocaleLowerCase("de-DE") ===
+      validation.exercise.name.toLocaleLowerCase("de-DE"),
+  );
+  if (duplicate) {
+    elements.exerciseNameError.textContent =
+      "Eine Übung mit diesem Namen ist bereits vorhanden.";
+    return false;
+  }
+  if (state.exercises.length >= MAX_CUSTOM_EXERCISES) {
+    elements.exerciseNameError.textContent = `Du kannst höchstens ${MAX_CUSTOM_EXERCISES} eigene Übungen anlegen.`;
+    return false;
+  }
+  if (!persistData(state.entries, [...state.exercises, validation.exercise]))
+    return false;
+  elements.exerciseForm.reset();
+  elements.exerciseNameError.textContent = "";
+  renderExerciseCatalogUi();
+  render();
+  if (elements.exerciseDialog.open) elements.exerciseDialog.close();
+  setTimeout(() => $(customFieldName(validation.exercise.id, 0))?.focus(), 100);
+  showToast(`${validation.exercise.name} hinzugefügt ✓`);
+  return true;
+}
+
+function handleExerciseSubmit(event) {
+  event.preventDefault();
+  const formData = new FormData(elements.exerciseForm);
+  addCustomExercise(formData.get("exerciseName"), formData.get("exerciseKind"));
+}
+
+function toggleCustomExercise(exerciseId) {
+  const current = state.exercises.find(
+    (exercise) => exercise.id === exerciseId,
+  );
+  if (!current) return;
+  const nextExercises = state.exercises.map((exercise) =>
+    exercise.id === exerciseId
+      ? { ...exercise, active: !exercise.active }
+      : exercise,
+  );
+  if (!persistData(state.entries, nextExercises)) return;
+  if (current.active && state.metric === customMetricKey(exerciseId))
+    state.metric = "plank";
+  renderExerciseCatalogUi();
+  render();
+  showToast(
+    current.active
+      ? `${current.name} archiviert`
+      : `${current.name} wieder aktiviert ✓`,
+  );
+}
+
+function renderMetricTabs() {
+  $$('[data-custom-metric="true"]', elements.metricTabs).forEach((button) =>
+    button.remove(),
+  );
+  for (const exercise of state.exercises) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.metric = customMetricKey(exercise.id);
+    button.dataset.customMetric = "true";
+    button.setAttribute(
+      "aria-pressed",
+      String(state.metric === customMetricKey(exercise.id)),
+    );
+    button.textContent = exercise.name;
+    if (!exercise.active) button.title = "Archivierte Übung";
+    elements.metricTabs.append(button);
+  }
+  $$("[data-metric]", elements.metricTabs).forEach((button) =>
+    button.setAttribute(
+      "aria-pressed",
+      String(button.dataset.metric === state.metric),
+    ),
+  );
+}
+
 function metricSummary(key) {
   const values = state.entries
-    .filter((entry) => entry[key] !== null)
-    .map((entry) => entry[key]);
+    .map((entry) => entryMetricValue(entry, key, state.exercises))
+    .filter((value) => value !== null);
   const latest = values.length ? values[values.length - 1] : null;
   const previous = values.length > 1 ? values[values.length - 2] : null;
   const first = values.length ? values[0] : null;
@@ -352,7 +642,7 @@ function renderOverview() {
   const squats = metricSummary("squats");
   const weight = metricSummary("weight");
   const waist = metricSummary("waist");
-  const streak = calculateStreak(state.entries);
+  const streak = calculateStreak(state.entries, todayLocal(), state.exercises);
 
   setText("bestPlank", formatNumber(plank.best));
   setText("bestPushups", formatNumber(pushups.best));
@@ -394,7 +684,9 @@ function renderOverview() {
 }
 
 function filterMetricEntries(key, period) {
-  const values = state.entries.filter((entry) => entry[key] !== null);
+  const values = state.entries.filter(
+    (entry) => entryMetricValue(entry, key, state.exercises) !== null,
+  );
   if (period === "all") return values;
   const reference = new Date(`${todayLocal()}T12:00:00`);
   reference.setDate(reference.getDate() - (Number(period) - 1));
@@ -435,7 +727,11 @@ function drawChart(canvas, entries, key, { compact = false } = {}) {
     : { top: 26, right: 25, bottom: 36, left: 51 };
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
-  const values = entries.map((entry) => entry[key]);
+  const definition = metricDefinition(key, state.exercises);
+  if (!definition) return false;
+  const values = entries.map((entry) =>
+    entryMetricValue(entry, key, state.exercises),
+  );
   const rawMin = Math.min(...values);
   const rawMax = Math.max(...values);
   const rawSpan = rawMax - rawMin;
@@ -450,9 +746,10 @@ function drawChart(canvas, entries, key, { compact = false } = {}) {
 
   const points = entries.map((entry) => {
     const time = new Date(`${entry.date}T12:00:00`).getTime();
+    const value = entryMetricValue(entry, key, state.exercises);
     return {
       x: padding.left + ((time - startTime) / timeSpan) * plotWidth,
-      y: padding.top + ((max - entry[key]) / span) * plotHeight,
+      y: padding.top + ((max - value) / span) * plotHeight,
     };
   });
 
@@ -466,7 +763,7 @@ function drawChart(canvas, entries, key, { compact = false } = {}) {
       const value = max - ratio * span;
       const y = padding.top + ratio * plotHeight;
       context.fillText(
-        formatNumber(value, METRICS[key].decimals),
+        formatNumber(value, definition.decimals),
         padding.left - 10,
         y,
       );
@@ -542,7 +839,13 @@ function renderCharts() {
     const hasChart = drawChart(elements.progressChart, entries, state.metric);
     elements.chartEmpty.hidden = hasChart;
 
-    const definition = METRICS[state.metric];
+    const definition = metricDefinition(state.metric, state.exercises);
+    if (!definition) {
+      state.metric = "plank";
+      renderMetricTabs();
+      renderCharts();
+      return;
+    }
     const periodLabel =
       state.period === "all"
         ? "gesamter Zeitraum"
@@ -556,10 +859,19 @@ function renderCharts() {
     if (entries.length === 0) {
       elements.chartSummary.textContent = `Noch keine ${definition.label}-Werte in diesem Zeitraum.`;
     } else if (entries.length === 1) {
-      elements.chartSummary.textContent = `Ein Wert: ${formatNumber(entries[0][state.metric], definition.decimals)} ${definition.unit} am ${formatDate(entries[0].date)}.`;
+      const onlyValue = entryMetricValue(
+        entries[0],
+        state.metric,
+        state.exercises,
+      );
+      elements.chartSummary.textContent = `Ein Wert: ${formatNumber(onlyValue, definition.decimals)} ${definition.unit} am ${formatDate(entries[0].date)}.`;
     } else {
-      const first = entries[0][state.metric];
-      const last = lastItem(entries)[state.metric];
+      const first = entryMetricValue(entries[0], state.metric, state.exercises);
+      const last = entryMetricValue(
+        lastItem(entries),
+        state.metric,
+        state.exercises,
+      );
       const difference = last - first;
       elements.chartSummary.textContent = `${entries.length} Werte von ${formatDate(entries[0].date)} bis ${formatDate(lastItem(entries).date)} · Veränderung ${formatSigned(difference, definition.decimals, definition.unit)}.`;
     }
@@ -567,16 +879,34 @@ function renderCharts() {
 }
 
 function metricDisplay(entry, key) {
-  const definition = METRICS[key];
+  const definition = metricDefinition(key, state.exercises);
+  if (!definition) return "—";
   if (EXERCISE_KEYS.includes(key)) {
     const values =
       entry[setsKey(key)] || Array.from({ length: SET_COUNT }, () => null);
     if (values.every((value) => value === null)) return "—";
     return `${values.map((value) => (value === null ? "–" : formatNumber(value))).join(" / ")} ${definition.unit}`;
   }
-  return entry[key] === null
+  if (definition.custom) {
+    const values = customExerciseValues(entry, definition.exerciseId);
+    if (values.every((value) => value === null)) return "—";
+    return `${values.map((value) => (value === null ? "–" : formatNumber(value))).join(" / ")} ${definition.unit}`;
+  }
+  return entryMetricValue(entry, key, state.exercises) === null
     ? "—"
-    : `${formatNumber(entry[key], definition.decimals)} ${definition.unit}`;
+    : `${formatNumber(entryMetricValue(entry, key, state.exercises), definition.decimals)} ${definition.unit}`;
+}
+
+function customMetricsDisplay(entry) {
+  const values = state.exercises
+    .map((exercise) => ({
+      exercise,
+      value: metricDisplay(entry, customMetricKey(exercise.id)),
+    }))
+    .filter((item) => item.value !== "—");
+  return values.length
+    ? values.map((item) => `${item.exercise.name}: ${item.value}`).join(" · ")
+    : "—";
 }
 
 function actionButton(action, date, label, iconPath, danger = false) {
@@ -613,7 +943,7 @@ function renderHistory() {
     elements.showMoreHistoryButton.textContent = `Weitere ${Math.min(50, remaining)} Einträge anzeigen`;
   }
   elements.csvButton.disabled = !hasEntries;
-  elements.backupButton.disabled = !hasEntries;
+  elements.backupButton.disabled = !hasEntries && state.exercises.length === 0;
 
   elements.historyRows.replaceChildren();
   elements.mobileHistory.replaceChildren();
@@ -625,12 +955,14 @@ function renderHistory() {
       metricDisplay(entry, "plank"),
       metricDisplay(entry, "pushups"),
       metricDisplay(entry, "squats"),
+      customMetricsDisplay(entry),
       metricDisplay(entry, "weight"),
       metricDisplay(entry, "waist"),
     ];
-    values.forEach((value) => {
+    values.forEach((value, index) => {
       const cell = document.createElement("td");
       cell.textContent = value;
+      if (index === 4) cell.className = "custom-history-cell";
       row.append(cell);
     });
     const actionCell = document.createElement("td");
@@ -694,12 +1026,25 @@ function renderHistory() {
       metric.append(label, value);
       metrics.append(metric);
     }
+    for (const exercise of state.exercises) {
+      const key = customMetricKey(exercise.id);
+      if (entryMetricValue(entry, key, state.exercises) === null) continue;
+      const metric = document.createElement("div");
+      metric.className = "history-metric";
+      const label = document.createElement("span");
+      label.textContent = exercise.name;
+      const value = document.createElement("strong");
+      value.textContent = metricDisplay(entry, key);
+      metric.append(label, value);
+      metrics.append(metric);
+    }
     card.append(header, metrics);
     elements.mobileHistory.append(card);
   }
 }
 
 function render() {
+  renderMetricTabs();
   renderOverview();
   renderHistory();
   renderCharts();
@@ -713,6 +1058,13 @@ function clearFormErrors() {
       Array.from({ length: SET_COUNT }, (_, index) => setFieldName(key, index)),
     ),
     ...BODY_METRIC_KEYS,
+    ...state.exercises
+      .filter((exercise) => exercise.active)
+      .flatMap((exercise) =>
+        Array.from({ length: SET_COUNT }, (_, index) =>
+          customFieldName(exercise.id, index),
+        ),
+      ),
   ];
   for (const key of fieldIds) {
     const input = $(key);
@@ -766,6 +1118,12 @@ function startEditing(date) {
     }
   }
   for (const key of BODY_METRIC_KEYS) $(key).value = entry[key] ?? "";
+  for (const exercise of state.exercises.filter((item) => item.active)) {
+    const values = customExerciseValues(entry, exercise.id);
+    for (let index = 0; index < SET_COUNT; index += 1) {
+      $(customFieldName(exercise.id, index)).value = values[index] ?? "";
+    }
+  }
   elements.formMode.textContent = "Bearbeiten";
   elements.saveButtonLabel.textContent = "Änderungen speichern";
   elements.cancelEditButton.hidden = false;
@@ -802,6 +1160,9 @@ function handleSubmit(event) {
   const existing = !state.editingDate
     ? state.entries.find((entry) => entry.date === raw.date)
     : null;
+  const editedEntry = state.editingDate
+    ? state.entries.find((entry) => entry.date === state.editingDate)
+    : null;
   const candidate = { ...raw };
   if (existing) {
     for (const key of EXERCISE_KEYS) {
@@ -815,7 +1176,28 @@ function handleSubmit(event) {
       if (candidate[key] === "") candidate[key] = existing[key];
   }
 
-  const validation = validateEntry(candidate);
+  candidate.customSets = state.exercises
+    .map((exercise) => {
+      const sourceEntry = existing || editedEntry;
+      const storedValues = sourceEntry
+        ? customExerciseValues(sourceEntry, exercise.id)
+        : Array.from({ length: SET_COUNT }, () => null);
+      const values = Array.from({ length: SET_COUNT }, (_, index) => {
+        if (!exercise.active) return storedValues[index] ?? null;
+        const field = customFieldName(exercise.id, index);
+        if (existing && candidate[field] === "")
+          return storedValues[index] ?? null;
+        return candidate[field] ?? null;
+      });
+      return { exerciseId: exercise.id, values };
+    })
+    .filter((item) =>
+      item.values.some(
+        (value) => value !== "" && value !== null && value !== undefined,
+      ),
+    );
+
+  const validation = validateEntry(candidate, state.exercises);
   if (!validation.valid) {
     showFormErrors(validation.errors);
     return;
@@ -826,8 +1208,9 @@ function handleSubmit(event) {
     state.entries,
     validation.entry,
     previousDate,
+    state.exercises,
   );
-  if (!persistEntries(nextEntries)) return;
+  if (!persistData(nextEntries)) return;
 
   const message = state.editingDate
     ? "Änderungen gespeichert"
@@ -850,14 +1233,16 @@ function handleHistoryAction(event) {
 function deleteEntry(date) {
   const deleted = state.entries.find((entry) => entry.date === date);
   if (!deleted) return;
-  const nextEntries = removeEntry(state.entries, date);
-  if (!persistEntries(nextEntries)) return;
+  const nextEntries = removeEntry(state.entries, date, state.exercises);
+  if (!persistData(nextEntries)) return;
   if (state.editingDate === date) resetForm();
   render();
   showToast(`Eintrag vom ${formatDate(date)} gelöscht`, {
     label: "Rückgängig",
     callback: () => {
-      if (persistEntries(upsertEntry(state.entries, deleted))) {
+      if (
+        persistData(upsertEntry(state.entries, deleted, null, state.exercises))
+      ) {
         render();
         showToast("Eintrag wiederhergestellt");
       }
@@ -883,9 +1268,13 @@ function timestampForFilename() {
 async function exportCsv() {
   if (!state.entries.length) return;
   const filename = `metrack-${todayLocal()}.csv`;
-  const file = new File([entriesToCsv(state.entries)], filename, {
-    type: "text/csv;charset=utf-8",
-  });
+  const file = new File(
+    [entriesToCsv(state.entries, state.exercises)],
+    filename,
+    {
+      type: "text/csv;charset=utf-8",
+    },
+  );
 
   try {
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
@@ -906,9 +1295,9 @@ async function exportCsv() {
 }
 
 async function exportBackup() {
-  if (!state.entries.length) return;
+  if (!state.entries.length && !state.exercises.length) return;
   const content = JSON.stringify(
-    createBackup(state.entries, state.settings),
+    createBackup(state.entries, state.exercises, state.settings),
     null,
     2,
   );
@@ -957,7 +1346,8 @@ async function readImportFile(file) {
     const range = entries.length
       ? `${formatDate(entries[0].date)} bis ${formatDate(lastItem(entries).date)}`
       : "keine Einträge";
-    elements.importSummary.textContent = `Die Sicherung enthält ${entries.length} ${entries.length === 1 ? "Tag" : "Tage"} (${range}). Du kannst sie mit deinen Daten zusammenführen oder deine aktuellen Einträge ersetzen.`;
+    const exerciseCount = parsed.exercises.length;
+    elements.importSummary.textContent = `Die Sicherung enthält ${entries.length} ${entries.length === 1 ? "Tag" : "Tage"} (${range}) und ${exerciseCount} ${exerciseCount === 1 ? "eigene Übung" : "eigene Übungen"}. Du kannst sie mit deinen Daten zusammenführen oder deine aktuellen Daten ersetzen.`;
 
     if (typeof elements.importDialog.showModal === "function") {
       elements.importDialog.showModal();
@@ -980,12 +1370,35 @@ function applyImport(mode) {
   if (!state.pendingImport || !["merge", "replace"].includes(mode)) return;
 
   const previousEntries = state.entries;
+  const previousExercises = state.exercises;
   const importedSettings = state.pendingImport.settings;
-  const nextEntries =
-    mode === "merge"
-      ? mergeEntries(state.entries, state.pendingImport.entries)
-      : state.pendingImport.entries;
-  if (!persistEntries(nextEntries, { allowRecovery: true })) return;
+  let nextExercises;
+  let nextEntries;
+  try {
+    nextExercises =
+      mode === "merge"
+        ? mergeExerciseCatalog(state.exercises, state.pendingImport.exercises)
+        : state.pendingImport.exercises;
+    nextEntries =
+      mode === "merge"
+        ? mergeEntries(
+            state.entries,
+            state.pendingImport.entries,
+            nextExercises,
+          )
+        : normalizeEntries(state.pendingImport.entries, nextExercises);
+  } catch (error) {
+    showToast(
+      error.message || "Sicherung konnte nicht zusammengeführt werden.",
+    );
+    return;
+  }
+  if (
+    !persistData(nextEntries, nextExercises, {
+      allowRecovery: true,
+    })
+  )
+    return;
 
   if (THEME_ORDER.includes(importedSettings?.theme)) {
     state.settings.theme = importedSettings.theme;
@@ -994,6 +1407,7 @@ function applyImport(mode) {
   }
 
   state.pendingImport = null;
+  renderExerciseCatalogUi();
   resetForm();
   render();
   showToast(
@@ -1003,7 +1417,13 @@ function applyImport(mode) {
     {
       label: "Rückgängig",
       callback: () => {
-        if (persistEntries(previousEntries, { allowRecovery: true })) {
+        if (
+          persistData(previousEntries, previousExercises, {
+            allowRecovery: true,
+          })
+        ) {
+          renderExerciseCatalogUi();
+          resetForm();
           render();
           showToast("Import rückgängig gemacht");
         }
@@ -1029,39 +1449,50 @@ function askForConfirmation({ title, text, actionLabel, callback }) {
 function resetAllData() {
   const hasRecoveryData = (() => {
     try {
-      return RECOVERY_KEYS.some((key) => localStorage.getItem(key) !== null);
+      return [DATA_KEY, PREVIOUS_DATA_KEY, STORAGE_KEY, ...RECOVERY_KEYS].some(
+        (key) => localStorage.getItem(key) !== null,
+      );
     } catch {
       return false;
     }
   })();
 
-  if (!state.entries.length && !hasRecoveryData) {
+  if (!state.entries.length && !state.exercises.length && !hasRecoveryData) {
     showToast("Es sind keine Daten vorhanden.");
     return;
   }
 
   askForConfirmation({
     title: "Alle Daten löschen?",
-    text: "Alle Einträge auf diesem Gerät werden entfernt. Du kannst die Löschung direkt danach rückgängig machen.",
+    text: "Alle Einträge und eigenen Übungen auf diesem Gerät werden entfernt. Du kannst die Löschung direkt danach rückgängig machen.",
     actionLabel: "Alle löschen",
     callback: () => {
       const previousEntries = state.entries;
+      const previousExercises = state.exercises;
       try {
-        if (!persistEntries([], { allowRecovery: true })) return;
+        if (!persistData([], [], { allowRecovery: true })) return;
         localStorage.removeItem(DATA_KEY);
+        localStorage.removeItem(PREVIOUS_DATA_KEY);
         localStorage.removeItem(STORAGE_KEY);
         RECOVERY_KEYS.forEach((key) => localStorage.removeItem(key));
       } catch {
         showToast("Die Daten konnten nicht vollständig gelöscht werden.");
         return;
       }
+      renderExerciseCatalogUi();
       resetForm();
       render();
-      if (previousEntries.length) {
+      if (previousEntries.length || previousExercises.length) {
         showToast("Alle Daten gelöscht", {
           label: "Rückgängig",
           callback: () => {
-            if (persistEntries(previousEntries, { allowRecovery: true })) {
+            if (
+              persistData(previousEntries, previousExercises, {
+                allowRecovery: true,
+              })
+            ) {
+              renderExerciseCatalogUi();
+              resetForm();
               render();
               showToast("Daten wiederhergestellt");
             }
@@ -1088,6 +1519,13 @@ function refreshTodayUi() {
       ),
     ),
     ...BODY_METRIC_KEYS.map((key) => $(key)),
+    ...state.exercises
+      .filter((exercise) => exercise.active)
+      .flatMap((exercise) =>
+        Array.from({ length: SET_COUNT }, (_, index) =>
+          $(customFieldName(exercise.id, index)),
+        ),
+      ),
   ];
   if (
     !state.editingDate &&
@@ -1134,9 +1572,10 @@ function discardCorruptData() {
     text: "Nutze vorher „Rohdaten sichern“, falls du den Inhalt später prüfen möchtest. Danach startet MeTrack mit einem leeren Datensatz.",
     actionLabel: "Verwerfen",
     callback: () => {
-      if (persistEntries([], { allowRecovery: true })) {
+      if (persistData([], [], { allowRecovery: true })) {
         try {
           localStorage.removeItem(DATA_KEY);
+          localStorage.removeItem(PREVIOUS_DATA_KEY);
           localStorage.removeItem(STORAGE_KEY);
           RECOVERY_KEYS.forEach((key) => localStorage.removeItem(key));
         } catch {
@@ -1145,6 +1584,7 @@ function discardCorruptData() {
           );
           return;
         }
+        renderExerciseCatalogUi();
         resetForm();
         render();
         showToast("MeTrack wurde mit leerem Datensatz neu gestartet");
@@ -1202,10 +1642,7 @@ function registerServiceWorker() {
     if (!worker) return;
     state.waitingWorker = worker;
     elements.updateButton.hidden = false;
-    showToast("Eine neue MeTrack-Version ist bereit.", {
-      label: "Aktualisieren",
-      callback: () => worker.postMessage({ type: "SKIP_WAITING" }),
-    });
+    elements.updateBanner.hidden = false;
   };
 
   navigator.serviceWorker
@@ -1243,7 +1680,25 @@ function bindEvents() {
   elements.updateButton.addEventListener("click", () => {
     state.waitingWorker?.postMessage({ type: "SKIP_WAITING" });
   });
+  elements.updateBannerButton.addEventListener("click", () => {
+    state.waitingWorker?.postMessage({ type: "SKIP_WAITING" });
+  });
+  elements.dismissUpdateBannerButton.addEventListener("click", () => {
+    elements.updateBanner.hidden = true;
+  });
   elements.entryForm.addEventListener("submit", handleSubmit);
+  elements.openExerciseDialogButton.addEventListener(
+    "click",
+    openExerciseDialog,
+  );
+  elements.closeExerciseDialogButton.addEventListener("click", () => {
+    if (elements.exerciseDialog.open) elements.exerciseDialog.close();
+  });
+  elements.exerciseForm.addEventListener("submit", handleExerciseSubmit);
+  elements.exerciseManagerList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-exercise-toggle]");
+    if (button) toggleCustomExercise(button.dataset.exerciseToggle);
+  });
   elements.cancelEditButton.addEventListener("click", resetForm);
   elements.historyRows.addEventListener("click", handleHistoryAction);
   elements.mobileHistory.addEventListener("click", handleHistoryAction);
@@ -1325,6 +1780,8 @@ function bindEvents() {
     if (event.key !== DATA_KEY) return;
     if (event.newValue === null) {
       state.entries = [];
+      state.exercises = [];
+      renderExerciseCatalogUi();
       resetForm();
       render();
       showToast("Daten wurden in einem anderen Tab gelöscht.");
@@ -1333,16 +1790,10 @@ function bindEvents() {
 
     try {
       const parsed = JSON.parse(event.newValue);
-      if (
-        parsed.schemaVersion !== 2 ||
-        !Array.isArray(parsed.entries) ||
-        parsed.entries.some(
-          (entry) => entry?.date > todayLocal() || !validateEntry(entry).valid,
-        )
-      ) {
-        throw new Error("Invalid storage event");
-      }
-      state.entries = normalizeEntries(parsed.entries);
+      const loaded = validateStoredEnvelope(parsed, DATA_SCHEMA_VERSION);
+      state.entries = loaded.entries;
+      state.exercises = loaded.exercises;
+      renderExerciseCatalogUi();
       resetForm();
       render();
       showToast("Daten aus einem anderen Tab übernommen.");
@@ -1370,10 +1821,13 @@ function bindEvents() {
 
 function initialize() {
   state.settings = readSettings();
-  state.entries = loadEntries();
+  const loaded = loadData();
+  state.entries = loaded.entries;
+  state.exercises = loaded.exercises;
   $("appVersion").textContent = `v${APP_VERSION}`;
 
   bindEvents();
+  renderExerciseCatalogUi();
   resetForm();
   refreshTodayUi();
   applyTheme();

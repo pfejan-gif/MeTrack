@@ -113,8 +113,7 @@ body {
   margin: 0;
   overflow-x: hidden;
   color: var(--text);
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at 90% -8%,
       color-mix(in srgb, var(--blue) 13%, transparent),
       transparent 34rem
@@ -225,6 +224,103 @@ svg {
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.4);
   backdrop-filter: blur(22px) saturate(1.4);
+}
+
+.update-banner {
+  position: fixed;
+  z-index: 180;
+  top: calc(var(--header-height) + env(safe-area-inset-top) + 12px);
+  left: 50%;
+  display: grid;
+  width: min(calc(100% - 24px), 520px);
+  min-height: 68px;
+  padding: 10px 10px 10px 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--mint) 34%, var(--line));
+  border-radius: 20px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
+  box-shadow: var(--shadow-lg);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  transform: translateX(-50%);
+}
+
+.update-banner-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 11%, transparent);
+}
+
+.update-banner-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.update-banner-copy {
+  min-width: 0;
+}
+
+.update-banner-copy strong,
+.update-banner-copy small {
+  display: block;
+}
+
+.update-banner-copy strong {
+  font-size: 0.84rem;
+  letter-spacing: -0.01em;
+}
+
+.update-banner-copy small {
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.update-banner-action,
+.update-banner-close {
+  min-height: 44px;
+  border: 0;
+  cursor: pointer;
+}
+
+.update-banner-action {
+  padding: 9px 13px;
+  border-radius: 12px;
+  color: var(--mint-ink);
+  background: var(--mint);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.update-banner-close {
+  display: grid;
+  width: 44px;
+  padding: 0;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--muted);
+  background: transparent;
+}
+
+.update-banner-close:hover {
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.update-banner-close svg {
+  width: 18px;
+  height: 18px;
 }
 
 .header-inner {
@@ -568,8 +664,11 @@ h3 {
 .card {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.025), transparent 38%),
+  background: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.025),
+      transparent 38%
+    ),
     var(--surface);
   box-shadow: var(--shadow-sm);
   -webkit-backdrop-filter: blur(10px);
@@ -589,8 +688,7 @@ h3 {
   min-height: 310px;
   padding: 24px;
   overflow: hidden;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at 95% 0%,
       color-mix(in srgb, var(--mint) 15%, transparent),
       transparent 18rem
@@ -794,6 +892,69 @@ h3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 9px;
   gap: 12px;
+}
+
+.custom-exercises {
+  margin-top: 26px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.custom-exercises-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.custom-exercises-heading h3,
+.custom-exercises-heading p {
+  margin: 0;
+}
+
+.custom-exercises-heading h3 {
+  margin-top: 2px;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.custom-exercises-heading div > p:last-child {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.custom-exercise-empty {
+  margin-top: 16px;
+  padding: 17px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 16px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg-elevated) 55%, transparent);
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.custom-set-groups {
+  margin-top: 16px;
+}
+
+.custom-set-groups .set-card {
+  border-color: color-mix(in srgb, var(--mint) 26%, var(--line));
+}
+
+.custom-exercise-badge {
+  display: inline-flex !important;
+  width: max-content;
+  margin-bottom: 8px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: var(--mint) !important;
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+  font-size: 0.58rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .set-card {
@@ -1014,8 +1175,7 @@ h3 {
   height: 330px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background:
-    linear-gradient(var(--line) 1px, transparent 1px),
+  background: linear-gradient(var(--line) 1px, transparent 1px),
     linear-gradient(90deg, var(--line) 1px, transparent 1px),
     color-mix(in srgb, var(--bg-elevated) 72%, transparent);
   background-size:
@@ -1153,6 +1313,13 @@ th {
 td {
   color: var(--text-soft);
   font-size: 0.8rem;
+}
+
+.custom-history-cell {
+  min-width: 240px;
+  max-width: 360px;
+  line-height: 1.45;
+  white-space: normal;
 }
 
 tbody tr:last-child td {
@@ -1345,6 +1512,200 @@ tbody tr:hover td {
 
 .modal form {
   padding: 26px;
+}
+
+.exercise-modal {
+  width: min(calc(100% - 24px), 580px);
+  max-height: min(86dvh, 760px);
+  overflow: auto;
+}
+
+.exercise-dialog-content {
+  padding: 24px;
+}
+
+.exercise-dialog-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.exercise-dialog-heading h2,
+.exercise-dialog-heading p {
+  margin: 0;
+}
+
+.exercise-dialog-heading h2 {
+  margin-top: 2px;
+  font-size: 1.35rem;
+}
+
+.exercise-dialog-heading div > p:last-child {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.exercise-form {
+  display: grid;
+  margin-top: 22px;
+  padding: 18px !important;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg-elevated);
+}
+
+.unit-choice {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  border: 0;
+}
+
+.unit-choice legend {
+  margin-bottom: 8px;
+  color: var(--text-soft);
+  font-size: 0.77rem;
+  font-weight: 780;
+}
+
+.unit-choice label {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.unit-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.unit-choice label > span {
+  display: block;
+  min-height: 70px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+
+.unit-choice input:checked + span {
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 10%, transparent);
+  color: var(--mint);
+}
+
+.unit-choice input:focus-visible + span {
+  outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
+  outline-offset: 3px;
+}
+
+.unit-choice strong,
+.unit-choice small {
+  display: block;
+}
+
+.unit-choice strong {
+  font-size: 0.76rem;
+}
+
+.unit-choice small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.exercise-add-button {
+  width: 100%;
+}
+
+.exercise-manager {
+  margin-top: 24px;
+}
+
+.exercise-manager-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exercise-manager-heading h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.exercise-manager-heading span {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.exercise-manager-empty {
+  margin-top: 12px !important;
+  padding: 15px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.exercise-manager-list {
+  display: grid;
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.exercise-manager-item {
+  display: grid;
+  min-height: 62px;
+  padding: 9px 9px 9px 13px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-elevated);
+}
+
+.exercise-manager-item strong,
+.exercise-manager-item small {
+  display: block;
+}
+
+.exercise-manager-item strong {
+  overflow: hidden;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exercise-manager-item small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+
+.exercise-manager-item.archived {
+  opacity: 0.72;
+}
+
+.exercise-toggle-button {
+  min-width: 92px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--text-soft);
+  background: var(--surface-soft);
+  font-size: 0.69rem;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .modal-icon {
@@ -1629,6 +1990,30 @@ tbody tr:hover td {
   .install-card {
     align-items: start;
   }
+
+  .update-banner {
+    top: calc(var(--header-height) + env(safe-area-inset-top) + 8px);
+    min-height: 62px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    border-radius: 18px;
+  }
+
+  .update-banner-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .update-banner-close {
+    display: none;
+  }
+
+  .custom-exercises-heading {
+    align-items: end;
+  }
+
+  .custom-exercises-heading .button {
+    flex: 0 0 auto;
+  }
 }
 
 @media (max-width: 420px) {
@@ -1656,6 +2041,27 @@ tbody tr:hover td {
     gap: 5px;
     font-size: 0.7rem;
   }
+
+  .update-banner-copy small {
+    display: none;
+  }
+
+  .update-banner-action {
+    padding-inline: 10px;
+  }
+
+  .custom-exercises-heading {
+    display: block;
+  }
+
+  .custom-exercises-heading .button {
+    width: 100%;
+    margin-top: 13px;
+  }
+
+  .unit-choice {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (display-mode: standalone) {
@@ -1681,6 +2087,7 @@ tbody tr:hover td {
 
 @media print {
   .app-header,
+  .update-banner,
   .install-card,
   .form-card,
   .data-actions,
