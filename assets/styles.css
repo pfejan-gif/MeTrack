@@ -1485,45 +1485,6 @@ tbody tr:hover td {
   font-variant-numeric: tabular-nums;
 }
 
-.privacy-card {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  margin-top: 72px;
-  padding: 23px;
-  align-items: center;
-  gap: 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
-}
-
-.privacy-icon {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  border-radius: 15px;
-  color: var(--blue);
-  background: color-mix(in srgb, var(--blue) 10%, transparent);
-}
-
-.privacy-card h2,
-.privacy-card p {
-  margin: 0;
-}
-
-.privacy-card h2 {
-  margin-bottom: 3px;
-  font-size: 1rem;
-  letter-spacing: -0.015em;
-}
-
-.privacy-card p {
-  max-width: 780px;
-  color: var(--muted);
-  font-size: 0.77rem;
-}
-
 .text-button {
   min-height: 44px;
   padding: 8px;
@@ -2161,20 +2122,6 @@ tbody tr:hover td {
     display: grid;
   }
 
-  .privacy-card {
-    grid-template-columns: auto 1fr;
-    margin-top: 54px;
-    padding: 18px;
-    align-items: start;
-    gap: 13px;
-  }
-
-  .privacy-card .text-button {
-    grid-column: 1 / -1;
-    justify-self: start;
-    margin-left: -8px;
-  }
-
   .install-card {
     align-items: start;
   }
@@ -2296,7 +2243,6 @@ tbody tr:hover td {
   .install-card,
   .form-card,
   .data-actions,
-  .privacy-card,
   .app-footer,
   .row-actions {
     display: none !important;

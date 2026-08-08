@@ -6,7 +6,7 @@
   <circle cx="955" cy="650" r="350" fill="#0a1d31" opacity=".8"/>
   <text x="94" y="224" fill="#5ce2ae" font-family="Inter, system-ui, sans-serif" font-size="31" font-weight="800" letter-spacing="8">MEIN FORTSCHRITT</text>
   <text x="90" y="350" fill="#f5f9ff" font-family="Inter, system-ui, sans-serif" font-size="112" font-weight="800" letter-spacing="-5">MeTrack</text>
-  <text x="94" y="414" fill="#9cb0c8" font-family="Inter, system-ui, sans-serif" font-size="34" font-weight="650">Privat. Lokal. Jeden Tag weiter.</text>
+  <text x="94" y="414" fill="#9cb0c8" font-family="Inter, system-ui, sans-serif" font-size="34" font-weight="650">Dein Training. Jeden Tag weiter.</text>
   <g transform="translate(810 151) scale(.32)">
     <rect width="1024" height="1024" rx="230" fill="#0b1828" stroke="#29435e" stroke-width="18"/>
     <path d="M244 720V360L506 612 780 300" fill="none" stroke="#5ce2ae" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>

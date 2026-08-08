@@ -44,7 +44,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.3.0";
+const APP_VERSION = "2.3.1";
 const TIMER_KEY = "metrack_active_timer_v1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
@@ -123,7 +123,6 @@ const elements = {
   confirmDialogTitle: $("confirmDialogTitle"),
   confirmDialogText: $("confirmDialogText"),
   confirmActionButton: $("confirmActionButton"),
-  resetButton: $("resetButton"),
   toast: $("toast"),
 };
 
@@ -1570,41 +1569,6 @@ function removeAllStorageKeys() {
   );
 }
 
-function resetAllData() {
-  askForConfirmation({
-    title: "Alle Daten löschen?",
-    text: "Alle Einträge und deine Übungsauswahl auf diesem Gerät werden entfernt. Direkt danach ist Rückgängig möglich.",
-    actionLabel: "Alle löschen",
-    callback: () => {
-      const previousEntries = state.entries;
-      const previousExercises = state.exercises;
-      try {
-        removeAllStorageKeys();
-        clearTimer();
-        state.entries = [];
-        state.exercises = cloneDefaults();
-        state.storageCorrupt = false;
-      } catch {
-        showToast("Die Daten konnten nicht vollständig gelöscht werden.");
-        return;
-      }
-      renderExerciseCatalogUi();
-      resetForm();
-      render();
-      showToast("Alle Daten gelöscht", {
-        label: "Rückgängig",
-        callback: () => {
-          if (persistData(previousEntries, previousExercises, { allowRecovery: true })) {
-            renderExerciseCatalogUi();
-            resetForm();
-            render();
-          }
-        },
-      });
-    },
-  });
-}
-
 function updateStorageUi() {
   const problem = state.storageCorrupt || !state.storageWritable;
   elements.dataAlert.hidden = !problem;
@@ -1782,7 +1746,6 @@ function bindEvents() {
   elements.importButton.addEventListener("click", () => elements.importFile.click());
   elements.recoverImportButton.addEventListener("click", () => elements.importFile.click());
   elements.importFile.addEventListener("change", () => readImportFile(elements.importFile.files?.[0]));
-  elements.resetButton.addEventListener("click", resetAllData);
   elements.downloadRawButton.addEventListener("click", downloadCorruptPayload);
   elements.discardCorruptButton.addEventListener("click", discardCorruptData);
   elements.importDialog.addEventListener("close", () => {
