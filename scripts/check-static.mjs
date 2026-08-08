@@ -1,23 +1,60 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(resolve(root, path), "utf8");
+const readdirTestFiles = () =>
+  readdirSync(resolve(root, "tests"))
+    .filter((file) => file.endsWith(".test.mjs"))
+    .map((file) => `tests/${file}`);
 
-const requiredFiles = [
+const styleModules = [
+  "assets/styles/base.css",
+  "assets/styles/dashboard.css",
+  "assets/styles/training.css",
+  "assets/styles/charts-history.css",
+  "assets/styles/dialogs.css",
+  "assets/styles/responsive.css",
+];
+const appModules = [
+  "assets/app.js",
+  "assets/app/chart-renderer.js",
+  "assets/app/dashboard-controller.js",
+  "assets/app/entry-controller.js",
+  "assets/app/exercise-controller.js",
+  "assets/app/exercise-icon-ui.js",
+  "assets/app/pwa-controller.js",
+  "assets/app/timer-controller.js",
+  "assets/app/transfer-controller.js",
+];
+const coreModules = [
+  "assets/core.js",
+  "assets/core/constants.js",
+  "assets/core/entries.js",
+  "assets/core/exercises.js",
+  "assets/core/migrations.js",
+  "assets/core/statistics.js",
+  "assets/core/transfer.js",
+  "assets/core/value-utils.js",
+];
+const appShellFiles = [
   "index.html",
   "manifest.webmanifest",
-  "service-worker.js",
   "assets/styles.css",
-  "assets/app.js",
-  "assets/core.js",
+  ...styleModules,
+  ...appModules,
+  ...coreModules,
   "assets/exercise-icons.js",
   "assets/icons/favicon.svg",
   "assets/icons/apple-touch-icon.png",
   "assets/icons/icon-192.png",
   "assets/icons/icon-512.png",
+];
+const requiredFiles = [
+  "service-worker.js",
+  ...appShellFiles,
   "assets/icons/metrack-logo.svg",
   "assets/icons/social-preview.svg",
 ];
@@ -30,7 +67,15 @@ for (const file of requiredFiles)
   );
 
 const html = read("index.html");
-const styles = read("assets/styles.css");
+const styleEntry = read("assets/styles.css");
+const styles = styleModules.map(read).join("\n");
+const app = appModules.map(read).join("\n");
+const core = coreModules.map(read).join("\n");
+for (const module of styleModules)
+  assert.ok(
+    styleEntry.includes(`@import "./${module.slice("assets/".length)}";`),
+    `Stylesheet-Einstieg importiert ${module} nicht.`,
+  );
 assert.match(html, /Content-Security-Policy/);
 assert.match(html, /viewport-fit=cover/);
 assert.match(html, /maximum-scale=1/);
@@ -136,14 +181,9 @@ assertOpaquePng("assets/icons/icon-512.png");
 assertOpaquePng("assets/icons/apple-touch-icon.png");
 
 const serviceWorker = read("service-worker.js");
-const app = read("assets/app.js");
-const core = read("assets/core.js");
 assert.doesNotMatch(app, /label\.textContent\s*=\s*"Timer"/);
 const packageJson = JSON.parse(read("package.json"));
-for (const asset of requiredFiles
-  .slice(0, 10)
-  .filter((path) => !["service-worker.js"].includes(path))) {
-  if (asset === "index.html") continue;
+for (const asset of appShellFiles) {
   assert.ok(
     serviceWorker.includes(`./${asset}`),
     `App-Shell fehlt im Service Worker: ${asset}`,
@@ -185,5 +225,19 @@ assert.doesNotMatch(
   /showToast\("Eine neue MeTrack-Version/,
   "PWA-Updates müssen den kompakten Update-Banner statt des Aktions-Toasts verwenden.",
 );
+
+const modularSources = [
+  ...appModules,
+  ...coreModules,
+  ...styleModules,
+  ...readdirTestFiles(),
+];
+for (const file of modularSources) {
+  const lineCount = read(file).split(/\r?\n/).length;
+  assert.ok(
+    lineCount <= 800,
+    `${file} ist mit ${lineCount} Zeilen zu groß und muss fachlich geteilt werden.`,
+  );
+}
 
 console.log(`Static check passed (${requiredFiles.length} required files).`);

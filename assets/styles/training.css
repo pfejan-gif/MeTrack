@@ -1,0 +1,470 @@
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.set-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 9px;
+  gap: 12px;
+}
+
+.custom-exercises {
+  margin-top: 26px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.custom-exercises-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.custom-exercises-heading h3,
+.custom-exercises-heading p {
+  margin: 0;
+}
+
+.custom-exercises-heading h3 {
+  margin-top: 2px;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.custom-exercises-heading div > p:last-child {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.custom-exercise-empty {
+  margin-top: 16px;
+  padding: 17px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 16px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg-elevated) 55%, transparent);
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.custom-set-groups {
+  margin-top: 16px;
+}
+
+.stretch-section {
+  margin-top: 20px;
+}
+
+.training-subheading h4,
+.training-subheading p {
+  margin: 0;
+}
+
+.training-subheading h4 {
+  font-size: 0.92rem;
+}
+
+.training-subheading p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.stretch-groups {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stretch-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--blue) 26%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-elevated) 76%, transparent);
+}
+
+.stretch-card-title {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 820;
+}
+
+.stretch-card-header {
+  display: flex;
+  margin-bottom: 11px;
+  align-items: center;
+  gap: 9px;
+}
+
+.stretch-card-header .exercise-symbol {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+}
+
+.stretch-check {
+  position: relative;
+  display: flex;
+  min-height: 58px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface-soft);
+  cursor: pointer;
+}
+
+.stretch-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stretch-check-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 13px;
+  color: transparent;
+  background: var(--bg-elevated);
+  transition: 160ms ease;
+}
+
+.stretch-check-mark svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2.5;
+}
+
+.stretch-check-copy strong,
+.stretch-check-copy small {
+  display: block;
+}
+
+.stretch-check-copy strong {
+  color: var(--text-soft);
+  font-size: 0.75rem;
+}
+
+.stretch-check-copy small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.stretch-check input:checked + .stretch-check-mark {
+  border-color: var(--mint);
+  color: white;
+  background: var(--mint);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--mint) 22%, transparent);
+}
+
+.stretch-check input:focus-visible + .stretch-check-mark {
+  outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
+  outline-offset: 3px;
+}
+
+.stretch-check:has(input:checked) {
+  border-color: color-mix(in srgb, var(--mint) 40%, var(--line));
+  background: color-mix(in srgb, var(--mint) 8%, var(--surface-soft));
+}
+
+.stretch-check:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
+  outline-offset: 3px;
+}
+
+.stretch-instructions {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 0.69rem;
+}
+
+.stretch-instructions summary {
+  min-height: 38px;
+  padding: 9px 2px 0;
+  color: var(--blue);
+  font-weight: 780;
+  cursor: pointer;
+}
+
+.stretch-instructions p {
+  margin: 3px 2px 0;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.exercise-overview-cards {
+  display: contents;
+}
+
+.custom-set-groups .set-card {
+  border-color: color-mix(in srgb, var(--mint) 26%, var(--line));
+}
+
+.custom-exercise-badge {
+  display: inline-flex !important;
+  width: max-content;
+  margin-bottom: 8px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: var(--mint) !important;
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+  font-size: 0.58rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.set-card {
+  min-width: 0;
+  margin: 0;
+  padding: 18px 15px 15px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+}
+
+.set-card legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.set-card-title,
+.set-card-subtitle {
+  display: block;
+}
+
+.set-card-title {
+  color: var(--text);
+  font-size: 0.87rem;
+  font-weight: 820;
+  letter-spacing: -0.015em;
+}
+
+.set-card-subtitle {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 680;
+  line-height: 1.35;
+}
+
+.set-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.set-card-heading .exercise-symbol {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+}
+
+.set-card-heading-copy {
+  min-width: 0;
+}
+
+.set-inputs {
+  display: grid;
+  clear: both;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.set-inputs .field label {
+  justify-content: flex-start;
+  font-size: 0.68rem;
+}
+
+.set-inputs .field input {
+  padding-inline: 9px;
+  text-align: center;
+}
+
+.set-field-header {
+  position: relative;
+  display: flex;
+  margin-bottom: 7px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+}
+
+.set-inputs .set-field-header label {
+  margin-bottom: 0;
+}
+
+.set-timer-button {
+  position: absolute;
+  top: 50%;
+  right: -6px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  color: var(--blue);
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.set-timer-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.set-timer-button.active {
+  color: var(--mint);
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .set-timer-button:hover {
+    color: var(--mint);
+    background: color-mix(in srgb, var(--mint) 10%, transparent);
+  }
+}
+
+.set-timer-button.running svg {
+  animation: timer-pulse 1.1s ease-in-out infinite;
+}
+
+.field {
+  min-width: 0;
+}
+
+.field label {
+  display: flex;
+  margin-bottom: 7px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--text-soft);
+  font-size: 0.77rem;
+  font-weight: 780;
+}
+
+.field label span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  min-height: 51px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  outline: 0;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-elevated) 84%, transparent);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field textarea {
+  min-height: 108px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.45;
+}
+
+.field input:hover,
+.field textarea:hover {
+  border-color: var(--line-strong);
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 13%, transparent);
+  background: var(--surface-solid);
+}
+
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.field-error {
+  display: block;
+  min-height: 1.15em;
+  margin: 5px 2px 0;
+  color: var(--danger);
+  font-size: 0.67rem;
+  line-height: 1.2;
+}
+
+.field-hint {
+  display: block;
+  margin: 5px 2px 0;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.form-error {
+  min-height: 1.4em;
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.form-actions {
+  display: flex;
+  margin-top: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.save-button {
+  min-width: 210px;
+}
+
+.form-tip {
+  display: flex;
+  margin: 21px 0 0;
+  padding-top: 18px;
+  align-items: flex-start;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.form-tip svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+

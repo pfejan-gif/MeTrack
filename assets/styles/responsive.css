@@ -1,0 +1,344 @@
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spotlight-card {
+    grid-row: span 2;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .set-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 701px) {
+  .desktop-history:not([hidden]) {
+    display: block;
+  }
+
+  .mobile-history {
+    display: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --header-height: 68px;
+  }
+
+  .header-inner,
+  .app-shell,
+  .app-footer {
+    width: min(calc(100% - 24px), var(--max-width));
+  }
+
+  .brand-mark {
+    width: 39px;
+    height: 39px;
+    border-radius: 13px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .app-shell {
+    padding-top: 32px;
+  }
+
+  .section-heading,
+  .split-heading,
+  .form-card .card-heading {
+    display: block;
+  }
+
+  .hero-cta {
+    width: 100%;
+    margin-top: 19px;
+  }
+
+  .dashboard-grid {
+    gap: 10px;
+  }
+
+  .spotlight-card {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    min-height: 285px;
+    padding: 20px;
+  }
+
+  .metric-card {
+    display: block;
+    min-height: 140px;
+    padding: 16px;
+  }
+
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 12px;
+    border-radius: 11px;
+  }
+
+  .metric-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .compact-metric-card {
+    min-height: 118px;
+  }
+
+  .metric-value {
+    font-size: clamp(1.65rem, 8vw, 2.15rem);
+  }
+
+  .content-section {
+    padding-top: 54px;
+  }
+
+  .form-card,
+  .progress-card,
+  .history-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .status-chip {
+    margin-top: 13px;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .date-field {
+    grid-column: 1 / -1;
+  }
+
+  .form-actions {
+    position: sticky;
+    z-index: 20;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    margin: 6px -5px -5px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    background: color-mix(in srgb, var(--surface-solid) 91%, transparent);
+    box-shadow: var(--shadow-lg);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
+
+  .save-button {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .period-control {
+    margin-top: 16px;
+  }
+
+  .chart-container {
+    height: 270px;
+  }
+
+  .history-heading {
+    margin-bottom: 18px;
+  }
+
+  .data-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 17px;
+  }
+
+  .compact-button {
+    padding-inline: 7px;
+  }
+
+  .desktop-history {
+    display: none !important;
+  }
+
+  .mobile-history:not([hidden]) {
+    display: grid;
+  }
+
+  .install-card {
+    align-items: start;
+  }
+
+  .update-banner {
+    top: calc(var(--header-height) + env(safe-area-inset-top) + 8px);
+    min-height: 62px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    border-radius: 18px;
+  }
+
+  .update-banner-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .update-banner-close {
+    display: none;
+  }
+
+  .custom-exercises-heading {
+    align-items: end;
+  }
+
+  .custom-exercises-heading .button {
+    flex: 0 0 auto;
+  }
+
+  .stretch-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .unit-choice {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .unit-choice label:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .exercise-icon-palette {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .spotlight-value {
+    font-size: 3.6rem;
+  }
+
+  .streak-badge {
+    padding-inline: 9px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .field input {
+    padding-inline: 11px;
+  }
+
+  .data-actions .button {
+    gap: 5px;
+    font-size: 0.7rem;
+  }
+
+  .update-banner-copy small {
+    display: none;
+  }
+
+  .update-banner-action {
+    padding-inline: 10px;
+  }
+
+  .custom-exercises-heading {
+    display: block;
+  }
+
+  .custom-exercises-heading .button {
+    width: 100%;
+    margin-top: 13px;
+  }
+
+  .unit-choice {
+    grid-template-columns: 1fr;
+  }
+
+  .unit-choice label:last-child {
+    grid-column: auto;
+  }
+
+  .exercise-icon-palette {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .exercise-manager-item {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-manager-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .timer-dialog-content {
+    padding: 20px;
+  }
+
+  .timer-readout {
+    min-height: 170px;
+  }
+}
+
+@media (display-mode: standalone) {
+  .app-header {
+    position: sticky;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media print {
+  .app-header,
+  .update-banner,
+  .install-card,
+  .form-card,
+  .data-actions,
+  .app-footer,
+  .row-actions {
+    display: none !important;
+  }
+
+  body {
+    color: #000;
+    background: #fff;
+  }
+
+  .app-shell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .card {
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+}

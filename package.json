@@ -1,12 +1,12 @@
 {
   "name": "metrack",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "private": true,
   "type": "module",
   "description": "Offline-fähiger Fitness-Tracker für GitHub Pages",
   "scripts": {
     "dev": "node scripts/preview-server.mjs",
-    "check": "node --check assets/app.js && node --check assets/core.js && node --check service-worker.js && node --check scripts/preview-server.mjs && node scripts/check-static.mjs",
+    "check": "node scripts/check-syntax.mjs && node scripts/check-static.mjs",
     "test": "node --test",
     "verify": "npm run check && npm test"
   },
