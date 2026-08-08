@@ -1,11 +1,17 @@
+import {
+  defaultExerciseIcon,
+  isExerciseIconAllowed,
+} from "./exercise-icons.js";
+
 export const STORAGE_KEY = "metrack_entries_v1";
 export const V2_DATA_KEY = "metrack_data_v2";
 export const V3_DATA_KEY = "metrack_data_v3";
-export const PREVIOUS_DATA_KEY = "metrack_data_v4";
-export const DATA_KEY = "metrack_data_v5";
-export const DATA_SCHEMA_VERSION = 5;
+export const V4_DATA_KEY = "metrack_data_v4";
+export const PREVIOUS_DATA_KEY = "metrack_data_v5";
+export const DATA_KEY = "metrack_data_v6";
+export const DATA_SCHEMA_VERSION = 6;
 export const SETTINGS_KEY = "metrack_settings_v1";
-export const BACKUP_VERSION = 5;
+export const BACKUP_VERSION = 6;
 export const SET_COUNT = 3;
 export const TIMER_MAX_MS = 86_400_000;
 export const MAX_BACKUP_ENTRIES = 5000;
@@ -47,18 +53,21 @@ export const DEFAULT_EXERCISES = Object.freeze([
     id: "exercise-plank",
     name: "Plank",
     kind: "seconds",
+    icon: "plank",
     active: true,
   }),
   Object.freeze({
     id: "exercise-pushups",
     name: "Liegestütze",
     kind: "reps",
+    icon: "push-up",
     active: true,
   }),
   Object.freeze({
     id: "exercise-squats",
     name: "Kniebeugen",
     kind: "reps",
+    icon: "squat",
     active: true,
   }),
 ]);
@@ -185,7 +194,11 @@ export function sanitizeExercise(raw) {
   if (!name || name.length > 40 || /[\u0000-\u001f\u007f]/.test(name))
     return null;
   if (!EXERCISE_TYPES[kind]) return null;
-  const exercise = { id, name, kind, active: raw.active !== false };
+  const requestedIcon = String(raw.icon ?? "").trim();
+  const icon = isExerciseIconAllowed(requestedIcon, kind)
+    ? requestedIcon
+    : defaultExerciseIcon(kind, id);
+  const exercise = { id, name, kind, icon, active: raw.active !== false };
   if (kind === "stretch") {
     const instructions = normalizedInstructions(raw.instructions);
     if (
@@ -213,6 +226,9 @@ export function validateExercise(raw) {
     errors.name = "Der Name enthält ungültige Zeichen.";
   if (!EXERCISE_TYPES[raw?.kind])
     errors.kind = "Bitte wähle Wiederholungen, Zeit oder Dehnung.";
+  const icon = String(raw?.icon ?? "").trim();
+  if (icon && !isExerciseIconAllowed(icon, raw?.kind))
+    errors.icon = "Bitte wähle ein passendes Symbol.";
   const instructions = normalizedInstructions(raw?.instructions);
   if (raw?.kind === "stretch" && instructions.length > MAX_INSTRUCTION_LENGTH)
     errors.instructions = `Die Anleitung darf höchstens ${MAX_INSTRUCTION_LENGTH} Zeichen lang sein.`;
@@ -959,9 +975,27 @@ export function migrateDataEnvelope(parsed) {
     throw new Error("Die gespeicherten MeTrack-Daten haben keine Version.");
   if (parsed.schemaVersion > DATA_SCHEMA_VERSION)
     throw new Error("Die Daten wurden mit einer neueren MeTrack-Version erstellt.");
+  if (parsed.schemaVersion === 6) {
+    const hasCanonicalIcons =
+      Array.isArray(parsed.exercises) &&
+      parsed.exercises.every((exercise) =>
+        isExerciseIconAllowed(exercise?.icon, exercise?.kind),
+      );
+    if (!hasCanonicalIcons || !validateExerciseCatalog(parsed.exercises).valid)
+      throw new Error("Der Übungskatalog ist ungültig.");
+    const exercises = sanitizeExerciseCatalog(parsed.exercises);
+    return {
+      schemaVersion: DATA_SCHEMA_VERSION,
+      exercises,
+      entries: validateStoredEntries(parsed.entries, exercises, {
+        canonical: true,
+        requireChecks: true,
+      }),
+    };
+  }
   if (parsed.schemaVersion === 5) {
     if (!validateExerciseCatalog(parsed.exercises).valid)
-      throw new Error("Der Übungskatalog ist ungültig.");
+      throw new Error("Der bisherige Übungskatalog ist ungültig.");
     const exercises = sanitizeExerciseCatalog(parsed.exercises);
     return {
       schemaVersion: DATA_SCHEMA_VERSION,
@@ -1114,7 +1148,13 @@ export function parseBackup(text) {
     throw new Error("Diese Sicherung wurde mit einer neueren MeTrack-Version erstellt.");
 
   let migrated;
-  if (parsed.version >= 5) {
+  if (parsed.version >= 6) {
+    migrated = migrateDataEnvelope({
+      schemaVersion: 6,
+      exercises: parsed.exercises,
+      entries: parsed.entries,
+    });
+  } else if (parsed.version === 5) {
     migrated = migrateDataEnvelope({
       schemaVersion: 5,
       exercises: parsed.exercises,
