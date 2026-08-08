@@ -112,8 +112,10 @@ assert.ok(
   app.includes(`APP_VERSION = "${packageJson.version}"`),
   "App-Anzeige und package.json müssen dieselbe Version verwenden.",
 );
-assert.match(core, /DATA_KEY = "metrack_data_v3"/);
-assert.match(core, /DATA_SCHEMA_VERSION = 3/);
+assert.match(core, /DATA_KEY = "metrack_data_v4"/);
+assert.match(core, /DATA_SCHEMA_VERSION = 4/);
+assert.match(html, />Übungen<\/h3>/);
+assert.doesNotMatch(html, />Eigene Übungen</);
 assert.doesNotMatch(
   app,
   /showToast\("Eine neue MeTrack-Version/,
