@@ -40,7 +40,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.2.0";
+const APP_VERSION = "2.2.1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
   "metrack_pre_reset_backup_v1",

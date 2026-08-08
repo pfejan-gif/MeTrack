@@ -1,27 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <defs>
-    <linearGradient id="bg" x1="89" y1="40" x2="1117" y2="630" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#142d47"/>
-      <stop offset=".55" stop-color="#0a1727"/>
-      <stop offset="1" stop-color="#07101c"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(1030 56) rotate(140) scale(580 460)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#68aefc" stop-opacity=".28"/>
-      <stop offset="1" stop-color="#68aefc" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="accent" x1="743" y1="472" x2="1066" y2="163" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#5ce2ae"/>
-      <stop offset="1" stop-color="#68aefc"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#glow)"/>
-  <text x="94" y="230" fill="#5ce2ae" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="30" font-weight="800" letter-spacing="5">MEIN FORTSCHRITT</text>
-  <text x="88" y="344" fill="#f5f9ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="106" font-weight="850" letter-spacing="-5">MeTrack</text>
-  <text x="94" y="412" fill="#a8b9cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="34" font-weight="600">Privat. Lokal. Jeden Tag weiter.</text>
-  <g opacity=".65" stroke="#456079" stroke-width="25" stroke-linecap="round">
-    <path d="M737 486V414"/><path d="M815 486V353"/><path d="M893 486V292"/><path d="M971 486V209"/><path d="M1049 486V338"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">MeTrack – Mein Fortschritt</title>
+  <desc id="desc">MeTrack Schriftzug und das M-förmige Fortschrittslogo auf dunkelblauem Grund.</desc>
+  <rect width="1200" height="630" fill="#07101c"/>
+  <circle cx="1060" cy="20" r="330" fill="#102844" opacity=".72"/>
+  <circle cx="955" cy="650" r="350" fill="#0a1d31" opacity=".8"/>
+  <text x="94" y="224" fill="#5ce2ae" font-family="Inter, system-ui, sans-serif" font-size="31" font-weight="800" letter-spacing="8">MEIN FORTSCHRITT</text>
+  <text x="90" y="350" fill="#f5f9ff" font-family="Inter, system-ui, sans-serif" font-size="112" font-weight="800" letter-spacing="-5">MeTrack</text>
+  <text x="94" y="414" fill="#9cb0c8" font-family="Inter, system-ui, sans-serif" font-size="34" font-weight="650">Privat. Lokal. Jeden Tag weiter.</text>
+  <g transform="translate(810 151) scale(.32)">
+    <rect width="1024" height="1024" rx="230" fill="#0b1828" stroke="#29435e" stroke-width="18"/>
+    <path d="M244 720V360L506 612 780 300" fill="none" stroke="#5ce2ae" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M646 300H780V434" fill="none" stroke="#5ce2ae" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <path d="m719 368 97-79 78 43 157-147" fill="none" stroke="url(#accent)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="1051" cy="185" r="22" fill="#68aefc"/>
 </svg>
