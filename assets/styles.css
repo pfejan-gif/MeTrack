@@ -939,6 +939,144 @@ h3 {
   margin-top: 16px;
 }
 
+.stretch-section {
+  margin-top: 20px;
+}
+
+.training-subheading h4,
+.training-subheading p {
+  margin: 0;
+}
+
+.training-subheading h4 {
+  font-size: 0.92rem;
+}
+
+.training-subheading p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.stretch-groups {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stretch-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--blue) 26%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-elevated) 76%, transparent);
+}
+
+.stretch-card-title {
+  display: block;
+  margin-bottom: 11px;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 820;
+}
+
+.stretch-check {
+  position: relative;
+  display: flex;
+  min-height: 58px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface-soft);
+  cursor: pointer;
+}
+
+.stretch-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stretch-check-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 13px;
+  color: transparent;
+  background: var(--bg-elevated);
+  transition: 160ms ease;
+}
+
+.stretch-check-mark svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2.5;
+}
+
+.stretch-check-copy strong,
+.stretch-check-copy small {
+  display: block;
+}
+
+.stretch-check-copy strong {
+  color: var(--text-soft);
+  font-size: 0.75rem;
+}
+
+.stretch-check-copy small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.stretch-check input:checked + .stretch-check-mark {
+  border-color: var(--mint);
+  color: white;
+  background: var(--mint);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--mint) 22%, transparent);
+}
+
+.stretch-check input:focus-visible + .stretch-check-mark {
+  outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
+  outline-offset: 3px;
+}
+
+.stretch-check:has(input:checked) {
+  border-color: color-mix(in srgb, var(--mint) 40%, var(--line));
+  background: color-mix(in srgb, var(--mint) 8%, var(--surface-soft));
+}
+
+.stretch-check:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
+  outline-offset: 3px;
+}
+
+.stretch-instructions {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 0.69rem;
+}
+
+.stretch-instructions summary {
+  min-height: 38px;
+  padding: 9px 2px 0;
+  color: var(--blue);
+  font-weight: 780;
+  cursor: pointer;
+}
+
+.stretch-instructions p {
+  margin: 3px 2px 0;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
 .exercise-overview-cards {
   display: contents;
 }
@@ -1087,7 +1225,8 @@ h3 {
   font-weight: 700;
 }
 
-.field input {
+.field input,
+.field textarea {
   width: 100%;
   min-height: 51px;
   padding: 12px 13px;
@@ -1106,17 +1245,27 @@ h3 {
   appearance: none;
 }
 
-.field input:hover {
+.field textarea {
+  min-height: 108px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.45;
+}
+
+.field input:hover,
+.field textarea:hover {
   border-color: var(--line-strong);
 }
 
-.field input:focus {
+.field input:focus,
+.field textarea:focus {
   border-color: var(--focus);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 13%, transparent);
   background: var(--surface-solid);
 }
 
-.field input[aria-invalid="true"] {
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
   border-color: var(--danger);
   box-shadow: 0 0 0 3px var(--danger-soft);
 }
@@ -1128,6 +1277,13 @@ h3 {
   color: var(--danger);
   font-size: 0.67rem;
   line-height: 1.2;
+}
+
+.field-hint {
+  display: block;
+  margin: 5px 2px 0;
+  color: var(--muted);
+  font-size: 0.65rem;
 }
 
 .form-error {
@@ -1698,7 +1854,7 @@ tbody tr:hover td {
   min-width: 0;
   margin: 0;
   padding: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
   border: 0;
 }
@@ -1759,6 +1915,15 @@ tbody tr:hover td {
 
 .exercise-add-button {
   width: 100%;
+}
+
+.exercise-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.exercise-form-actions .exercise-add-button {
+  flex: 1;
 }
 
 .exercise-manager {
@@ -1833,6 +1998,17 @@ tbody tr:hover td {
   font-size: 0.67rem;
 }
 
+.exercise-manager-instructions {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.65rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .exercise-manager-item.archived {
   opacity: 0.72;
 }
@@ -1845,6 +2021,18 @@ tbody tr:hover td {
   border-radius: 11px;
   color: var(--text-soft);
   background: var(--surface-soft);
+  font-size: 0.69rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.exercise-edit-button {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--line));
+  border-radius: 11px;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, var(--surface-soft));
   font-size: 0.69rem;
   font-weight: 800;
   cursor: pointer;
@@ -2169,6 +2357,18 @@ tbody tr:hover td {
   .custom-exercises-heading .button {
     flex: 0 0 auto;
   }
+
+  .stretch-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .unit-choice {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .unit-choice label:last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 420px) {
@@ -2218,13 +2418,17 @@ tbody tr:hover td {
     grid-template-columns: 1fr;
   }
 
+  .unit-choice label:last-child {
+    grid-column: auto;
+  }
+
   .exercise-manager-item {
     grid-template-columns: 1fr;
   }
 
   .exercise-manager-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .timer-dialog-content {

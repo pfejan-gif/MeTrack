@@ -393,8 +393,8 @@
               <div class="custom-exercises-heading">
                 <div>
                   <p class="eyebrow">Dein Training</p>
-                  <h3 id="exercisesTitle">Übungen</h3>
-                  <p>Aktiviere nur die Übungen, die du eintragen möchtest.</p>
+                  <h3 id="exercisesTitle">Übungen &amp; Dehnungen</h3>
+                  <p>Stelle zusammen, was du täglich erfassen möchtest.</p>
                 </div>
                 <button
                   class="button secondary compact-button"
@@ -408,13 +408,20 @@
                 </button>
               </div>
               <div class="custom-exercise-empty" id="customExerciseEmpty">
-                Keine aktive Übung. Tippe auf „Verwalten“, um Übungen zu
-                aktivieren oder hinzuzufügen.
+                Kein aktiver Trainingseintrag. Tippe auf „Verwalten“, um
+                Übungen oder Dehnungen zu aktivieren und hinzuzufügen.
               </div>
               <div
                 class="set-groups custom-set-groups"
                 id="customExerciseFields"
               ></div>
+              <section class="stretch-section" id="stretchSection" hidden>
+                <div class="training-subheading">
+                  <h4>Dehnungen</h4>
+                  <p>Hake ab, was du an diesem Tag durchgeführt hast.</p>
+                </div>
+                <div class="stretch-groups" id="stretchFields"></div>
+              </section>
             </section>
 
             <p class="form-error" id="formError" role="alert"></p>
@@ -574,7 +581,7 @@
                 <thead>
                   <tr>
                     <th scope="col">Datum</th>
-                    <th scope="col">Übungen · je 3 Sätze</th>
+                    <th scope="col">Training</th>
                     <th scope="col">Gewicht</th>
                     <th scope="col">Bauch</th>
                     <th scope="col"><span class="sr-only">Aktionen</span></th>
@@ -613,8 +620,8 @@
         <div class="exercise-dialog-heading">
           <div>
             <p class="eyebrow">Training anpassen</p>
-            <h2 id="exerciseDialogTitle">Übungen</h2>
-            <p>Jede Übung erhält drei Sätze pro Tag.</p>
+            <h2 id="exerciseDialogTitle">Übungen &amp; Dehnungen</h2>
+            <p>Übungen haben drei Sätze, Dehnungen einen Tagesstatus.</p>
           </div>
           <button
             class="icon-button compact"
@@ -644,7 +651,7 @@
           </div>
 
           <fieldset class="unit-choice">
-            <legend>Was möchtest du messen?</legend>
+            <legend>Was möchtest du erfassen?</legend>
             <label>
               <input type="radio" name="exerciseKind" value="reps" checked />
               <span>
@@ -659,23 +666,53 @@
                 <small>z. B. 100 Sek.</small>
               </span>
             </label>
+            <label>
+              <input type="radio" name="exerciseKind" value="stretch" />
+              <span>
+                <strong>Dehnung</strong>
+                <small>täglich erledigt oder nicht</small>
+              </span>
+            </label>
           </fieldset>
 
-          <button class="button primary exercise-add-button" type="submit">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Übung hinzufügen
-          </button>
+          <div class="field instruction-field" id="exerciseInstructionsField" hidden>
+            <label for="exerciseInstructions">Anleitung <span>optional</span></label>
+            <textarea
+              id="exerciseInstructions"
+              name="exerciseInstructions"
+              rows="4"
+              maxlength="600"
+              placeholder="Beschreibe kurz Haltung, Bewegung und Dauer."
+            ></textarea>
+            <small class="field-hint">Diese Info erscheint direkt bei der Dehnung.</small>
+            <small class="field-error" id="exerciseInstructionsError"></small>
+          </div>
+
+          <div class="exercise-form-actions">
+            <button
+              class="button ghost"
+              id="exerciseCancelEditButton"
+              type="button"
+              hidden
+            >
+              Abbrechen
+            </button>
+            <button class="button primary exercise-add-button" type="submit">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span id="exerciseSubmitLabel">Hinzufügen</span>
+            </button>
+          </div>
         </form>
 
         <div class="exercise-manager">
           <div class="exercise-manager-heading">
-            <h3>Deine Übungen</h3>
-            <span>Deaktivieren behält alle Werte</span>
+            <h3>Dein Training</h3>
+            <span>Deaktivieren behält alle Daten</span>
           </div>
           <p class="exercise-manager-empty" id="exerciseManagerEmpty">
-            Noch keine Übungen angelegt.
+            Noch keine Übungen oder Dehnungen angelegt.
           </p>
           <div class="exercise-manager-list" id="exerciseManagerList"></div>
         </div>
