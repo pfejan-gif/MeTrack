@@ -2,7 +2,7 @@
   "id": "./",
   "name": "MeTrack – Mein Fortschritt",
   "short_name": "MeTrack",
-  "description": "Privater Fitness-Tracker für Plank, Liegestütze, Kniebeugen, Gewicht und Bauchumfang.",
+  "description": "Privater Fitness-Tracker für frei wählbare Übungen, Gewicht und Bauchumfang.",
   "lang": "de-DE",
   "dir": "ltr",
   "start_url": "./",

@@ -17,6 +17,8 @@ const requiredFiles = [
   "assets/icons/apple-touch-icon.png",
   "assets/icons/icon-192.png",
   "assets/icons/icon-512.png",
+  "assets/icons/metrack-logo.svg",
+  "assets/icons/social-preview.svg",
 ];
 
 for (const file of requiredFiles)
@@ -77,6 +79,14 @@ const pngSize = (path) => {
   assert.equal(bytes.toString("ascii", 1, 4), "PNG", `${path} ist kein PNG.`);
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 };
+const assertOpaquePng = (path) => {
+  const bytes = readFileSync(resolve(root, path));
+  assert.equal(
+    bytes[25],
+    2,
+    `${path} muss ein vollflächiges RGB-PNG ohne Alphakanal sein.`,
+  );
+};
 assert.deepEqual(pngSize("assets/icons/icon-192.png"), {
   width: 192,
   height: 192,
@@ -89,6 +99,9 @@ assert.deepEqual(pngSize("assets/icons/apple-touch-icon.png"), {
   width: 180,
   height: 180,
 });
+assertOpaquePng("assets/icons/icon-192.png");
+assertOpaquePng("assets/icons/icon-512.png");
+assertOpaquePng("assets/icons/apple-touch-icon.png");
 
 const serviceWorker = read("service-worker.js");
 const app = read("assets/app.js");
