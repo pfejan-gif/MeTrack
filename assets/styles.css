@@ -1015,6 +1015,7 @@ h3 {
 }
 
 .set-field-header {
+  position: relative;
   display: flex;
   margin-bottom: 7px;
   align-items: center;
@@ -1022,21 +1023,17 @@ h3 {
   gap: 0;
 }
 
-.set-field-header.has-timer {
-  min-height: 44px;
-  margin-bottom: 5px;
-}
-
 .set-inputs .set-field-header label {
   margin-bottom: 0;
 }
 
 .set-timer-button {
+  position: absolute;
+  top: 50%;
+  right: -6px;
   display: grid;
   width: 44px;
   height: 44px;
-  margin-right: -6px;
-  flex: 0 0 44px;
   min-height: 44px;
   padding: 0;
   place-items: center;
@@ -1045,6 +1042,7 @@ h3 {
   color: var(--blue);
   background: transparent;
   cursor: pointer;
+  transform: translateY(-50%);
 }
 
 .set-timer-button svg {
@@ -1052,10 +1050,16 @@ h3 {
   height: 20px;
 }
 
-.set-timer-button:hover,
 .set-timer-button.active {
   color: var(--mint);
-  background: color-mix(in srgb, var(--mint) 10%, transparent);
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .set-timer-button:hover {
+    color: var(--mint);
+    background: color-mix(in srgb, var(--mint) 10%, transparent);
+  }
 }
 
 .set-timer-button.running svg {
