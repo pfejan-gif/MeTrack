@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "metrack-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v2.3.3`;
+const CACHE_NAME = `${CACHE_PREFIX}v2.3.4`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -15,7 +15,13 @@ const APP_SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =>
+        cache.addAll(
+          APP_SHELL.map((url) => new Request(url, { cache: "reload" })),
+        ),
+      ),
   );
 });
 
