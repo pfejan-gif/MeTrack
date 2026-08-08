@@ -9,8 +9,9 @@ Ein fokussierter, iPhone-optimierter Fitness-Tracker für den täglichen Fortsch
 ## Funktionen
 
 - je drei Sätze bzw. Versuche für Plank, Liegestütze und Kniebeugen erfassen
-- eigene Übungen wie Sit-Ups anlegen und wahlweise in Wiederholungen oder Sekunden messen
-- eigene Übungen archivieren, ohne frühere Trainingswerte zu löschen
+- Übungen wie Sit-Ups anlegen und wahlweise in Wiederholungen oder Sekunden messen
+- jede Übung – auch Plank, Liegestütze und Kniebeugen – deaktivieren, ohne frühere Trainingswerte zu löschen
+- Übungen nach einer deutlichen Warnung mitsamt allen historischen Werten ganz löschen
 - Gewicht und Bauchumfang dokumentieren
 - persönliche Bestwerte, Veränderungen und aktuelle Serie sehen
 - Verlauf nach Messwert und Zeitraum auswerten
@@ -39,7 +40,7 @@ MeTrack besitzt kein Backend und lädt keine Drittanbieter-Ressourcen. Trainings
 - Safari-Daten löschen entfernt auch MeTrack-Einträge.
 - Bei einem Gerätewechsel müssen die Daten über **Sichern** exportiert und auf dem neuen Gerät über **Import** wiederhergestellt werden.
 
-Bereits vorhandene Einträge aus `metrack_entries_v1` und `metrack_data_v2` werden validiert und sicher nach `metrack_data_v3` übernommen. Die ältere Ablage bleibt als Rückfallkopie erhalten. Ein bisheriger Einzelwert wird automatisch zu Satz 1; Dashboard und Diagramme verwenden den besten Tageswert aus den drei Sätzen. Eigene Übungen und ihre Einheit liegen gemeinsam mit den Einträgen im versionierten v3-Dokument und werden in JSON-Sicherungen vollständig mitgeführt.
+Bereits vorhandene Einträge aus `metrack_entries_v1`, `metrack_data_v2` und `metrack_data_v3` werden validiert und sicher nach `metrack_data_v4` übernommen. Die ältere Ablage bleibt als Rückfallkopie erhalten. Ein bisheriger Einzelwert wird automatisch zu Satz 1; Dashboard und Diagramme verwenden den besten Tageswert aus den drei Sätzen. Alle Übungen einschließlich Plank, Liegestütze und Kniebeugen liegen mit Einheit und Aktivstatus gemeinsam mit den Einträgen im versionierten v4-Dokument und werden in JSON-Sicherungen vollständig mitgeführt.
 
 > Technischer Hinweis: GitHub Pages trennt Browser-Speicher nach Domain, nicht nach Repository-Pfad. Andere Webprojekte unter derselben `pfejan-gif.github.io`-Domain könnten daher technisch auf dieselbe Ablage zugreifen. Für eine vollständig isolierte Browser-Origin ist eine eigene Domain für MeTrack erforderlich.
 

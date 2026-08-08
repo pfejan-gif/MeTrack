@@ -939,6 +939,10 @@ h3 {
   margin-top: 16px;
 }
 
+.exercise-overview-cards {
+  display: contents;
+}
+
 .custom-set-groups .set-card {
   border-color: color-mix(in srgb, var(--mint) 26%, var(--line));
 }
@@ -1322,6 +1326,14 @@ td {
   white-space: normal;
 }
 
+.custom-history-cell > span {
+  display: block;
+}
+
+.custom-history-cell > span + span {
+  margin-top: 4px;
+}
+
 tbody tr:last-child td {
   border-bottom: 0;
 }
@@ -1673,6 +1685,12 @@ tbody tr:hover td {
   background: var(--bg-elevated);
 }
 
+.exercise-manager-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .exercise-manager-item strong,
 .exercise-manager-item small {
   display: block;
@@ -1706,6 +1724,22 @@ tbody tr:hover td {
   font-size: 0.69rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+.exercise-delete-button {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--line));
+  border-radius: 11px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  font-size: 0.69rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.exercise-delete-button:hover {
+  border-color: color-mix(in srgb, var(--danger) 48%, var(--line));
 }
 
 .modal-icon {
@@ -2061,6 +2095,15 @@ tbody tr:hover td {
 
   .unit-choice {
     grid-template-columns: 1fr;
+  }
+
+  .exercise-manager-item {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-manager-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 }
 

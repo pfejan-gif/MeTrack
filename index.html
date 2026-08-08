@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#08111f" />
     <meta
       name="description"
-      content="MeTrack ist dein privater Fitness-Tracker für Plank, Liegestütze, Kniebeugen, Gewicht und Bauchumfang."
+      content="MeTrack ist dein privater Fitness-Tracker für frei wählbare Übungen, Gewicht und Bauchumfang."
     />
     <meta name="referrer" content="no-referrer" />
     <meta
@@ -268,11 +268,16 @@
           <article class="card spotlight-card">
             <div class="spotlight-topline">
               <div>
-                <p class="metric-label">Plank Bestzeit</p>
-                <p class="spotlight-value">
-                  <span id="bestPlank">—</span> <small>Sek.</small>
+                <p class="metric-label" id="spotlightExerciseLabel">
+                  Übungs-Bestwert
                 </p>
-                <p class="trend" id="plankTrend">Noch kein Eintrag</p>
+                <p class="spotlight-value">
+                  <span id="spotlightExerciseValue">—</span>
+                  <small id="spotlightExerciseUnit">—</small>
+                </p>
+                <p class="trend" id="spotlightExerciseTrend">
+                  Noch kein Eintrag
+                </p>
               </div>
               <span class="streak-badge" id="streakBadge">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -287,9 +292,9 @@
               <canvas
                 id="overviewChart"
                 role="img"
-                aria-label="Plank-Verlauf der letzten Einträge"
+                aria-label="Verlauf der hervorgehobenen Übung"
               >
-                Plank-Verlauf. Die Werte stehen zusätzlich in der Historie.
+                Übungsverlauf. Die Werte stehen zusätzlich in der Historie.
               </canvas>
             </div>
           </article>
@@ -327,21 +332,7 @@
             </div>
           </article>
 
-          <article class="card metric-card compact-metric-card">
-            <p class="metric-label">Liegestütze</p>
-            <p class="metric-value">
-              <span id="bestPushups">—</span> <small>Wdh.</small>
-            </p>
-            <p class="metric-change">Persönlicher Bestwert</p>
-          </article>
-
-          <article class="card metric-card compact-metric-card">
-            <p class="metric-label">Kniebeugen</p>
-            <p class="metric-value">
-              <span id="bestSquats">—</span> <small>Wdh.</small>
-            </p>
-            <p class="metric-change">Persönlicher Bestwert</p>
-          </article>
+          <div class="exercise-overview-cards" id="exerciseOverviewCards"></div>
         </div>
       </section>
 
@@ -395,172 +386,15 @@
               </div>
             </div>
 
-            <div class="set-groups">
-              <fieldset class="set-card">
-                <legend>
-                  <span>Plank</span>
-                  <small>3 Versuche · Sekunden</small>
-                </legend>
-                <div class="set-inputs">
-                  <div class="field">
-                    <label for="plank1">Satz 1</label>
-                    <input
-                      id="plank1"
-                      name="plank1"
-                      type="number"
-                      min="0"
-                      max="3600"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="45"
-                    />
-                    <small class="field-error" id="plank1Error"></small>
-                  </div>
-                  <div class="field">
-                    <label for="plank2">Satz 2</label>
-                    <input
-                      id="plank2"
-                      name="plank2"
-                      type="number"
-                      min="0"
-                      max="3600"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="45"
-                    />
-                    <small class="field-error" id="plank2Error"></small>
-                  </div>
-                  <div class="field">
-                    <label for="plank3">Satz 3</label>
-                    <input
-                      id="plank3"
-                      name="plank3"
-                      type="number"
-                      min="0"
-                      max="3600"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="45"
-                    />
-                    <small class="field-error" id="plank3Error"></small>
-                  </div>
-                </div>
-              </fieldset>
-
-              <fieldset class="set-card">
-                <legend>
-                  <span>Liegestütze</span>
-                  <small>3 Sätze · Wiederholungen</small>
-                </legend>
-                <div class="set-inputs">
-                  <div class="field">
-                    <label for="pushups1">Satz 1</label>
-                    <input
-                      id="pushups1"
-                      name="pushups1"
-                      type="number"
-                      min="0"
-                      max="1000"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="12"
-                    />
-                    <small class="field-error" id="pushups1Error"></small>
-                  </div>
-                  <div class="field">
-                    <label for="pushups2">Satz 2</label>
-                    <input
-                      id="pushups2"
-                      name="pushups2"
-                      type="number"
-                      min="0"
-                      max="1000"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="12"
-                    />
-                    <small class="field-error" id="pushups2Error"></small>
-                  </div>
-                  <div class="field">
-                    <label for="pushups3">Satz 3</label>
-                    <input
-                      id="pushups3"
-                      name="pushups3"
-                      type="number"
-                      min="0"
-                      max="1000"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="12"
-                    />
-                    <small class="field-error" id="pushups3Error"></small>
-                  </div>
-                </div>
-              </fieldset>
-
-              <fieldset class="set-card">
-                <legend>
-                  <span>Kniebeugen</span>
-                  <small>3 Sätze · Wiederholungen</small>
-                </legend>
-                <div class="set-inputs">
-                  <div class="field">
-                    <label for="squats1">Satz 1</label>
-                    <input
-                      id="squats1"
-                      name="squats1"
-                      type="number"
-                      min="0"
-                      max="2000"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="20"
-                    />
-                    <small class="field-error" id="squats1Error"></small>
-                  </div>
-                  <div class="field">
-                    <label for="squats2">Satz 2</label>
-                    <input
-                      id="squats2"
-                      name="squats2"
-                      type="number"
-                      min="0"
-                      max="2000"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="20"
-                    />
-                    <small class="field-error" id="squats2Error"></small>
-                  </div>
-                  <div class="field">
-                    <label for="squats3">Satz 3</label>
-                    <input
-                      id="squats3"
-                      name="squats3"
-                      type="number"
-                      min="0"
-                      max="2000"
-                      step="1"
-                      inputmode="numeric"
-                      placeholder="20"
-                    />
-                    <small class="field-error" id="squats3Error"></small>
-                  </div>
-                </div>
-              </fieldset>
-            </div>
-
             <section
               class="custom-exercises"
-              aria-labelledby="customExercisesTitle"
+              aria-labelledby="exercisesTitle"
             >
               <div class="custom-exercises-heading">
                 <div>
                   <p class="eyebrow">Dein Training</p>
-                  <h3 id="customExercisesTitle">Eigene Übungen</h3>
-                  <p>
-                    Ergänze zum Beispiel Sit-Ups als Wiederholungen oder Zeit.
-                  </p>
+                  <h3 id="exercisesTitle">Übungen</h3>
+                  <p>Aktiviere nur die Übungen, die du eintragen möchtest.</p>
                 </div>
                 <button
                   class="button secondary compact-button"
@@ -574,8 +408,8 @@
                 </button>
               </div>
               <div class="custom-exercise-empty" id="customExerciseEmpty">
-                Noch keine eigene Übung. Tippe auf „Verwalten“, um eine
-                hinzuzufügen.
+                Keine aktive Übung. Tippe auf „Verwalten“, um Übungen zu
+                aktivieren oder hinzuzufügen.
               </div>
               <div
                 class="set-groups custom-set-groups"
@@ -648,15 +482,6 @@
             role="group"
             aria-label="Messwert auswählen"
           >
-            <button type="button" data-metric="plank" aria-pressed="true">
-              Plank
-            </button>
-            <button type="button" data-metric="pushups" aria-pressed="false">
-              Liegestütze
-            </button>
-            <button type="button" data-metric="squats" aria-pressed="false">
-              Kniebeugen
-            </button>
             <button type="button" data-metric="weight" aria-pressed="false">
               Gewicht
             </button>
@@ -749,10 +574,7 @@
                 <thead>
                   <tr>
                     <th scope="col">Datum</th>
-                    <th scope="col">Plank · 3 Sätze</th>
-                    <th scope="col">Liegestütze · 3 Sätze</th>
-                    <th scope="col">Kniebeugen · 3 Sätze</th>
-                    <th scope="col">Eigene Übungen</th>
+                    <th scope="col">Übungen · je 3 Sätze</th>
                     <th scope="col">Gewicht</th>
                     <th scope="col">Bauch</th>
                     <th scope="col"><span class="sr-only">Aktionen</span></th>
@@ -813,7 +635,7 @@
         <div class="exercise-dialog-heading">
           <div>
             <p class="eyebrow">Training anpassen</p>
-            <h2 id="exerciseDialogTitle">Eigene Übungen</h2>
+            <h2 id="exerciseDialogTitle">Übungen</h2>
             <p>Jede Übung erhält drei Sätze pro Tag.</p>
           </div>
           <button
@@ -872,10 +694,10 @@
         <div class="exercise-manager">
           <div class="exercise-manager-heading">
             <h3>Deine Übungen</h3>
-            <span>Archivieren erhält alte Werte</span>
+            <span>Deaktivieren behält alle Werte</span>
           </div>
           <p class="exercise-manager-empty" id="exerciseManagerEmpty">
-            Noch keine eigenen Übungen angelegt.
+            Noch keine Übungen angelegt.
           </p>
           <div class="exercise-manager-list" id="exerciseManagerList"></div>
         </div>
