@@ -268,9 +268,16 @@
           <article class="card spotlight-card">
             <div class="spotlight-topline">
               <div>
-                <p class="metric-label" id="spotlightExerciseLabel">
-                  Übungs-Bestwert
-                </p>
+                <div class="spotlight-label-row">
+                  <span
+                    class="spotlight-exercise-icon"
+                    id="spotlightExerciseIcon"
+                    aria-hidden="true"
+                  ></span>
+                  <p class="metric-label" id="spotlightExerciseLabel">
+                    Übungs-Bestwert
+                  </p>
+                </div>
                 <p class="spotlight-value">
                   <span id="spotlightExerciseValue">—</span>
                   <small id="spotlightExerciseUnit">—</small>
@@ -673,6 +680,18 @@
                 <small>täglich erledigt oder nicht</small>
               </span>
             </label>
+          </fieldset>
+
+          <fieldset class="exercise-icon-choice">
+            <legend>Symbol auswählen</legend>
+            <p>Wähle ein Symbol, das du schnell wiedererkennst.</p>
+            <div
+              class="exercise-icon-palette"
+              id="exerciseIconPalette"
+              role="radiogroup"
+              aria-label="Symbol für den Trainingseintrag"
+            ></div>
+            <small class="field-error" id="exerciseIconError"></small>
           </fieldset>
 
           <div class="field instruction-field" id="exerciseInstructionsField" hidden>

@@ -12,6 +12,7 @@ import {
   TIMER_MAX_MS,
   V2_DATA_KEY,
   V3_DATA_KEY,
+  V4_DATA_KEY,
   calculateStreak,
   createBackup,
   createDataEnvelope,
@@ -46,8 +47,14 @@ import {
   validateExercise,
   validateExerciseCatalog,
 } from "./core.js";
+import {
+  createExerciseIconSvg,
+  defaultExerciseIcon,
+  iconOptionsForKind,
+  isExerciseIconAllowed,
+} from "./exercise-icons.js";
 
-const APP_VERSION = "2.4.0";
+const APP_VERSION = "2.5.0";
 const TIMER_KEY = "metrack_active_timer_v1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
@@ -82,11 +89,14 @@ const elements = {
   stretchFields: $("stretchFields"),
   exerciseEmpty: $("customExerciseEmpty"),
   exerciseOverviewCards: $("exerciseOverviewCards"),
+  spotlightExerciseIcon: $("spotlightExerciseIcon"),
   openExerciseDialogButton: $("openExerciseDialogButton"),
   exerciseDialog: $("exerciseDialog"),
   exerciseForm: $("exerciseForm"),
   exerciseName: $("exerciseName"),
   exerciseNameError: $("exerciseNameError"),
+  exerciseIconPalette: $("exerciseIconPalette"),
+  exerciseIconError: $("exerciseIconError"),
   exerciseInstructionsField: $("exerciseInstructionsField"),
   exerciseInstructions: $("exerciseInstructions"),
   exerciseInstructionsError: $("exerciseInstructionsError"),
@@ -224,6 +234,7 @@ function loadData() {
   const candidates = [
     { key: DATA_KEY, migrate: migrateDataEnvelope },
     { key: PREVIOUS_DATA_KEY, migrate: migrateDataEnvelope },
+    { key: V4_DATA_KEY, migrate: migrateDataEnvelope },
     { key: V3_DATA_KEY, migrate: migrateDataEnvelope },
     { key: V2_DATA_KEY, migrate: migrateDataEnvelope },
     { key: STORAGE_KEY, migrate: migrateLegacyEntries },
@@ -346,6 +357,45 @@ function cycleTheme() {
 
 function makeExerciseId() {
   return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function exerciseIconBadge(exercise, className = "exercise-symbol") {
+  const badge = document.createElement("span");
+  badge.className = className;
+  badge.setAttribute("aria-hidden", "true");
+  badge.append(createExerciseIconSvg(exercise.icon));
+  return badge;
+}
+
+function selectedExerciseIcon() {
+  return elements.exerciseForm.querySelector(
+    'input[name="exerciseIcon"]:checked',
+  )?.value;
+}
+
+function renderExerciseIconPalette(kind, preferredIcon = "") {
+  const options = iconOptionsForKind(kind);
+  const selected = isExerciseIconAllowed(preferredIcon, kind)
+    ? preferredIcon
+    : defaultExerciseIcon(kind);
+  elements.exerciseIconPalette.replaceChildren();
+  for (const option of options) {
+    const label = document.createElement("label");
+    label.className = "exercise-icon-option";
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "exerciseIcon";
+    input.value = option.id;
+    input.checked = option.id === selected;
+    const tile = document.createElement("span");
+    tile.className = "exercise-icon-tile";
+    tile.append(createExerciseIconSvg(option.id));
+    const name = document.createElement("small");
+    name.textContent = option.label;
+    tile.append(name);
+    label.append(input, tile);
+    elements.exerciseIconPalette.append(label);
+  }
 }
 
 function timerExercise() {
@@ -737,9 +787,12 @@ function createStretchCard(exercise, checked = false) {
   const id = exerciseCheckFieldName(exercise.id);
   const card = document.createElement("article");
   card.className = "stretch-card";
+  const header = document.createElement("div");
+  header.className = "stretch-card-header";
   const title = document.createElement("strong");
   title.className = "stretch-card-title";
   title.textContent = exercise.name;
+  header.append(exerciseIconBadge(exercise), title);
   const label = document.createElement("label");
   label.className = "stretch-check";
   label.htmlFor = id;
@@ -769,7 +822,7 @@ function createStretchCard(exercise, checked = false) {
   hint.textContent = "Zum Abhaken antippen";
   copy.append(action, hint);
   label.append(input, mark, copy);
-  card.append(title, label);
+  card.append(header, label);
   if (exercise.instructions) {
     const details = document.createElement("details");
     details.className = "stretch-instructions";
@@ -808,11 +861,19 @@ function renderExerciseFields() {
     const fieldset = document.createElement("fieldset");
     fieldset.className = "set-card";
     const legend = document.createElement("legend");
+    const heading = document.createElement("span");
+    heading.className = "set-card-heading";
+    const headingCopy = document.createElement("span");
+    headingCopy.className = "set-card-heading-copy";
     const title = document.createElement("span");
+    title.className = "set-card-title";
     title.textContent = exercise.name;
     const subtitle = document.createElement("small");
+    subtitle.className = "set-card-subtitle";
     subtitle.textContent = `3 Sätze · ${type.label}`;
-    legend.append(title, subtitle);
+    headingCopy.append(title, subtitle);
+    heading.append(exerciseIconBadge(exercise), headingCopy);
+    legend.append(heading);
     const inputs = document.createElement("div");
     inputs.className = "set-inputs";
     for (let index = 0; index < SET_COUNT; index += 1) {
@@ -877,17 +938,21 @@ function renderExerciseManager() {
     const item = document.createElement("div");
     item.className = `exercise-manager-item${exercise.active ? "" : " archived"}`;
     const copy = document.createElement("div");
+    copy.className = "exercise-manager-copy";
+    const details = document.createElement("div");
+    details.className = "exercise-manager-details";
     const name = document.createElement("strong");
     name.textContent = exercise.name;
     const detail = document.createElement("small");
     detail.textContent = `${EXERCISE_TYPES[exercise.kind].label} · ${exercise.active ? "aktiv" : "deaktiviert"}`;
-    copy.append(name, detail);
+    details.append(name, detail);
     if (exercise.kind === "stretch" && exercise.instructions) {
       const instructions = document.createElement("p");
       instructions.className = "exercise-manager-instructions";
       instructions.textContent = exercise.instructions;
-      copy.append(instructions);
+      details.append(instructions);
     }
+    copy.append(exerciseIconBadge(exercise), details);
     const actions = document.createElement("div");
     actions.className = "exercise-manager-actions";
     actions.append(
@@ -924,18 +989,20 @@ function renderExerciseCatalogUi() {
   renderMetricTabs();
 }
 
-function updateExerciseKindUi() {
+function updateExerciseKindUi(preferredIcon = selectedExerciseIcon()) {
   const kind = elements.exerciseForm.querySelector(
     'input[name="exerciseKind"]:checked',
   )?.value;
   elements.exerciseInstructionsField.hidden = kind !== "stretch";
   elements.exerciseInstructions.disabled = kind !== "stretch";
+  renderExerciseIconPalette(kind, preferredIcon);
 }
 
 function resetExerciseEditor() {
   state.editingExerciseId = null;
   elements.exerciseForm.reset();
   elements.exerciseNameError.textContent = "";
+  elements.exerciseIconError.textContent = "";
   elements.exerciseInstructionsError.textContent = "";
   elements.exerciseSubmitLabel.textContent = "Hinzufügen";
   elements.exerciseCancelEditButton.hidden = true;
@@ -969,7 +1036,7 @@ function openExerciseDialog() {
   const instructions = kind === "stretch"
     ? window.prompt("Optionale Anleitung zur Dehnung:", "") || ""
     : "";
-  addExercise(name, kind, instructions);
+  addExercise(name, kind, instructions, defaultExerciseIcon(kind));
 }
 
 function startEditingExercise(exerciseId) {
@@ -979,6 +1046,7 @@ function startEditingExercise(exerciseId) {
   elements.exerciseName.value = exercise.name;
   elements.exerciseInstructions.value = exercise.instructions || "";
   elements.exerciseNameError.textContent = "";
+  elements.exerciseIconError.textContent = "";
   elements.exerciseInstructionsError.textContent = "";
   $$('input[name="exerciseKind"]', elements.exerciseForm).forEach((input) => {
     input.checked = input.value === exercise.kind;
@@ -987,12 +1055,12 @@ function startEditingExercise(exerciseId) {
   elements.exerciseSubmitLabel.textContent = "Änderungen speichern";
   elements.exerciseCancelEditButton.hidden = false;
   elements.exerciseForm.querySelector('button[type="submit"]').disabled = false;
-  updateExerciseKindUi();
+  updateExerciseKindUi(exercise.icon);
   elements.exerciseForm.scrollIntoView({ behavior: "smooth", block: "start" });
   setTimeout(() => elements.exerciseName.focus(), 80);
 }
 
-function addExercise(name, kind, instructions = "") {
+function addExercise(name, kind, instructions = "", icon = "") {
   const current = state.exercises.find(
     (exercise) => exercise.id === state.editingExerciseId,
   );
@@ -1000,14 +1068,17 @@ function addExercise(name, kind, instructions = "") {
     id: current?.id || makeExerciseId(),
     name,
     kind,
+    icon,
     active: current?.active ?? true,
     instructions,
   });
   elements.exerciseNameError.textContent = "";
+  elements.exerciseIconError.textContent = "";
   elements.exerciseInstructionsError.textContent = "";
   if (!validation.valid) {
     elements.exerciseNameError.textContent =
       validation.errors.name || validation.errors.kind || "Ungültiger Eintrag.";
+    elements.exerciseIconError.textContent = validation.errors.icon || "";
     elements.exerciseInstructionsError.textContent =
       validation.errors.instructions || "";
     return false;
@@ -1145,7 +1216,10 @@ function renderMetricTabs() {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.metric = exerciseMetricKey(exercise.id);
-    button.textContent = exercise.name;
+    button.append(createExerciseIconSvg(exercise.icon));
+    const label = document.createElement("span");
+    label.textContent = exercise.name;
+    button.append(label);
     button.setAttribute("aria-pressed", String(state.metric === button.dataset.metric));
     if (!exercise.active) button.title = "Deaktivierte Übung";
     elements.metricTabs.append(button);
@@ -1198,6 +1272,10 @@ function renderOverview() {
   const active = state.exercises.filter((exercise) => exercise.active);
   const spotlight = active[0] || state.exercises[0] || null;
   if (spotlight) {
+    elements.spotlightExerciseIcon.replaceChildren(
+      createExerciseIconSvg(spotlight.icon),
+    );
+    elements.spotlightExerciseIcon.hidden = false;
     const definition = exerciseDefinition(spotlight);
     if (definition.completion) {
       const summary = exerciseCompletionSummary(
@@ -1231,6 +1309,8 @@ function renderOverview() {
       { compact: true },
     );
   } else {
+    elements.spotlightExerciseIcon.replaceChildren();
+    elements.spotlightExerciseIcon.hidden = true;
     setText("spotlightExerciseLabel", "Kein Training aktiv");
     setText("spotlightExerciseValue", "—");
     setText("spotlightExerciseUnit", "");
@@ -1243,6 +1323,11 @@ function renderOverview() {
     const definition = exerciseDefinition(exercise);
     const card = document.createElement("article");
     card.className = "card metric-card compact-metric-card";
+    const icon = exerciseIconBadge(
+      exercise,
+      "metric-icon exercise-symbol metric-exercise-icon",
+    );
+    const body = document.createElement("div");
     const label = document.createElement("p");
     label.className = "metric-label";
     label.textContent = exercise.name;
@@ -1270,7 +1355,8 @@ function renderOverview() {
       note.textContent = "Persönlicher Bestwert";
     }
     value.append(number, " ", unit);
-    card.append(label, value, note);
+    body.append(label, value, note);
+    card.append(icon, body);
     elements.exerciseOverviewCards.append(card);
   }
 }
@@ -1392,6 +1478,7 @@ function exerciseCell(entry) {
     const value = exerciseDisplay(entry, exercise);
     if (!value) continue;
     const line = document.createElement("span");
+    line.append(createExerciseIconSvg(exercise.icon));
     const name = document.createElement("strong");
     name.textContent = exercise.name;
     line.append(name, ` ${value}`);
@@ -1460,15 +1547,20 @@ function renderHistory() {
     const metrics = document.createElement("div");
     metrics.className = "history-metrics";
     const items = [
-      ...state.exercises.map((exercise) => [exercise.name, exerciseDisplay(entry, exercise)]),
-      ["Gewicht", entry.weight === null ? null : `${formatNumber(entry.weight, 1)} kg`],
-      ["Bauch", entry.waist === null ? null : `${formatNumber(entry.waist, 1)} cm`],
-    ].filter(([, value]) => value);
-    for (const [label, value] of items) {
+      ...state.exercises.map((exercise) => ({
+        label: exercise.name,
+        value: exerciseDisplay(entry, exercise),
+        icon: exercise.icon,
+      })),
+      { label: "Gewicht", value: entry.weight === null ? null : `${formatNumber(entry.weight, 1)} kg` },
+      { label: "Bauch", value: entry.waist === null ? null : `${formatNumber(entry.waist, 1)} cm` },
+    ].filter((item) => item.value);
+    for (const { label, value, icon } of items) {
       const metric = document.createElement("div");
       metric.className = "history-metric";
       const small = document.createElement("span");
-      small.textContent = label;
+      if (icon) small.append(createExerciseIconSvg(icon));
+      small.append(label);
       const strong = document.createElement("strong");
       strong.textContent = value;
       metric.append(small, strong);
@@ -1982,6 +2074,7 @@ function bindEvents() {
       editingExercise?.kind === "stretch"
         ? elements.exerciseInstructions.value
         : data.get("exerciseInstructions"),
+      data.get("exerciseIcon"),
     );
   });
   elements.exerciseManagerList.addEventListener("click", (event) => {

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "metrack-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v2.4.0`;
+const CACHE_NAME = `${CACHE_PREFIX}v2.5.0`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const APP_SHELL = [
   "./assets/styles.css",
   "./assets/app.js",
   "./assets/core.js",
+  "./assets/exercise-icons.js",
   "./assets/icons/favicon.svg",
   "./assets/icons/apple-touch-icon.png",
   "./assets/icons/icon-192.png",

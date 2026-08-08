@@ -38,6 +38,12 @@ import {
   validateExercise,
   validateExerciseCatalog,
 } from "../assets/core.js";
+import {
+  EXERCISE_ICONS,
+  defaultExerciseIcon,
+  iconOptionsForKind,
+  isExerciseIconAllowed,
+} from "../assets/exercise-icons.js";
 
 const catalog = DEFAULT_EXERCISES.map((exercise) => ({ ...exercise }));
 const [plank, pushups, squats] = catalog;
@@ -113,7 +119,7 @@ test("migriert v1-Einzelwerte verlustfrei in den allgemeinen Katalog", () => {
       waist: 95.1,
     },
   ]);
-  assert.equal(migrated.schemaVersion, 5);
+  assert.equal(migrated.schemaVersion, 6);
   assert.deepEqual(migrated.exercises, catalog);
   assert.deepEqual(entryExerciseValues(migrated.entries[0], plank.id), [40, null, null]);
   assert.deepEqual(entryExerciseValues(migrated.entries[0], pushups.id), [10, null, null]);
@@ -177,13 +183,13 @@ test("erhält den maximalen v3-Katalog plus Standardübungen", () => {
   assert.equal(validateExerciseCatalog(migrated.exercises).valid, true);
 });
 
-test("migriert v4-Einträge ohne erfundene Dehnungsstatus nach v5", () => {
+test("migriert v4-Einträge ohne erfundene Dehnungsstatus nach v6", () => {
   const migrated = migrateDataEnvelope({
     schemaVersion: 4,
     exercises: catalog,
     entries: [day("2026-08-04", { plank: [45, null, null] })],
   });
-  assert.equal(migrated.schemaVersion, 5);
+  assert.equal(migrated.schemaVersion, 6);
   assert.deepEqual(migrated.entries[0].exerciseChecks, []);
   assert.equal(entryMetricValue(migrated.entries[0], plankMetric, catalog), 45);
 });
@@ -276,6 +282,70 @@ test("validiert neue Übungen und verhindert doppelte Namen", () => {
   assert.equal(situps.exercise.name, "Sit-Ups");
   assert.equal(validateExercise({ ...situps.exercise, kind: "meter" }).valid, false);
   assert.equal(validateExerciseCatalog([situps.exercise, { ...situps.exercise, id: "custom-situps-2", name: "sit-ups" }]).valid, false);
+});
+
+test("bietet getrennte, eindeutige Symbolpaletten für Übungen und Dehnungen", () => {
+  const exerciseIcons = iconOptionsForKind("reps");
+  const stretchIcons = iconOptionsForKind("stretch");
+  assert.equal(EXERCISE_ICONS.length, 24);
+  assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 24);
+  assert.equal(exerciseIcons.length, 14);
+  assert.equal(stretchIcons.length, 10);
+  assert.equal(isExerciseIconAllowed("dumbbell", "seconds"), true);
+  assert.equal(isExerciseIconAllowed("hip-stretch", "reps"), false);
+  assert.equal(defaultExerciseIcon("reps", plank.id), "plank");
+});
+
+test("speichert gewählte Symbole und weist Symbole der falschen Gruppe zurück", () => {
+  const situps = validateExercise({
+    id: "custom-situps",
+    name: "Sit-Ups",
+    kind: "reps",
+    icon: "sit-up",
+    active: true,
+  });
+  assert.equal(situps.valid, true);
+  assert.equal(situps.exercise.icon, "sit-up");
+  assert.equal(
+    validateExercise({ ...situps.exercise, icon: "hip-stretch" }).valid,
+    false,
+  );
+});
+
+test("ergänzt bei der v5-Migration verlustfrei Standardsymbole", () => {
+  const stretch = {
+    id: "custom-hip-stretch",
+    name: "Hüftbeuger",
+    kind: "stretch",
+    active: true,
+    instructions: "30 Sekunden halten.",
+  };
+  const migrated = migrateDataEnvelope({
+    schemaVersion: 5,
+    exercises: [...catalog.map(({ icon, ...exercise }) => exercise), stretch],
+    entries: [{
+      date: "2026-08-08",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
+      weight: null,
+      waist: null,
+    }],
+  });
+  assert.equal(migrated.schemaVersion, 6);
+  assert.equal(migrated.exercises[0].icon, "plank");
+  assert.equal(migrated.exercises[3].icon, "stretch");
+  assert.equal(entryExerciseCompletion(migrated.entries[0], stretch.id), true);
+});
+
+test("verlangt im v6-Dokument kanonische Symbole", () => {
+  assert.throws(
+    () => migrateDataEnvelope({
+      schemaVersion: 6,
+      exercises: catalog.map(({ icon, ...exercise }) => exercise),
+      entries: [],
+    }),
+    /Übungskatalog ist ungültig/,
+  );
 });
 
 test("validiert Dehnungen mit optionaler Anleitung", () => {
@@ -410,12 +480,13 @@ test("erstellt Excel-freundliches CSV für alle Übungen", () => {
   assert.match(csv, /82,4/);
 });
 
-test("exportiert und importiert eine v5-Sicherung verlustfrei", () => {
-  const situps = { id: "custom-situps", name: "Sit-Ups", kind: "reps", active: false };
+test("exportiert und importiert eine v6-Sicherung verlustfrei", () => {
+  const situps = { id: "custom-situps", name: "Sit-Ups", kind: "reps", icon: "sit-up", active: false };
   const stretch = {
     id: "custom-hip-stretch",
     name: "Hüftbeuger",
     kind: "stretch",
+    icon: "hip-stretch",
     active: true,
     instructions: "30 Sekunden pro Seite halten.",
   };
@@ -472,5 +543,7 @@ test("führt Übungskataloge sicher zusammen und erkennt Typkonflikte", () => {
 
 test("sanitisiert Kataloge deterministisch", () => {
   const situps = { id: "custom-situps", name: "Sit-Ups", kind: "reps", active: true };
-  assert.deepEqual(sanitizeExerciseCatalog([situps, { ...situps }]), [situps]);
+  assert.deepEqual(sanitizeExerciseCatalog([situps, { ...situps }]), [
+    { ...situps, icon: "activity" },
+  ]);
 });
