@@ -1,20 +1,89 @@
 # MeTrack
 
-Ein schlanker, iPhone-freundlicher Fitness-Tracker für täglichen Fortschritt.
+![MeTrack – privater Fitness-Tracker](./assets/icons/social-preview.png)
+
+Ein fokussierter, iPhone-optimierter Fitness-Tracker für den täglichen Fortschritt – ohne Konto, Tracking oder Server. MeTrack läuft direkt über GitHub Pages und speichert alle Daten ausschließlich im Browser des verwendeten Geräts.
+
+**[MeTrack öffnen](https://pfejan-gif.github.io/MeTrack/)**
 
 ## Funktionen
 
-- Plank-Dauer in Sekunden
-- Liegestütze und Kniebeugen
-- Gewicht und Bauchumfang
-- persönliche Bestwerte
-- Verlaufskurven
-- tägliche Historie als Tabelle
-- CSV-Export
-- lokale Speicherung im Browser (keine Anmeldung, kein Server)
+- je drei Sätze bzw. Versuche für Plank, Liegestütze und Kniebeugen erfassen
+- Gewicht und Bauchumfang dokumentieren
+- persönliche Bestwerte, Veränderungen und aktuelle Serie sehen
+- Verlauf nach Messwert und Zeitraum auswerten
+- Einträge mobil und am Desktop bearbeiten oder mit Rückgängig löschen
+- Excel-kompatibles CSV exportieren
+- versionierte JSON-Sicherungen exportieren, prüfen und wiederherstellen
+- lokale Daten zusammenführen oder vollständig aus einer Sicherung ersetzen
+- als PWA auf dem iPhone-Homescreen installieren
+- nach dem ersten Aufruf vollständig offline verwenden
+- automatische, helle und dunkle Darstellung
 
-## Nutzung auf dem iPhone
+## Auf dem iPhone installieren
 
-Öffne die GitHub-Pages-Adresse in Safari und wähle **Teilen → Zum Home-Bildschirm**. Dadurch lässt sich MeTrack fast wie eine normale App starten.
+1. Die [GitHub-Pages-App](https://pfejan-gif.github.io/MeTrack/) in **Safari** öffnen.
+2. Unten auf **Teilen** tippen.
+3. **Zum Home-Bildschirm** auswählen.
+4. Mit **Hinzufügen** bestätigen.
 
-> Hinweis: Die Daten liegen ausschließlich im lokalen Speicher des jeweiligen Browsers/Geräts. Vor einem Browserwechsel oder Löschen der Website-Daten empfiehlt sich der CSV-Export.
+MeTrack öffnet sich danach im eigenen App-Fenster. Safe-Area-Abstände, Touch-Ziele und Zahlentastaturen sind für iPhone/Safari optimiert.
+
+## Datenschutz und Sicherung
+
+MeTrack besitzt kein Backend und lädt keine Drittanbieter-Ressourcen. Trainings- und Körperdaten bleiben im `localStorage` des jeweiligen Browsers. Das bedeutet auch:
+
+- Es gibt keine automatische Cloud-Synchronisierung.
+- Safari-Daten löschen entfernt auch MeTrack-Einträge.
+- Bei einem Gerätewechsel müssen die Daten über **Sichern** exportiert und auf dem neuen Gerät über **Import** wiederhergestellt werden.
+
+Bereits vorhandene Einträge aus `metrack_entries_v1` werden einmalig validiert und sicher nach `metrack_data_v2` übernommen. Der alte Datensatz bleibt als Rückfallkopie erhalten. Ein bisheriger Einzelwert wird automatisch zu Satz 1; Dashboard und Diagramme verwenden den besten Tageswert aus den drei Sätzen.
+
+> Technischer Hinweis: GitHub Pages trennt Browser-Speicher nach Domain, nicht nach Repository-Pfad. Andere Webprojekte unter derselben `pfejan-gif.github.io`-Domain könnten daher technisch auf dieselbe Ablage zugreifen. Für eine vollständig isolierte Browser-Origin ist eine eigene Domain für MeTrack erforderlich.
+
+## Lokale Entwicklung
+
+Die App benötigt keinen Build-Schritt und keine Laufzeitabhängigkeiten.
+
+```bash
+python3 -m http.server 8000
+```
+
+Danach `http://localhost:8000` öffnen. Service Worker funktionieren auf `localhost` oder über HTTPS.
+
+## Qualität prüfen
+
+Erforderlich: Node.js 20 oder neuer.
+
+```bash
+npm ci
+npm run verify
+```
+
+Die Prüfung umfasst JavaScript-Syntax, relative GitHub-Pages-Pfade, Manifest und App-Shell, Icon-Abmessungen sowie Unit-Tests für Validierung, Berechnungen, CRUD, CSV und Sicherungsimporte. GitHub Actions führt dieselben Prüfungen bei Pushes und Pull Requests aus.
+
+## Projektstruktur
+
+```text
+.
+├── index.html                 # semantische App-Oberfläche
+├── assets/
+│   ├── app.js                 # UI, Speicherung und PWA-Verhalten
+│   ├── core.js                # getestete Daten- und Berechnungslogik
+│   ├── styles.css             # responsive iPhone-/Desktop-Oberfläche
+│   └── icons/                 # Favicon, App-Icons und Vorschau
+├── manifest.webmanifest       # installierbare PWA
+├── service-worker.js          # Offline-App-Shell und Updates
+├── tests/                     # Unit-Tests ohne externe Abhängigkeiten
+└── .github/workflows/         # automatische Qualitätsprüfung
+```
+
+## Deployment
+
+GitHub Pages veröffentlicht den Inhalt des `main`-Branches aus dem Repository-Stamm. Alle App-Pfade sind relativ, damit MeTrack zuverlässig unter dem Repository-Unterpfad `/MeTrack/` funktioniert.
+
+Repository-Einstellung: **Settings → Pages → Deploy from a branch → `main` / `(root)`**. Für produktive Änderungen sollte der `main`-Branch geschützt und der Workflow **Quality** als erforderlicher Check aktiviert werden.
+
+## Browser-Unterstützung
+
+MeTrack ist für aktuelles Safari auf iPhone/iPad sowie aktuelle Chromium- und Firefox-Versionen ausgelegt. Ohne native Dialog-Unterstützung verwendet der Sicherungsimport einen funktionalen Systemdialog als Fallback.
