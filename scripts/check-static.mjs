@@ -13,6 +13,7 @@ const requiredFiles = [
   "assets/styles.css",
   "assets/app.js",
   "assets/core.js",
+  "assets/exercise-icons.js",
   "assets/icons/favicon.svg",
   "assets/icons/apple-touch-icon.png",
   "assets/icons/icon-192.png",
@@ -40,6 +41,7 @@ assert.match(html, /id="exerciseDialog"/);
 assert.match(html, /id="customExerciseFields"/);
 assert.match(html, /id="stretchFields"/);
 assert.match(html, /id="exerciseInstructions"/);
+assert.match(html, /id="exerciseIconPalette"/);
 assert.match(html, /id="timerDialog"/);
 assert.match(html, /id="timerStartPauseButton"/);
 assert.doesNotMatch(html, /id="resetButton"/);
@@ -161,8 +163,9 @@ assert.ok(
   app.includes(`APP_VERSION = "${packageJson.version}"`),
   "App-Anzeige und package.json müssen dieselbe Version verwenden.",
 );
-assert.match(core, /DATA_KEY = "metrack_data_v5"/);
-assert.match(core, /DATA_SCHEMA_VERSION = 5/);
+assert.match(core, /DATA_KEY = "metrack_data_v6"/);
+assert.match(core, /DATA_SCHEMA_VERSION = 6/);
+assert.match(app, /createExerciseIconSvg/);
 assert.match(core, /entryExerciseCompletion/);
 assert.match(core, /exerciseCompletionSummary/);
 assert.match(core, /export function timerElapsedMs/);
