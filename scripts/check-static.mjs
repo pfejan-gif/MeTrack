@@ -40,6 +40,10 @@ assert.match(html, /id="exerciseDialog"/);
 assert.match(html, /id="customExerciseFields"/);
 assert.match(html, /id="timerDialog"/);
 assert.match(html, /id="timerStartPauseButton"/);
+assert.doesNotMatch(html, /id="resetButton"/);
+assert.doesNotMatch(html, /Alle Daten löschen/);
+assert.doesNotMatch(html, /privat/i);
+assert.doesNotMatch(html, /privacy-card/);
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
 assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
@@ -55,6 +59,7 @@ assert.doesNotMatch(
 );
 
 const manifest = JSON.parse(read("manifest.webmanifest"));
+assert.doesNotMatch(manifest.description, /privat/i);
 for (const key of [
   "id",
   "name",

@@ -1,6 +1,6 @@
 # MeTrack
 
-![MeTrack – privater Fitness-Tracker](./assets/icons/social-preview.png)
+![MeTrack – Fitness-Tracker](./assets/icons/social-preview.png)
 
 Ein fokussierter, iPhone-optimierter Fitness-Tracker für den täglichen Fortschritt – ohne Konto, Tracking oder Server. MeTrack läuft direkt über GitHub Pages und speichert alle Daten ausschließlich im Browser des verwendeten Geräts.
 
