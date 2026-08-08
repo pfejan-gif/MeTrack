@@ -129,6 +129,11 @@ for (const asset of requiredFiles
   );
 }
 assert.match(serviceWorker, /CACHE_PREFIX = ["']metrack-app-["']/);
+assert.match(
+  serviceWorker,
+  /new Request\(url,\s*\{\s*cache:\s*"reload"\s*\}\)/,
+  "Der App-Shell-Cache muss bei Updates den HTTP-Cache umgehen.",
+);
 assert.ok(
   serviceWorker.includes(`v${packageJson.version}`),
   "Service-Worker-Cache und package.json müssen dieselbe Version verwenden.",
