@@ -1,0 +1,102 @@
+import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const read = (path) => readFileSync(resolve(root, path), "utf8");
+
+const requiredFiles = [
+  "index.html",
+  "manifest.webmanifest",
+  "service-worker.js",
+  "assets/styles.css",
+  "assets/app.js",
+  "assets/core.js",
+  "assets/icons/favicon.svg",
+  "assets/icons/apple-touch-icon.png",
+  "assets/icons/icon-192.png",
+  "assets/icons/icon-512.png",
+];
+
+for (const file of requiredFiles)
+  assert.equal(
+    existsSync(resolve(root, file)),
+    true,
+    `Fehlende Datei: ${file}`,
+  );
+
+const html = read("index.html");
+assert.match(html, /Content-Security-Policy/);
+assert.match(html, /viewport-fit=cover/);
+assert.match(html, /apple-mobile-web-app-capable/);
+assert.doesNotMatch(
+  html,
+  /(?:src|href)="\/(?!\/)/,
+  "Lokale Ressourcen müssen relativ für GitHub Pages sein.",
+);
+
+const manifest = JSON.parse(read("manifest.webmanifest"));
+for (const key of [
+  "id",
+  "name",
+  "short_name",
+  "start_url",
+  "scope",
+  "display",
+  "icons",
+]) {
+  assert.ok(manifest[key], `Manifest-Feld fehlt: ${key}`);
+}
+assert.equal(manifest.start_url, "./");
+assert.equal(manifest.scope, "./");
+assert.equal(
+  manifest.icons.some((icon) => icon.sizes === "192x192"),
+  true,
+);
+assert.equal(
+  manifest.icons.some((icon) => icon.sizes === "512x512"),
+  true,
+);
+
+const pngSize = (path) => {
+  const bytes = readFileSync(resolve(root, path));
+  assert.equal(bytes.toString("ascii", 1, 4), "PNG", `${path} ist kein PNG.`);
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+};
+assert.deepEqual(pngSize("assets/icons/icon-192.png"), {
+  width: 192,
+  height: 192,
+});
+assert.deepEqual(pngSize("assets/icons/icon-512.png"), {
+  width: 512,
+  height: 512,
+});
+assert.deepEqual(pngSize("assets/icons/apple-touch-icon.png"), {
+  width: 180,
+  height: 180,
+});
+
+const serviceWorker = read("service-worker.js");
+const app = read("assets/app.js");
+const packageJson = JSON.parse(read("package.json"));
+for (const asset of requiredFiles
+  .slice(0, 10)
+  .filter((path) => !["service-worker.js"].includes(path))) {
+  if (asset === "index.html") continue;
+  assert.ok(
+    serviceWorker.includes(`./${asset}`),
+    `App-Shell fehlt im Service Worker: ${asset}`,
+  );
+}
+assert.match(serviceWorker, /CACHE_PREFIX = ["']metrack-app-["']/);
+assert.ok(
+  serviceWorker.includes(`v${packageJson.version}`),
+  "Service-Worker-Cache und package.json müssen dieselbe Version verwenden.",
+);
+assert.ok(
+  app.includes(`APP_VERSION = "${packageJson.version}"`),
+  "App-Anzeige und package.json müssen dieselbe Version verwenden.",
+);
+
+console.log(`Static check passed (${requiredFiles.length} required files).`);
