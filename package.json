@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Offline-fähiger Fitness-Tracker für GitHub Pages",
   "scripts": {
-    "check": "node --check assets/app.js && node --check assets/core.js && node --check service-worker.js && node scripts/check-static.mjs",
+    "dev": "node scripts/preview-server.mjs",
+    "check": "node --check assets/app.js && node --check assets/core.js && node --check service-worker.js && node --check scripts/preview-server.mjs && node scripts/check-static.mjs",
     "test": "node --test",
     "verify": "npm run check && npm test"
   },
