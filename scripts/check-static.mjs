@@ -38,6 +38,8 @@ assert.match(html, /apple-mobile-web-app-capable/);
 assert.match(html, /id="updateBanner"/);
 assert.match(html, /id="exerciseDialog"/);
 assert.match(html, /id="customExerciseFields"/);
+assert.match(html, /id="stretchFields"/);
+assert.match(html, /id="exerciseInstructions"/);
 assert.match(html, /id="timerDialog"/);
 assert.match(html, /id="timerStartPauseButton"/);
 assert.doesNotMatch(html, /id="resetButton"/);
@@ -159,14 +161,21 @@ assert.ok(
   app.includes(`APP_VERSION = "${packageJson.version}"`),
   "App-Anzeige und package.json müssen dieselbe Version verwenden.",
 );
-assert.match(core, /DATA_KEY = "metrack_data_v4"/);
-assert.match(core, /DATA_SCHEMA_VERSION = 4/);
+assert.match(core, /DATA_KEY = "metrack_data_v5"/);
+assert.match(core, /DATA_SCHEMA_VERSION = 5/);
+assert.match(core, /entryExerciseCompletion/);
+assert.match(core, /exerciseCompletionSummary/);
 assert.match(core, /export function timerElapsedMs/);
+assert.doesNotMatch(
+  app,
+  /\.innerHTML\s*=|insertAdjacentHTML/,
+  "Dynamische Inhalte dürfen nicht als ungeprüftes HTML gerendert werden.",
+);
 assert.match(app, /navigator\.wakeLock\.request\("screen"\)/);
 assert.match(app, /TIMER_KEY = "metrack_active_timer_v1"/);
 assert.match(app, /updateViaCache:\s*"none"/);
 assert.match(app, /registration\s*\.update\(\)/);
-assert.match(html, />Übungen<\/h3>/);
+assert.match(html, />Übungen &amp; Dehnungen<\/h3>/);
 assert.doesNotMatch(html, />Eigene Übungen</);
 assert.doesNotMatch(
   app,

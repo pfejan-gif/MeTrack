@@ -12,8 +12,10 @@ import {
   createBackup,
   createDataEnvelope,
   entriesToCsv,
+  entryExerciseCompletion,
   entryExerciseValues,
   entryMetricValue,
+  exerciseCompletionSummary,
   exerciseMetricKey,
   exerciseUsageCount,
   formatStopwatch,
@@ -111,7 +113,7 @@ test("migriert v1-Einzelwerte verlustfrei in den allgemeinen Katalog", () => {
       waist: 95.1,
     },
   ]);
-  assert.equal(migrated.schemaVersion, 4);
+  assert.equal(migrated.schemaVersion, 5);
   assert.deepEqual(migrated.exercises, catalog);
   assert.deepEqual(entryExerciseValues(migrated.entries[0], plank.id), [40, null, null]);
   assert.deepEqual(entryExerciseValues(migrated.entries[0], pushups.id), [10, null, null]);
@@ -173,6 +175,17 @@ test("erhält den maximalen v3-Katalog plus Standardübungen", () => {
   const migrated = migrateDataEnvelope({ schemaVersion: 3, exercises, entries: [] });
   assert.equal(migrated.exercises.length, 33);
   assert.equal(validateExerciseCatalog(migrated.exercises).valid, true);
+});
+
+test("migriert v4-Einträge ohne erfundene Dehnungsstatus nach v5", () => {
+  const migrated = migrateDataEnvelope({
+    schemaVersion: 4,
+    exercises: catalog,
+    entries: [day("2026-08-04", { plank: [45, null, null] })],
+  });
+  assert.equal(migrated.schemaVersion, 5);
+  assert.deepEqual(migrated.entries[0].exerciseChecks, []);
+  assert.equal(entryMetricValue(migrated.entries[0], plankMetric, catalog), 45);
 });
 
 test("speichert drei Sätze und nutzt den Tagesbestwert", () => {
@@ -265,6 +278,78 @@ test("validiert neue Übungen und verhindert doppelte Namen", () => {
   assert.equal(validateExerciseCatalog([situps.exercise, { ...situps.exercise, id: "custom-situps-2", name: "sit-ups" }]).valid, false);
 });
 
+test("validiert Dehnungen mit optionaler Anleitung", () => {
+  const stretch = validateExercise({
+    id: "custom-hip-stretch",
+    name: "Hüftbeuger",
+    kind: "stretch",
+    active: true,
+    instructions: "Ausfallschritt einnehmen.\nBecken sanft nach vorn schieben.",
+  });
+  assert.equal(stretch.valid, true);
+  assert.equal(stretch.exercise.instructions.includes("\n"), true);
+  assert.equal(
+    validateExercise({ ...stretch.exercise, instructions: "x".repeat(601) }).valid,
+    false,
+  );
+});
+
+test("speichert Dehnungen als erfassten Tagesstatus und berechnet die Statistik", () => {
+  const stretch = {
+    id: "custom-hip-stretch",
+    name: "Hüftbeuger",
+    kind: "stretch",
+    active: true,
+    instructions: "30 Sekunden pro Seite halten.",
+  };
+  const exercises = [...catalog, stretch];
+  const entries = [
+    {
+      date: "2026-08-05",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
+      weight: null,
+      waist: null,
+    },
+    {
+      ...day("2026-08-06", { pushups: [10, null, null] }),
+      exerciseChecks: [{ exerciseId: stretch.id, completed: false }],
+    },
+    {
+      date: "2026-08-07",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
+      weight: null,
+      waist: null,
+    },
+    {
+      date: "2026-08-08",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
+      weight: null,
+      waist: null,
+    },
+  ];
+  const normalized = normalizeEntries(entries, exercises);
+  assert.equal(entryExerciseCompletion(normalized[1], stretch.id), false);
+  assert.equal(
+    entryMetricValue(normalized[1], exerciseMetricKey(stretch.id), exercises),
+    0,
+  );
+  assert.deepEqual(
+    exerciseCompletionSummary(normalized, stretch.id, exercises, "2026-08-08"),
+    { completed: 3, tracked: 4, rate: 75, currentStreak: 2 },
+  );
+  assert.equal(
+    validateEntry({
+      date: "2026-08-08",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: stretch.id, completed: false }],
+    }, exercises).valid,
+    false,
+  );
+});
+
 test("weist Werte unbekannter Übungen zurück", () => {
   const validation = validateEntry({
     date: "2026-08-05",
@@ -283,20 +368,62 @@ test("führt Teilsätze ohne Datenverlust zusammen", () => {
   assert.equal(merged[0].weight, 82);
 });
 
+test("führt einen expliziten Dehnungsstatus beim Import deterministisch zusammen", () => {
+  const stretch = {
+    id: "custom-hip-stretch",
+    name: "Hüftbeuger",
+    kind: "stretch",
+    active: true,
+    instructions: "30 Sekunden halten.",
+  };
+  const exercises = [...catalog, stretch];
+  const current = [{
+    ...day("2026-08-05", { pushups: [10, null, null] }),
+    exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
+  }];
+  const incoming = [{
+    ...day("2026-08-05", { plank: [40, null, null] }),
+    exerciseChecks: [{ exerciseId: stretch.id, completed: false }],
+  }];
+  const merged = mergeEntries(current, incoming, exercises);
+  assert.equal(entryExerciseCompletion(merged[0], stretch.id), false);
+  assert.equal(entryMetricValue(merged[0], pushupsMetric, exercises), 10);
+});
+
 test("erstellt Excel-freundliches CSV für alle Übungen", () => {
-  const csv = entriesToCsv([day("2026-08-05", { plank: [40, 45, 43], weight: 82.4 })], catalog);
+  const stretch = {
+    id: "custom-hip-stretch",
+    name: "Hüftbeuger",
+    kind: "stretch",
+    active: true,
+    instructions: "30 Sekunden halten.",
+  };
+  const csv = entriesToCsv([{
+    ...day("2026-08-05", { plank: [40, 45, 43], weight: 82.4 }),
+    exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
+  }], [...catalog, stretch]);
   assert.equal(csv.startsWith("\ufeff"), true);
   assert.match(csv, /Plank Sekunden Satz 1/);
   assert.match(csv, /Liegestütze Wiederholungen Satz 3/);
+  assert.match(csv, /Hüftbeuger durchgeführt/);
+  assert.match(csv, /;Ja;/);
   assert.match(csv, /82,4/);
 });
 
-test("exportiert und importiert eine v4-Sicherung verlustfrei", () => {
+test("exportiert und importiert eine v5-Sicherung verlustfrei", () => {
   const situps = { id: "custom-situps", name: "Sit-Ups", kind: "reps", active: false };
-  const exercises = [...catalog, situps];
+  const stretch = {
+    id: "custom-hip-stretch",
+    name: "Hüftbeuger",
+    kind: "stretch",
+    active: true,
+    instructions: "30 Sekunden pro Seite halten.",
+  };
+  const exercises = [...catalog, situps, stretch];
   const entries = [{
     date: "2026-08-05",
     exerciseSets: [{ exerciseId: situps.id, values: [20, 24, 22] }],
+    exerciseChecks: [{ exerciseId: stretch.id, completed: false }],
     weight: null,
     waist: null,
   }];
@@ -306,6 +433,7 @@ test("exportiert und importiert eine v4-Sicherung verlustfrei", () => {
   assert.equal(backup.schemaVersion, DATA_SCHEMA_VERSION);
   assert.deepEqual(restored.exercises, exercises);
   assert.deepEqual(entryExerciseValues(restored.entries[0], situps.id), [20, 24, 22]);
+  assert.equal(entryExerciseCompletion(restored.entries[0], stretch.id), false);
   assert.equal(restored.settings.theme, "dark");
 });
 

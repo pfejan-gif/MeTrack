@@ -1,7 +1,6 @@
 import {
   BODY_METRIC_KEYS,
   DATA_KEY,
-  DATA_SCHEMA_VERSION,
   DEFAULT_EXERCISES,
   EXERCISE_TYPES,
   MAX_EXERCISES,
@@ -12,13 +11,17 @@ import {
   STORAGE_KEY,
   TIMER_MAX_MS,
   V2_DATA_KEY,
+  V3_DATA_KEY,
   calculateStreak,
   createBackup,
   createDataEnvelope,
   entriesToCsv,
+  entryExerciseCompletion,
   entryExerciseValues,
   entryMetricValue,
   exerciseDefinition,
+  exerciseCheckFieldName,
+  exerciseCompletionSummary,
   exerciseFieldName,
   exerciseMetricKey,
   exerciseUsageCount,
@@ -44,7 +47,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.3.7";
+const APP_VERSION = "2.4.0";
 const TIMER_KEY = "metrack_active_timer_v1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
@@ -75,6 +78,8 @@ const elements = {
   networkBanner: $("networkBanner"),
   entryForm: $("entryForm"),
   exerciseFields: $("customExerciseFields"),
+  stretchSection: $("stretchSection"),
+  stretchFields: $("stretchFields"),
   exerciseEmpty: $("customExerciseEmpty"),
   exerciseOverviewCards: $("exerciseOverviewCards"),
   openExerciseDialogButton: $("openExerciseDialogButton"),
@@ -82,6 +87,11 @@ const elements = {
   exerciseForm: $("exerciseForm"),
   exerciseName: $("exerciseName"),
   exerciseNameError: $("exerciseNameError"),
+  exerciseInstructionsField: $("exerciseInstructionsField"),
+  exerciseInstructions: $("exerciseInstructions"),
+  exerciseInstructionsError: $("exerciseInstructionsError"),
+  exerciseSubmitLabel: $("exerciseSubmitLabel"),
+  exerciseCancelEditButton: $("exerciseCancelEditButton"),
   exerciseManagerList: $("exerciseManagerList"),
   exerciseManagerEmpty: $("exerciseManagerEmpty"),
   closeExerciseDialogButton: $("closeExerciseDialogButton"),
@@ -133,6 +143,7 @@ const state = {
   period: "30",
   historyLimit: 50,
   editingDate: null,
+  editingExerciseId: null,
   settings: { theme: "system", installHintDismissed: false },
   storageWritable: true,
   storageCorrupt: false,
@@ -213,6 +224,7 @@ function loadData() {
   const candidates = [
     { key: DATA_KEY, migrate: migrateDataEnvelope },
     { key: PREVIOUS_DATA_KEY, migrate: migrateDataEnvelope },
+    { key: V3_DATA_KEY, migrate: migrateDataEnvelope },
     { key: V2_DATA_KEY, migrate: migrateDataEnvelope },
     { key: STORAGE_KEY, migrate: migrateLegacyEntries },
   ];
@@ -721,16 +733,76 @@ function createTimerButton(exercise, index) {
   return button;
 }
 
+function createStretchCard(exercise, checked = false) {
+  const id = exerciseCheckFieldName(exercise.id);
+  const card = document.createElement("article");
+  card.className = "stretch-card";
+  const title = document.createElement("strong");
+  title.className = "stretch-card-title";
+  title.textContent = exercise.name;
+  const label = document.createElement("label");
+  label.className = "stretch-check";
+  label.htmlFor = id;
+  const input = document.createElement("input");
+  input.id = id;
+  input.name = id;
+  input.type = "checkbox";
+  input.checked = checked;
+  input.dataset.exerciseCheck = "true";
+  const mark = document.createElement("span");
+  mark.className = "stretch-check-mark";
+  mark.setAttribute("aria-hidden", "true");
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  const iconPath = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path",
+  );
+  iconPath.setAttribute("d", "m5 12 4 4L19 6");
+  icon.append(iconPath);
+  mark.append(icon);
+  const copy = document.createElement("span");
+  copy.className = "stretch-check-copy";
+  const action = document.createElement("strong");
+  action.textContent = "Heute durchgeführt";
+  const hint = document.createElement("small");
+  hint.textContent = "Zum Abhaken antippen";
+  copy.append(action, hint);
+  label.append(input, mark, copy);
+  card.append(title, label);
+  if (exercise.instructions) {
+    const details = document.createElement("details");
+    details.className = "stretch-instructions";
+    const summary = document.createElement("summary");
+    summary.textContent = "Anleitung anzeigen";
+    const instructions = document.createElement("p");
+    instructions.textContent = exercise.instructions;
+    details.append(summary, instructions);
+    card.append(details);
+  }
+  return card;
+}
+
 function renderExerciseFields() {
   const values = new Map(
     $$('input[data-exercise-input="true"]', elements.exerciseFields).map(
       (input) => [input.id, input.value],
     ),
   );
+  const checks = new Map(
+    $$('input[data-exercise-check="true"]', elements.stretchFields).map(
+      (input) => [input.id, input.checked],
+    ),
+  );
   elements.exerciseFields.replaceChildren();
+  elements.stretchFields.replaceChildren();
   const active = state.exercises.filter((exercise) => exercise.active);
+  const measured = active.filter((exercise) => exercise.kind !== "stretch");
+  const stretches = active.filter((exercise) => exercise.kind === "stretch");
   elements.exerciseEmpty.hidden = active.length > 0;
-  for (const exercise of active) {
+  elements.exerciseFields.hidden = measured.length === 0;
+  elements.stretchSection.hidden = stretches.length === 0;
+  for (const exercise of measured) {
     const definition = exerciseDefinition(exercise);
     const type = EXERCISE_TYPES[exercise.kind];
     const fieldset = document.createElement("fieldset");
@@ -777,6 +849,12 @@ function renderExerciseFields() {
     fieldset.append(legend, inputs);
     elements.exerciseFields.append(fieldset);
   }
+  for (const exercise of stretches) {
+    const id = exerciseCheckFieldName(exercise.id);
+    elements.stretchFields.append(
+      createStretchCard(exercise, checks.get(id) ?? false),
+    );
+  }
   updateTimerButtons();
 }
 
@@ -794,7 +872,7 @@ function renderExerciseManager() {
   elements.exerciseManagerList.replaceChildren();
   elements.exerciseManagerEmpty.hidden = state.exercises.length > 0;
   elements.exerciseForm.querySelector('button[type="submit"]').disabled =
-    state.exercises.length >= MAX_EXERCISES;
+    state.exercises.length >= MAX_EXERCISES && !state.editingExerciseId;
   for (const exercise of state.exercises) {
     const item = document.createElement("div");
     item.className = `exercise-manager-item${exercise.active ? "" : " archived"}`;
@@ -804,9 +882,22 @@ function renderExerciseManager() {
     const detail = document.createElement("small");
     detail.textContent = `${EXERCISE_TYPES[exercise.kind].label} · ${exercise.active ? "aktiv" : "deaktiviert"}`;
     copy.append(name, detail);
+    if (exercise.kind === "stretch" && exercise.instructions) {
+      const instructions = document.createElement("p");
+      instructions.className = "exercise-manager-instructions";
+      instructions.textContent = exercise.instructions;
+      copy.append(instructions);
+    }
     const actions = document.createElement("div");
     actions.className = "exercise-manager-actions";
     actions.append(
+      managerButton(
+        "Bearbeiten",
+        "exercise-edit-button",
+        "exerciseEdit",
+        exercise.id,
+        `${exercise.name} bearbeiten`,
+      ),
       managerButton(
         exercise.active ? "Deaktivieren" : "Aktivieren",
         "exercise-toggle-button",
@@ -833,57 +924,134 @@ function renderExerciseCatalogUi() {
   renderMetricTabs();
 }
 
-function openExerciseDialog() {
+function updateExerciseKindUi() {
+  const kind = elements.exerciseForm.querySelector(
+    'input[name="exerciseKind"]:checked',
+  )?.value;
+  elements.exerciseInstructionsField.hidden = kind !== "stretch";
+  elements.exerciseInstructions.disabled = kind !== "stretch";
+}
+
+function resetExerciseEditor() {
+  state.editingExerciseId = null;
+  elements.exerciseForm.reset();
   elements.exerciseNameError.textContent = "";
+  elements.exerciseInstructionsError.textContent = "";
+  elements.exerciseSubmitLabel.textContent = "Hinzufügen";
+  elements.exerciseCancelEditButton.hidden = true;
+  elements.exerciseForm.querySelector('button[type="submit"]').disabled =
+    state.exercises.length >= MAX_EXERCISES;
+  $$('input[name="exerciseKind"]', elements.exerciseForm).forEach((input) => {
+    input.disabled = false;
+  });
+  updateExerciseKindUi();
+}
+
+function openExerciseDialog() {
+  resetExerciseEditor();
   if (typeof elements.exerciseDialog.showModal === "function") {
     elements.exerciseDialog.showModal();
     setTimeout(() => elements.exerciseName.focus(), 80);
     return;
   }
-  const name = window.prompt("Wie heißt die neue Übung?", "Sit-Ups");
+  const name = window.prompt("Wie heißt der neue Trainingseintrag?", "Sit-Ups");
   if (!name) return;
-  addExercise(name, window.confirm("Mit Zeit messen?") ? "seconds" : "reps");
+  const kindInput = window.prompt(
+    "Typ eingeben: Wiederholungen, Zeit oder Dehnung",
+    "Wiederholungen",
+  );
+  const normalizedKind = String(kindInput || "").trim().toLocaleLowerCase("de-DE");
+  const kind = normalizedKind.startsWith("d")
+    ? "stretch"
+    : normalizedKind.startsWith("z")
+      ? "seconds"
+      : "reps";
+  const instructions = kind === "stretch"
+    ? window.prompt("Optionale Anleitung zur Dehnung:", "") || ""
+    : "";
+  addExercise(name, kind, instructions);
 }
 
-function addExercise(name, kind) {
+function startEditingExercise(exerciseId) {
+  const exercise = state.exercises.find((item) => item.id === exerciseId);
+  if (!exercise) return;
+  state.editingExerciseId = exercise.id;
+  elements.exerciseName.value = exercise.name;
+  elements.exerciseInstructions.value = exercise.instructions || "";
+  elements.exerciseNameError.textContent = "";
+  elements.exerciseInstructionsError.textContent = "";
+  $$('input[name="exerciseKind"]', elements.exerciseForm).forEach((input) => {
+    input.checked = input.value === exercise.kind;
+    input.disabled = true;
+  });
+  elements.exerciseSubmitLabel.textContent = "Änderungen speichern";
+  elements.exerciseCancelEditButton.hidden = false;
+  elements.exerciseForm.querySelector('button[type="submit"]').disabled = false;
+  updateExerciseKindUi();
+  elements.exerciseForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => elements.exerciseName.focus(), 80);
+}
+
+function addExercise(name, kind, instructions = "") {
+  const current = state.exercises.find(
+    (exercise) => exercise.id === state.editingExerciseId,
+  );
   const validation = validateExercise({
-    id: makeExerciseId(),
+    id: current?.id || makeExerciseId(),
     name,
     kind,
-    active: true,
+    active: current?.active ?? true,
+    instructions,
   });
+  elements.exerciseNameError.textContent = "";
+  elements.exerciseInstructionsError.textContent = "";
   if (!validation.valid) {
     elements.exerciseNameError.textContent =
-      validation.errors.name || validation.errors.kind || "Ungültige Übung.";
+      validation.errors.name || validation.errors.kind || "Ungültiger Eintrag.";
+    elements.exerciseInstructionsError.textContent =
+      validation.errors.instructions || "";
     return false;
   }
   if (
     state.exercises.some(
       (exercise) =>
+        exercise.id !== validation.exercise.id &&
         exercise.name.toLocaleLowerCase("de-DE") ===
         validation.exercise.name.toLocaleLowerCase("de-DE"),
     )
   ) {
     elements.exerciseNameError.textContent =
-      "Eine Übung mit diesem Namen ist bereits vorhanden.";
+      "Ein Trainingseintrag mit diesem Namen ist bereits vorhanden.";
     return false;
   }
-  if (state.exercises.length >= MAX_EXERCISES) {
-    elements.exerciseNameError.textContent = `Du kannst höchstens ${MAX_EXERCISES} Übungen anlegen.`;
+  if (!current && state.exercises.length >= MAX_EXERCISES) {
+    elements.exerciseNameError.textContent = `Du kannst höchstens ${MAX_EXERCISES} Einträge anlegen.`;
     return false;
   }
-  if (!persistData(state.entries, [...state.exercises, validation.exercise]))
+  const nextExercises = current
+    ? state.exercises.map((exercise) =>
+        exercise.id === current.id ? validation.exercise : exercise,
+      )
+    : [...state.exercises, validation.exercise];
+  if (!persistData(state.entries, nextExercises))
     return false;
-  elements.exerciseForm.reset();
+  const edited = Boolean(current);
+  resetExerciseEditor();
   renderExerciseCatalogUi();
   resetForm();
   render();
-  if (elements.exerciseDialog.open) elements.exerciseDialog.close();
-  setTimeout(
-    () => $(exerciseFieldName(validation.exercise.id, 0))?.focus(),
-    100,
+  if (!edited && elements.exerciseDialog.open) elements.exerciseDialog.close();
+  if (!edited) {
+    const fieldId = validation.exercise.kind === "stretch"
+      ? exerciseCheckFieldName(validation.exercise.id)
+      : exerciseFieldName(validation.exercise.id, 0);
+    setTimeout(() => $(fieldId)?.focus(), 100);
+  }
+  showToast(
+    edited
+      ? `${validation.exercise.name} aktualisiert ✓`
+      : `${validation.exercise.name} hinzugefügt ✓`,
   );
-  showToast(`${validation.exercise.name} hinzugefügt ✓`);
   return true;
 }
 
@@ -937,8 +1105,8 @@ function deleteExercise(exerciseId) {
     title: `„${exercise.name}“ ganz löschen?`,
     text:
       usage > 0
-        ? `Die Übung und ihre Werte an ${usage} ${usage === 1 ? "Trainingstag" : "Trainingstagen"} werden unwiderruflich entfernt. Deaktivieren würde alle Werte behalten.`
-        : "Die Übung wird unwiderruflich entfernt. Du kannst sie stattdessen ohne Datenverlust deaktivieren.",
+        ? `Der Trainingseintrag und seine Daten an ${usage} ${usage === 1 ? "Trainingstag" : "Trainingstagen"} werden unwiderruflich entfernt. Deaktivieren würde alle Daten behalten.`
+        : "Der Trainingseintrag wird unwiderruflich entfernt. Du kannst ihn stattdessen ohne Datenverlust deaktivieren.",
     actionLabel: "Ganz löschen",
     callback: () => {
       if (state.timer.exerciseId === exerciseId) clearTimer();
@@ -949,6 +1117,7 @@ function deleteExercise(exerciseId) {
         remaining,
       );
       if (!persistData(entries, remaining)) return;
+      if (state.editingExerciseId === exerciseId) resetExerciseEditor();
       if (state.metric === exerciseMetricKey(exerciseId))
         state.metric = metricFallback();
       renderExerciseCatalogUi();
@@ -1030,14 +1199,31 @@ function renderOverview() {
   const spotlight = active[0] || state.exercises[0] || null;
   if (spotlight) {
     const definition = exerciseDefinition(spotlight);
-    const summary = metricSummary(exerciseMetricKey(spotlight.id));
-    setText("spotlightExerciseLabel", `${spotlight.name} Bestwert`);
-    setText("spotlightExerciseValue", formatNumber(summary.best));
-    setText("spotlightExerciseUnit", definition.unit);
-    setText(
-      "spotlightExerciseTrend",
-      signed(summary.fromPrevious, 0, definition.unit) || "Noch kein Vergleich",
-    );
+    if (definition.completion) {
+      const summary = exerciseCompletionSummary(
+        state.entries,
+        spotlight.id,
+        state.exercises,
+      );
+      setText("spotlightExerciseLabel", `${spotlight.name} durchgeführt`);
+      setText("spotlightExerciseValue", formatNumber(summary.completed));
+      setText("spotlightExerciseUnit", "×");
+      setText(
+        "spotlightExerciseTrend",
+        summary.tracked
+          ? `${summary.rate} % · Serie ${summary.currentStreak} ${summary.currentStreak === 1 ? "Tag" : "Tage"}`
+          : "Noch kein Tagesstatus",
+      );
+    } else {
+      const summary = metricSummary(exerciseMetricKey(spotlight.id));
+      setText("spotlightExerciseLabel", `${spotlight.name} Bestwert`);
+      setText("spotlightExerciseValue", formatNumber(summary.best));
+      setText("spotlightExerciseUnit", definition.unit);
+      setText(
+        "spotlightExerciseTrend",
+        signed(summary.fromPrevious, 0, definition.unit) || "Noch kein Vergleich",
+      );
+    }
     drawChart(
       elements.overviewChart,
       filteredMetricEntries(exerciseMetricKey(spotlight.id), "all").slice(-8),
@@ -1045,17 +1231,16 @@ function renderOverview() {
       { compact: true },
     );
   } else {
-    setText("spotlightExerciseLabel", "Keine Übung aktiv");
+    setText("spotlightExerciseLabel", "Kein Training aktiv");
     setText("spotlightExerciseValue", "—");
     setText("spotlightExerciseUnit", "");
-    setText("spotlightExerciseTrend", "Aktiviere eine Übung unter „Verwalten“");
+    setText("spotlightExerciseTrend", "Aktiviere einen Eintrag unter „Verwalten“");
     clearCanvas(elements.overviewChart);
   }
 
   elements.exerciseOverviewCards.replaceChildren();
   for (const exercise of active.slice(1)) {
     const definition = exerciseDefinition(exercise);
-    const summary = metricSummary(exerciseMetricKey(exercise.id));
     const card = document.createElement("article");
     card.className = "card metric-card compact-metric-card";
     const label = document.createElement("p");
@@ -1064,13 +1249,27 @@ function renderOverview() {
     const value = document.createElement("p");
     value.className = "metric-value";
     const number = document.createElement("span");
-    number.textContent = formatNumber(summary.best);
     const unit = document.createElement("small");
-    unit.textContent = definition.unit;
-    value.append(number, " ", unit);
     const note = document.createElement("p");
     note.className = "metric-change";
-    note.textContent = "Persönlicher Bestwert";
+    if (definition.completion) {
+      const summary = exerciseCompletionSummary(
+        state.entries,
+        exercise.id,
+        state.exercises,
+      );
+      number.textContent = formatNumber(summary.completed);
+      unit.textContent = "×";
+      note.textContent = summary.tracked
+        ? `${summary.rate} % der erfassten Tage · Serie ${summary.currentStreak}`
+        : "Noch kein Tagesstatus";
+    } else {
+      const summary = metricSummary(exerciseMetricKey(exercise.id));
+      number.textContent = formatNumber(summary.best);
+      unit.textContent = definition.unit;
+      note.textContent = "Persönlicher Bestwert";
+    }
+    value.append(number, " ", unit);
     card.append(label, value, note);
     elements.exerciseOverviewCards.append(card);
   }
@@ -1107,8 +1306,10 @@ function drawChart(canvas, entries, key, { compact = false } = {}) {
   const values = entries.map((entry) =>
     entryMetricValue(entry, key, state.exercises),
   );
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const definition = metricDefinition(key, state.exercises);
+  const completion = definition?.completion === true;
+  const min = completion ? 0 : Math.min(...values);
+  const max = completion ? 1 : Math.max(...values);
   const spread = max - min || Math.max(max * 0.1, 1);
   const pad = compact ? 8 : 26;
   const width = Math.max(1, rect.width - pad * 2);
@@ -1119,10 +1320,13 @@ function drawChart(canvas, entries, key, { compact = false } = {}) {
   context.lineJoin = "round";
   context.lineCap = "round";
   context.strokeStyle = mint;
+  const yFor = (value) => completion
+    ? pad + height - value * height
+    : pad + height - ((value - min + spread * 0.08) / (spread * 1.16)) * height;
   context.beginPath();
   values.forEach((value, index) => {
     const x = pad + (values.length === 1 ? width / 2 : (index / (values.length - 1)) * width);
-    const y = pad + height - ((value - min + spread * 0.08) / (spread * 1.16)) * height;
+    const y = yFor(value);
     if (index === 0) context.moveTo(x, y);
     else context.lineTo(x, y);
   });
@@ -1131,7 +1335,7 @@ function drawChart(canvas, entries, key, { compact = false } = {}) {
     context.fillStyle = mint;
     values.forEach((value, index) => {
       const x = pad + (values.length === 1 ? width / 2 : (index / (values.length - 1)) * width);
-      const y = pad + height - ((value - min + spread * 0.08) / (spread * 1.16)) * height;
+      const y = yFor(value);
       context.beginPath();
       context.arc(x, y, 3.5, 0, Math.PI * 2);
       context.fill();
@@ -1151,7 +1355,16 @@ function renderCharts() {
   elements.chartEmpty.hidden = entries.length >= 2;
   drawChart(elements.progressChart, entries, state.metric);
   if (!entries.length) {
-    elements.chartSummary.textContent = `Noch keine Werte für ${definition.label}.`;
+    elements.chartSummary.textContent = definition.completion
+      ? `Noch kein Tagesstatus für ${definition.label}.`
+      : `Noch keine Werte für ${definition.label}.`;
+  } else if (definition.completion) {
+    const summary = exerciseCompletionSummary(
+      entries,
+      definition.exerciseId,
+      state.exercises,
+    );
+    elements.chartSummary.textContent = `${summary.completed} von ${summary.tracked} erfassten ${summary.tracked === 1 ? "Tag" : "Tagen"} durchgeführt (${summary.rate} %). Aktuelle Serie: ${summary.currentStreak} ${summary.currentStreak === 1 ? "Tag" : "Tage"}.`;
   } else {
     const first = entryMetricValue(entries[0], state.metric, state.exercises);
     const last = entryMetricValue(entries[entries.length - 1], state.metric, state.exercises);
@@ -1161,6 +1374,10 @@ function renderCharts() {
 }
 
 function exerciseDisplay(entry, exercise) {
+  if (exercise.kind === "stretch") {
+    const completed = entryExerciseCompletion(entry, exercise.id);
+    return completed === null ? null : completed ? "Erledigt ✓" : "Nicht erledigt";
+  }
   const values = entryExerciseValues(entry, exercise.id);
   if (values.every((value) => value === null)) return null;
   const unit = exerciseDefinition(exercise).unit;
@@ -1277,11 +1494,11 @@ function allFormFieldIds() {
     ...BODY_METRIC_KEYS,
     ...state.exercises
       .filter((exercise) => exercise.active)
-      .flatMap((exercise) =>
-        Array.from({ length: SET_COUNT }, (_, index) =>
-          exerciseFieldName(exercise.id, index),
-        ),
-      ),
+      .flatMap((exercise) => exercise.kind === "stretch"
+        ? [exerciseCheckFieldName(exercise.id)]
+        : Array.from({ length: SET_COUNT }, (_, index) =>
+            exerciseFieldName(exercise.id, index),
+          )),
   ];
 }
 
@@ -1328,6 +1545,11 @@ function startEditing(date) {
   $("date").value = entry.date;
   for (const key of BODY_METRIC_KEYS) $(key).value = entry[key] ?? "";
   for (const exercise of state.exercises.filter((item) => item.active)) {
+    if (exercise.kind === "stretch") {
+      $(exerciseCheckFieldName(exercise.id)).checked =
+        entryExerciseCompletion(entry, exercise.id) === true;
+      continue;
+    }
     const values = entryExerciseValues(entry, exercise.id);
     values.forEach((value, index) => {
       $(exerciseFieldName(exercise.id, index)).value = value ?? "";
@@ -1346,8 +1568,21 @@ function formCandidate() {
     ? state.entries.find((entry) => entry.date === state.editingDate)
     : existing;
   const editing = Boolean(state.editingDate);
-  const candidate = { date, exerciseSets: [] };
+  const candidate = { date, exerciseSets: [], exerciseChecks: [] };
   for (const exercise of state.exercises) {
+    if (exercise.kind === "stretch") {
+      const oldCompletion = source
+        ? entryExerciseCompletion(source, exercise.id)
+        : null;
+      let completed = oldCompletion;
+      if (exercise.active) {
+        const checked = $(exerciseCheckFieldName(exercise.id))?.checked === true;
+        completed = !editing && oldCompletion === true ? true : checked;
+      }
+      if (completed !== null)
+        candidate.exerciseChecks.push({ exerciseId: exercise.id, completed });
+      continue;
+    }
     const oldValues = source ? entryExerciseValues(source, exercise.id) : [null, null, null];
     const values = exercise.active
       ? Array.from({ length: SET_COUNT }, (_, index) => {
@@ -1500,7 +1735,7 @@ async function readImportFile(file) {
     const range = parsed.entries.length
       ? `${formatDate(parsed.entries[0].date)} bis ${formatDate(parsed.entries[parsed.entries.length - 1].date)}`
       : "keine Einträge";
-    elements.importSummary.textContent = `Die Sicherung enthält ${parsed.entries.length} ${parsed.entries.length === 1 ? "Tag" : "Tage"} (${range}) und ${parsed.exercises.length} ${parsed.exercises.length === 1 ? "Übung" : "Übungen"}.`;
+    elements.importSummary.textContent = `Die Sicherung enthält ${parsed.entries.length} ${parsed.entries.length === 1 ? "Tag" : "Tage"} (${range}) und ${parsed.exercises.length} ${parsed.exercises.length === 1 ? "Trainingseintrag" : "Trainingseinträge"}.`;
     if (typeof elements.importDialog.showModal === "function")
       elements.importDialog.showModal();
     else if (window.confirm(`${elements.importSummary.textContent}\n\nVorhandene Daten ersetzen?`))
@@ -1564,7 +1799,7 @@ function askForConfirmation({ title, text, actionLabel, callback }) {
 }
 
 function removeAllStorageKeys() {
-  [DATA_KEY, PREVIOUS_DATA_KEY, V2_DATA_KEY, STORAGE_KEY, TIMER_KEY, ...RECOVERY_KEYS].forEach(
+  [DATA_KEY, PREVIOUS_DATA_KEY, V3_DATA_KEY, V2_DATA_KEY, STORAGE_KEY, TIMER_KEY, ...RECOVERY_KEYS].forEach(
     (key) => localStorage.removeItem(key),
   );
 }
@@ -1721,15 +1956,39 @@ function bindEvents() {
   });
   elements.cancelEditButton.addEventListener("click", resetForm);
   elements.openExerciseDialogButton.addEventListener("click", openExerciseDialog);
-  elements.closeExerciseDialogButton.addEventListener("click", () => elements.exerciseDialog.close());
+  elements.closeExerciseDialogButton.addEventListener("click", () => {
+    resetExerciseEditor();
+    elements.exerciseDialog.close();
+  });
+  elements.exerciseDialog.addEventListener("close", resetExerciseEditor);
+  elements.exerciseForm.addEventListener("change", (event) => {
+    if (event.target.matches('input[name="exerciseKind"]'))
+      updateExerciseKindUi();
+  });
+  elements.exerciseCancelEditButton.addEventListener("click", () => {
+    resetExerciseEditor();
+    renderExerciseManager();
+    elements.exerciseName.focus();
+  });
   elements.exerciseForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const data = new FormData(elements.exerciseForm);
-    addExercise(data.get("exerciseName"), data.get("exerciseKind"));
+    const editingExercise = state.exercises.find(
+      (exercise) => exercise.id === state.editingExerciseId,
+    );
+    addExercise(
+      data.get("exerciseName"),
+      editingExercise?.kind || data.get("exerciseKind"),
+      editingExercise?.kind === "stretch"
+        ? elements.exerciseInstructions.value
+        : data.get("exerciseInstructions"),
+    );
   });
   elements.exerciseManagerList.addEventListener("click", (event) => {
+    const edit = event.target.closest("[data-exercise-edit]");
     const toggle = event.target.closest("[data-exercise-toggle]");
     const remove = event.target.closest("[data-exercise-delete]");
+    if (edit) startEditingExercise(edit.dataset.exerciseEdit);
     if (toggle) toggleExercise(toggle.dataset.exerciseToggle);
     if (remove) deleteExercise(remove.dataset.exerciseDelete);
   });

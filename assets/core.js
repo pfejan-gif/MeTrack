@@ -1,13 +1,15 @@
 export const STORAGE_KEY = "metrack_entries_v1";
 export const V2_DATA_KEY = "metrack_data_v2";
-export const PREVIOUS_DATA_KEY = "metrack_data_v3";
-export const DATA_KEY = "metrack_data_v4";
-export const DATA_SCHEMA_VERSION = 4;
+export const V3_DATA_KEY = "metrack_data_v3";
+export const PREVIOUS_DATA_KEY = "metrack_data_v4";
+export const DATA_KEY = "metrack_data_v5";
+export const DATA_SCHEMA_VERSION = 5;
 export const SETTINGS_KEY = "metrack_settings_v1";
-export const BACKUP_VERSION = 4;
+export const BACKUP_VERSION = 5;
 export const SET_COUNT = 3;
 export const TIMER_MAX_MS = 86_400_000;
 export const MAX_BACKUP_ENTRIES = 5000;
+export const MAX_INSTRUCTION_LENGTH = 600;
 // v3 erlaubte bis zu 30 zusätzliche Übungen. Zusammen mit den drei
 // bisherigen Standardübungen müssen daher mindestens 33 migrierbar bleiben.
 export const MAX_EXERCISES = 40;
@@ -29,6 +31,12 @@ export const EXERCISE_TYPES = Object.freeze({
     csvUnit: "Sekunden",
     min: 0,
     max: 86_400,
+  },
+  stretch: {
+    label: "Dehnung",
+    shortUnit: "",
+    csvUnit: "durchgeführt",
+    completion: true,
   },
 });
 
@@ -147,6 +155,10 @@ export function exerciseFieldName(exerciseId, index) {
   return `${exerciseId}-set-${index + 1}`;
 }
 
+export function exerciseCheckFieldName(exerciseId) {
+  return `${exerciseId}-completed`;
+}
+
 export const customFieldName = exerciseFieldName;
 
 function normalizedExerciseName(value) {
@@ -154,6 +166,13 @@ function normalizedExerciseName(value) {
     .normalize("NFC")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function normalizedInstructions(value) {
+  return String(value ?? "")
+    .normalize("NFC")
+    .replace(/\r\n?/g, "\n")
+    .trim();
 }
 
 export function sanitizeExercise(raw) {
@@ -166,7 +185,17 @@ export function sanitizeExercise(raw) {
   if (!name || name.length > 40 || /[\u0000-\u001f\u007f]/.test(name))
     return null;
   if (!EXERCISE_TYPES[kind]) return null;
-  return { id, name, kind, active: raw.active !== false };
+  const exercise = { id, name, kind, active: raw.active !== false };
+  if (kind === "stretch") {
+    const instructions = normalizedInstructions(raw.instructions);
+    if (
+      instructions.length > MAX_INSTRUCTION_LENGTH ||
+      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(instructions)
+    )
+      return null;
+    exercise.instructions = instructions;
+  }
+  return exercise;
 }
 
 export const sanitizeCustomExercise = sanitizeExercise;
@@ -183,7 +212,15 @@ export function validateExercise(raw) {
   else if (/[\u0000-\u001f\u007f]/.test(name))
     errors.name = "Der Name enthält ungültige Zeichen.";
   if (!EXERCISE_TYPES[raw?.kind])
-    errors.kind = "Bitte wähle Wiederholungen oder Zeit.";
+    errors.kind = "Bitte wähle Wiederholungen, Zeit oder Dehnung.";
+  const instructions = normalizedInstructions(raw?.instructions);
+  if (raw?.kind === "stretch" && instructions.length > MAX_INSTRUCTION_LENGTH)
+    errors.instructions = `Die Anleitung darf höchstens ${MAX_INSTRUCTION_LENGTH} Zeichen lang sein.`;
+  else if (
+    raw?.kind === "stretch" &&
+    /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(instructions)
+  )
+    errors.instructions = "Die Anleitung enthält ungültige Zeichen.";
   return {
     valid: Object.keys(errors).length === 0,
     errors,
@@ -245,6 +282,22 @@ export function exerciseDefinition(exercise) {
   const sanitized = sanitizeExercise(exercise);
   if (!sanitized) return null;
   const type = EXERCISE_TYPES[sanitized.kind];
+  if (type.completion) {
+    return {
+      key: exerciseMetricKey(sanitized.id),
+      exerciseId: sanitized.id,
+      label: sanitized.name,
+      shortLabel: sanitized.name,
+      unit: "",
+      csvLabel: `${sanitized.name} ${type.csvUnit}`,
+      decimals: 0,
+      min: 0,
+      max: 1,
+      direction: "up",
+      exercise: true,
+      completion: true,
+    };
+  }
   return {
     key: exerciseMetricKey(sanitized.id),
     exerciseId: sanitized.id,
@@ -335,6 +388,14 @@ export function entryExerciseValues(raw, exerciseId) {
 
 export const customExerciseValues = entryExerciseValues;
 
+export function entryExerciseCompletion(raw, exerciseId) {
+  if (!Array.isArray(raw?.exerciseChecks)) return null;
+  const check = raw.exerciseChecks.find(
+    (item) => item?.exerciseId === exerciseId,
+  );
+  return typeof check?.completed === "boolean" ? check.completed : null;
+}
+
 export function todayLocal(now = new Date()) {
   const offset = now.getTimezoneOffset();
   return new Date(now.getTime() - offset * 60_000).toISOString().slice(0, 10);
@@ -404,8 +465,14 @@ function sanitizeWholeNumber(value, definition) {
 export function sanitizeEntry(raw, exercises = DEFAULT_EXERCISES) {
   if (!raw || !isIsoDate(raw.date)) return null;
   const catalog = sanitizeExerciseCatalog(exercises);
-  const entry = { date: raw.date, exerciseSets: [] };
+  const entry = { date: raw.date, exerciseSets: [], exerciseChecks: [] };
   for (const exercise of catalog) {
+    if (exercise.kind === "stretch") {
+      const completed = entryExerciseCompletion(raw, exercise.id);
+      if (completed !== null)
+        entry.exerciseChecks.push({ exerciseId: exercise.id, completed });
+      continue;
+    }
     const definition = exerciseDefinition(exercise);
     const values = rawExerciseValues(raw, exercise.id).map((value) =>
       sanitizeWholeNumber(value, definition),
@@ -432,6 +499,11 @@ export function hasMeasurement(entry) {
     BODY_METRIC_KEYS.some(
       (key) => entry?.[key] !== null && entry?.[key] !== undefined,
     )
+  )
+    return true;
+  if (
+    Array.isArray(entry?.exerciseChecks) &&
+    entry.exerciseChecks.some((item) => item?.completed === true)
   )
     return true;
   return Array.isArray(entry?.exerciseSets)
@@ -468,12 +540,18 @@ export function validateEntry(raw, exercises = DEFAULT_EXERCISES) {
   const definitions = new Map(
     catalog.map((exercise) => [exercise.id, exerciseDefinition(exercise)]),
   );
+  const exerciseById = new Map(catalog.map((exercise) => [exercise.id, exercise]));
   const seenIds = new Set();
   if (raw?.exerciseSets !== undefined && !Array.isArray(raw.exerciseSets))
     errors.exerciseSets = "Übungswerte sind ungültig.";
   for (const item of Array.isArray(raw?.exerciseSets) ? raw.exerciseSets : []) {
     const definition = definitions.get(item?.exerciseId);
-    if (!item || !definition || seenIds.has(item.exerciseId)) {
+    if (
+      !item ||
+      !definition ||
+      definition.completion ||
+      seenIds.has(item.exerciseId)
+    ) {
       errors.exerciseSets = "Übungswerte passen nicht zum Übungskatalog.";
       continue;
     }
@@ -488,7 +566,7 @@ export function validateEntry(raw, exercises = DEFAULT_EXERCISES) {
   if (Array.isArray(raw?.customSets)) {
     for (const item of raw.customSets) {
       const definition = definitions.get(item?.exerciseId);
-      if (!item || !definition) {
+      if (!item || !definition || definition.completion) {
         errors.exerciseSets = "Übungswerte passen nicht zum Übungskatalog.";
         continue;
       }
@@ -499,6 +577,22 @@ export function validateEntry(raw, exercises = DEFAULT_EXERCISES) {
         item.exerciseId,
       );
     }
+  }
+  const seenChecks = new Set();
+  if (raw?.exerciseChecks !== undefined && !Array.isArray(raw.exerciseChecks))
+    errors.exerciseChecks = "Dehnungsstatus ist ungültig.";
+  for (const item of Array.isArray(raw?.exerciseChecks) ? raw.exerciseChecks : []) {
+    const exercise = exerciseById.get(item?.exerciseId);
+    if (
+      !item ||
+      exercise?.kind !== "stretch" ||
+      typeof item.completed !== "boolean" ||
+      seenChecks.has(item.exerciseId)
+    ) {
+      errors.exerciseChecks = "Dehnungsstatus passt nicht zum Übungskatalog.";
+      continue;
+    }
+    seenChecks.add(item.exerciseId);
   }
   for (const exercise of catalog) {
     const legacyKey = LEGACY_EXERCISE_BY_ID[exercise.id];
@@ -537,7 +631,7 @@ export function validateEntry(raw, exercises = DEFAULT_EXERCISES) {
   }
   const sanitized = sanitizeEntry(raw, catalog);
   if (sanitized && !hasMeasurement(sanitized))
-    errors.form = "Trage mindestens einen Messwert ein.";
+    errors.form = "Trage mindestens einen Messwert ein oder hake eine Dehnung ab.";
   return { valid: Object.keys(errors).length === 0, errors, entry: sanitized };
 }
 
@@ -571,8 +665,20 @@ export function mergeDayEntries(
   if (!current) return incoming;
   if (!incoming) return current;
   if (current.date !== incoming.date) return incoming;
-  const merged = { date: current.date, exerciseSets: [] };
+  const merged = {
+    date: current.date,
+    exerciseSets: [],
+    exerciseChecks: [],
+  };
   for (const exercise of catalog) {
+    if (exercise.kind === "stretch") {
+      const currentCompletion = entryExerciseCompletion(current, exercise.id);
+      const incomingCompletion = entryExerciseCompletion(incoming, exercise.id);
+      const completed = incomingCompletion ?? currentCompletion;
+      if (completed !== null)
+        merged.exerciseChecks.push({ exerciseId: exercise.id, completed });
+      continue;
+    }
     const currentValues = rawExerciseValues(current, exercise.id);
     const incomingValues = rawExerciseValues(incoming, exercise.id);
     const values = currentValues.map(
@@ -622,6 +728,9 @@ export function removeExerciseFromEntries(
     exerciseSets: Array.isArray(entry.exerciseSets)
       ? entry.exerciseSets.filter((item) => item?.exerciseId !== exerciseId)
       : [],
+    exerciseChecks: Array.isArray(entry.exerciseChecks)
+      ? entry.exerciseChecks.filter((item) => item?.exerciseId !== exerciseId)
+      : [],
     customSets: Array.isArray(entry.customSets)
       ? entry.customSets.filter((item) => item?.exerciseId !== exerciseId)
       : [],
@@ -636,11 +745,12 @@ export function removeExerciseFromEntries(
 }
 
 export function exerciseUsageCount(entries, exerciseId) {
-  return (Array.isArray(entries) ? entries : []).filter((entry) =>
-    rawExerciseValues(entry, exerciseId).some(
+  return (Array.isArray(entries) ? entries : []).filter((entry) => {
+    const completion = entryExerciseCompletion(entry, exerciseId);
+    return completion !== null || rawExerciseValues(entry, exerciseId).some(
       (value) => value !== null && value !== undefined,
-    ),
-  ).length;
+    );
+  }).length;
 }
 
 export function entryMetricValue(
@@ -660,13 +770,14 @@ export function entryMetricValue(
     return completed.length ? Math.max(...completed) : null;
   }
   const exerciseId = exerciseIdFromMetric(key);
-  if (
-    !exerciseId ||
-    !sanitizeExerciseCatalog(exercises).some(
-      (exercise) => exercise.id === exerciseId,
-    )
-  )
-    return null;
+  const exercise = sanitizeExerciseCatalog(exercises).find(
+    (item) => item.id === exerciseId,
+  );
+  if (!exerciseId || !exercise) return null;
+  if (exercise.kind === "stretch") {
+    const completed = entryExerciseCompletion(entry, exerciseId);
+    return completed === null ? null : Number(completed);
+  }
   const completed = rawExerciseValues(entry, exerciseId).filter(
     (value) => value !== null && value !== undefined,
   );
@@ -725,18 +836,8 @@ export function changeFromFirst(
   return latest === null || first === null ? null : latest - first;
 }
 
-export function calculateStreak(
-  entries,
-  referenceDate = todayLocal(),
-  exercises = DEFAULT_EXERCISES,
-) {
-  const uniqueDates = [
-    ...new Set(
-      normalizeEntries(entries, exercises)
-        .map((entry) => entry.date)
-        .filter((date) => date <= referenceDate),
-    ),
-  ]
+function calculateDateStreak(dates, referenceDate) {
+  const uniqueDates = [...new Set(dates.filter((date) => date <= referenceDate))]
     .sort()
     .reverse();
   if (!uniqueDates.length || !isIsoDate(referenceDate)) return 0;
@@ -752,6 +853,48 @@ export function calculateStreak(
     reference = current;
   }
   return streak;
+}
+
+export function calculateStreak(
+  entries,
+  referenceDate = todayLocal(),
+  exercises = DEFAULT_EXERCISES,
+) {
+  return calculateDateStreak(
+    normalizeEntries(entries, exercises).map((entry) => entry.date),
+    referenceDate,
+  );
+}
+
+export function exerciseCompletionSummary(
+  entries,
+  exerciseId,
+  exercises = DEFAULT_EXERCISES,
+  referenceDate = todayLocal(),
+) {
+  const exercise = sanitizeExerciseCatalog(exercises).find(
+    (item) => item.id === exerciseId && item.kind === "stretch",
+  );
+  if (!exercise)
+    return { completed: 0, tracked: 0, rate: 0, currentStreak: 0 };
+  const trackedEntries = normalizeEntries(entries, exercises)
+    .map((entry) => ({
+      date: entry.date,
+      completed: entryExerciseCompletion(entry, exerciseId),
+    }))
+    .filter((item) => item.completed !== null);
+  const completedEntries = trackedEntries.filter((item) => item.completed);
+  return {
+    completed: completedEntries.length,
+    tracked: trackedEntries.length,
+    rate: trackedEntries.length
+      ? Math.round((completedEntries.length / trackedEntries.length) * 100)
+      : 0,
+    currentStreak: calculateDateStreak(
+      completedEntries.map((item) => item.date),
+      referenceDate,
+    ),
+  };
 }
 
 export function formatNumber(value, decimals = 0, locale = "de-DE") {
@@ -792,12 +935,18 @@ function migratedCatalog(previousExercises) {
   return result;
 }
 
-function validateStoredEntries(entries, exercises, { canonical = false } = {}) {
+function validateStoredEntries(
+  entries,
+  exercises,
+  { canonical = false, requireChecks = false } = {},
+) {
   if (!Array.isArray(entries)) throw new Error("Der Datensatz ist ungültig.");
   if (entries.length > MAX_BACKUP_ENTRIES)
     throw new Error(`Der Datensatz enthält mehr als ${MAX_BACKUP_ENTRIES} Einträge.`);
   entries.forEach((entry, index) => {
     if (canonical && !Array.isArray(entry?.exerciseSets))
+      throw new Error(`Eintrag ${index + 1} ist nicht im aktuellen Format.`);
+    if (requireChecks && !Array.isArray(entry?.exerciseChecks))
       throw new Error(`Eintrag ${index + 1} ist nicht im aktuellen Format.`);
     if (entry?.date > todayLocal() || !validateEntry(entry, exercises).valid)
       throw new Error(`Eintrag ${index + 1} ist ungültig.`);
@@ -810,9 +959,22 @@ export function migrateDataEnvelope(parsed) {
     throw new Error("Die gespeicherten MeTrack-Daten haben keine Version.");
   if (parsed.schemaVersion > DATA_SCHEMA_VERSION)
     throw new Error("Die Daten wurden mit einer neueren MeTrack-Version erstellt.");
-  if (parsed.schemaVersion === 4) {
+  if (parsed.schemaVersion === 5) {
     if (!validateExerciseCatalog(parsed.exercises).valid)
       throw new Error("Der Übungskatalog ist ungültig.");
+    const exercises = sanitizeExerciseCatalog(parsed.exercises);
+    return {
+      schemaVersion: DATA_SCHEMA_VERSION,
+      exercises,
+      entries: validateStoredEntries(parsed.entries, exercises, {
+        canonical: true,
+        requireChecks: true,
+      }),
+    };
+  }
+  if (parsed.schemaVersion === 4) {
+    if (!validateExerciseCatalog(parsed.exercises).valid)
+      throw new Error("Der bisherige Übungskatalog ist ungültig.");
     const exercises = sanitizeExerciseCatalog(parsed.exercises);
     return {
       schemaVersion: DATA_SCHEMA_VERSION,
@@ -881,6 +1043,7 @@ export function entriesToCsv(entries, exercises = DEFAULT_EXERCISES) {
     "Datum",
     ...catalog.flatMap((exercise) => {
       const definition = exerciseDefinition(exercise);
+      if (definition.completion) return [definition.csvLabel];
       return [
         ...Array.from(
           { length: SET_COUNT },
@@ -894,6 +1057,10 @@ export function entriesToCsv(entries, exercises = DEFAULT_EXERCISES) {
   const lines = normalizeEntries(entries, catalog).map((entry) => [
     entry.date,
     ...catalog.flatMap((exercise) => {
+      if (exercise.kind === "stretch") {
+        const completed = entryExerciseCompletion(entry, exercise.id);
+        return [completed === null ? "" : completed ? "Ja" : "Nein"];
+      }
       const values = rawExerciseValues(entry, exercise.id);
       const best = entryMetricValue(
         entry,
@@ -947,7 +1114,13 @@ export function parseBackup(text) {
     throw new Error("Diese Sicherung wurde mit einer neueren MeTrack-Version erstellt.");
 
   let migrated;
-  if (parsed.version >= 4) {
+  if (parsed.version >= 5) {
+    migrated = migrateDataEnvelope({
+      schemaVersion: 5,
+      exercises: parsed.exercises,
+      entries: parsed.entries,
+    });
+  } else if (parsed.version === 4) {
     migrated = migrateDataEnvelope({
       schemaVersion: 4,
       exercises: parsed.exercises,
@@ -993,6 +1166,12 @@ export function mergeExerciseCatalog(currentExercises, importedExercises) {
       if (current.kind !== incoming.kind)
         throw new Error(`Die Übung „${incoming.name}“ hat einen Typkonflikt.`);
       if (!current.active && incoming.active) current.active = true;
+      if (
+        current.kind === "stretch" &&
+        !current.instructions &&
+        incoming.instructions
+      )
+        current.instructions = incoming.instructions;
       continue;
     }
     if (names.has(incoming.name.toLocaleLowerCase("de-DE")))
