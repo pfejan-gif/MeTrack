@@ -44,7 +44,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 
-const APP_VERSION = "2.3.5";
+const APP_VERSION = "2.3.6";
 const TIMER_KEY = "metrack_active_timer_v1";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
@@ -717,9 +717,7 @@ function createTimerButton(exercise, index) {
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", "M9 3h6M12 6V3m0 10 3-2");
   svg.append(circle, path);
-  const label = document.createElement("span");
-  label.textContent = "Timer";
-  button.append(svg, label);
+  button.append(svg);
   return button;
 }
 
@@ -766,12 +764,14 @@ function renderExerciseFields() {
       const error = document.createElement("small");
       error.className = "field-error";
       error.id = `${id}Error`;
-      const inputRow = document.createElement("div");
-      inputRow.className = "set-input-row";
-      inputRow.append(input);
-      if (exercise.kind === "seconds")
-        inputRow.append(createTimerButton(exercise, index));
-      field.append(label, inputRow, error);
+      const fieldHeader = document.createElement("div");
+      fieldHeader.className = "set-field-header";
+      fieldHeader.append(label);
+      if (exercise.kind === "seconds") {
+        fieldHeader.classList.add("has-timer");
+        fieldHeader.append(createTimerButton(exercise, index));
+      }
+      field.append(fieldHeader, input, error);
       inputs.append(field);
     }
     fieldset.append(legend, inputs);
