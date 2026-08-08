@@ -51,6 +51,7 @@ assert.doesNotMatch(
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
 assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
+assert.match(styles, /\.set-field-header\s*\{/);
 assert.match(
   styles,
   /\.toast\.visible\s*\{[^}]*pointer-events:\s*auto/s,
@@ -123,6 +124,7 @@ assertOpaquePng("assets/icons/apple-touch-icon.png");
 const serviceWorker = read("service-worker.js");
 const app = read("assets/app.js");
 const core = read("assets/core.js");
+assert.doesNotMatch(app, /label\.textContent\s*=\s*"Timer"/);
 const packageJson = JSON.parse(read("package.json"));
 for (const asset of requiredFiles
   .slice(0, 10)

@@ -1014,43 +1014,48 @@ h3 {
   text-align: center;
 }
 
-.set-input-row {
-  display: grid;
-  gap: 6px;
+.set-field-header {
+  display: flex;
+  margin-bottom: 7px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
 }
 
-.set-input-row input {
-  min-width: 0;
-  width: 100%;
+.set-field-header.has-timer {
+  min-height: 44px;
+  margin-bottom: 5px;
+}
+
+.set-inputs .set-field-header label {
+  margin-bottom: 0;
 }
 
 .set-timer-button {
-  display: inline-flex;
-  width: 100%;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-right: -6px;
+  flex: 0 0 44px;
   min-height: 44px;
-  padding: 7px 8px;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  color: var(--text-soft);
-  background: var(--surface-soft);
-  font-size: 0.64rem;
-  font-weight: 800;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  color: var(--blue);
+  background: transparent;
   cursor: pointer;
 }
 
 .set-timer-button svg {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 .set-timer-button:hover,
 .set-timer-button.active {
-  border-color: color-mix(in srgb, var(--mint) 45%, var(--line));
   color: var(--mint);
-  background: color-mix(in srgb, var(--mint) 9%, var(--surface-soft));
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
 }
 
 .set-timer-button.running svg {
