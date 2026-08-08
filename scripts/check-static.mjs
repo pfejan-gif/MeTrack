@@ -27,9 +27,18 @@ for (const file of requiredFiles)
   );
 
 const html = read("index.html");
+const styles = read("assets/styles.css");
 assert.match(html, /Content-Security-Policy/);
 assert.match(html, /viewport-fit=cover/);
+assert.match(html, /maximum-scale=1/);
+assert.match(html, /user-scalable=no/);
 assert.match(html, /apple-mobile-web-app-capable/);
+assert.match(styles, /touch-action:\s*pan-x pan-y/);
+assert.match(
+  styles,
+  /\.set-card legend\s*\{[^}]*float:\s*left/s,
+  "Legenden müssen innerhalb des Feldrahmens liegen, damit iOS die obere Linie nicht unterbricht.",
+);
 assert.doesNotMatch(
   html,
   /(?:src|href)="\/(?!\/)/,
