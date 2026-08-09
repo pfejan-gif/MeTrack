@@ -8,6 +8,11 @@ const SWIPE_MIN_DISTANCE = 56;
 const SWIPE_MAX_DURATION = 1_000;
 const SWIPE_DIRECTION_RATIO = 1.25;
 const SWIPE_EDGE_GUARD = 24;
+const VIEW_TRANSITION_DISTANCE = 28;
+const VIEW_TRANSITION_OPTIONS = {
+  duration: 260,
+  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+};
 const SWIPE_BLOCK_SELECTOR = [
   "a",
   "button",
@@ -43,6 +48,22 @@ function blocksViewSwipe(target) {
   return Boolean(target?.closest?.(SWIPE_BLOCK_SELECTOR));
 }
 
+export function viewTransitionKeyframes(direction = 1) {
+  const offset = direction < 0
+    ? -VIEW_TRANSITION_DISTANCE
+    : VIEW_TRANSITION_DISTANCE;
+  return [
+    {
+      opacity: 0.66,
+      transform: `translate3d(${offset}px, 0, 0) scale(0.992)`,
+    },
+    {
+      opacity: 1,
+      transform: "translate3d(0, 0, 0) scale(1)",
+    },
+  ];
+}
+
 export function routeFromHash(hash = "") {
   const normalized = String(hash).toLocaleLowerCase("de-DE");
   if (["#analysis", "#overview", "#progress"].includes(normalized))
@@ -58,6 +79,7 @@ export function routeFromHash(hash = "") {
 export function createNavigationController({
   windowRef = window,
   gestureSurface = null,
+  transitionSurface = null,
   sections,
   links,
   entrySection,
@@ -67,8 +89,30 @@ export function createNavigationController({
 }) {
   let currentView = null;
   let swipeStart = null;
+  let pendingTransitionDirection = 0;
+  let viewAnimation = null;
+
+  function animateViewTransition(direction) {
+    viewAnimation?.cancel?.();
+    viewAnimation = null;
+    if (
+      !transitionSurface?.animate ||
+      windowRef.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    )
+      return;
+    try {
+      viewAnimation = transitionSurface.animate(
+        viewTransitionKeyframes(direction),
+        VIEW_TRANSITION_OPTIONS,
+      );
+    } catch {
+      viewAnimation = null;
+    }
+  }
 
   function applyRoute({ initial = false } = {}) {
+    const transitionDirection = pendingTransitionDirection;
+    pendingTransitionDirection = 0;
     const route = routeFromHash(windowRef.location.hash);
     if (!initial && currentView && route.view !== currentView)
       beforeNavigate(currentView, route.view);
@@ -90,12 +134,18 @@ export function createNavigationController({
       );
     else if (!initial && changed)
       windowRef.scrollTo({ top: 0, behavior: "auto" });
+    if (!initial && changed && transitionDirection)
+      animateViewTransition(transitionDirection);
     return route.view;
   }
 
-  function navigate(view, { entry = false, replace = false } = {}) {
+  function navigate(
+    view,
+    { entry = false, replace = false, transitionDirection = 0 } = {},
+  ) {
     const hash = entry ? "#entry" : VIEW_HASHES[view] || VIEW_HASHES.today;
     if (windowRef.location.hash === hash) return applyRoute();
+    pendingTransitionDirection = transitionDirection;
     if (replace) {
       windowRef.history.replaceState(null, "", hash);
       return applyRoute();
@@ -135,12 +185,14 @@ export function createNavigationController({
       (item) => item.identifier === start.identifier,
     );
     if (!touch) return;
+    const deltaX = touch.clientX - start.x;
     const destination = swipeDestination(currentView, {
-      deltaX: touch.clientX - start.x,
+      deltaX,
       deltaY: touch.clientY - start.y,
       duration: now() - start.time,
     });
-    if (destination) navigate(destination);
+    if (destination)
+      navigate(destination, { transitionDirection: deltaX < 0 ? 1 : -1 });
   }
 
   function cancelTouchGesture() {
@@ -167,6 +219,8 @@ export function createNavigationController({
     gestureSurface?.removeEventListener("touchstart", handleTouchStart);
     gestureSurface?.removeEventListener("touchend", handleTouchEnd);
     gestureSurface?.removeEventListener("touchcancel", cancelTouchGesture);
+    viewAnimation?.cancel?.();
+    viewAnimation = null;
   }
 
   return {

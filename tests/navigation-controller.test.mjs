@@ -5,6 +5,7 @@ import {
   createNavigationController,
   routeFromHash,
   swipeDestination,
+  viewTransitionKeyframes,
 } from "../assets/app/navigation-controller.js";
 
 class FakeElement {
@@ -28,9 +29,13 @@ class FakeElement {
   }
 }
 
-function fixture(hash = "", { initialNow = 0 } = {}) {
+function fixture(
+  hash = "",
+  { initialNow = 0, reducedMotion = false } = {},
+) {
   const listeners = new Map();
   const gestureListeners = new Map();
+  const animations = [];
   const sections = ["today", "analysis", "analysis", "history"].map(
     (appView) => new FakeElement({ appView }),
   );
@@ -51,6 +56,7 @@ function fixture(hash = "", { initialNow = 0 } = {}) {
     },
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: (name) => listeners.delete(name),
+    matchMedia: () => ({ matches: reducedMotion }),
     requestAnimationFrame: (callback) => callback(),
     scrollTo() {},
   };
@@ -58,9 +64,24 @@ function fixture(hash = "", { initialNow = 0 } = {}) {
     addEventListener: (name, callback) => gestureListeners.set(name, callback),
     removeEventListener: (name) => gestureListeners.delete(name),
   };
+  const transitionSurface = {
+    animate: (keyframes, options) => {
+      const animation = {
+        cancelled: false,
+        cancel() {
+          this.cancelled = true;
+        },
+        keyframes,
+        options,
+      };
+      animations.push(animation);
+      return animation;
+    },
+  };
   const controller = createNavigationController({
     windowRef,
     gestureSurface,
+    transitionSurface,
     sections,
     links,
     entrySection,
@@ -69,6 +90,7 @@ function fixture(hash = "", { initialNow = 0 } = {}) {
     now: () => currentTime,
   });
   return {
+    animations,
     changes,
     controller,
     entrySection,
@@ -78,8 +100,8 @@ function fixture(hash = "", { initialNow = 0 } = {}) {
     sections,
     transitions,
     windowRef,
-    setTime: (value) => {
-      currentTime = value;
+    advanceTime: (value) => {
+      currentTime += value;
     },
   };
 }
@@ -94,7 +116,7 @@ function swipe(setup, { fromX, fromY, toX, toY, duration = 250, target } = {}) {
     target: eventTarget,
     touches: [touch(1, fromX, fromY)],
   });
-  setup.setTime(duration);
+  setup.advanceTime(duration);
   setup.gestureListeners.get("touchend")({
     changedTouches: [touch(1, toX, toY)],
   });
@@ -157,6 +179,23 @@ test("ignoriert Tab-Grenzen, kurze, vertikale und zu langsame Gesten", () => {
   );
 });
 
+test("erzeugt einen dezenten Übergang aus der Wischrichtung", () => {
+  assert.deepEqual(viewTransitionKeyframes(1), [
+    {
+      opacity: 0.66,
+      transform: "translate3d(28px, 0, 0) scale(0.992)",
+    },
+    {
+      opacity: 1,
+      transform: "translate3d(0, 0, 0) scale(1)",
+    },
+  ]);
+  assert.equal(
+    viewTransitionKeyframes(-1)[0].transform,
+    "translate3d(-28px, 0, 0) scale(0.992)",
+  );
+});
+
 test("zeigt nur die gewählte Ansicht und markiert ihre Navigation", () => {
   const { controller, links, sections, transitions } = fixture("#analysis");
 
@@ -189,6 +228,60 @@ test("wechselt per Wischgeste zum benachbarten Tab", () => {
   });
 
   assert.equal(setup.windowRef.location.hash, "#history");
+});
+
+test("animiert den neuen Inhalt passend zur Wischrichtung", () => {
+  const setup = fixture("#analysis");
+  setup.controller.initialize();
+
+  swipe(setup, {
+    fromX: 300,
+    fromY: 400,
+    toX: 210,
+    toY: 405,
+  });
+  setup.listeners.get("hashchange")();
+
+  assert.equal(setup.animations.length, 1);
+  assert.equal(
+    setup.animations[0].keyframes[0].transform,
+    "translate3d(28px, 0, 0) scale(0.992)",
+  );
+  assert.deepEqual(setup.animations[0].options, {
+    duration: 260,
+    easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+  });
+
+  swipe(setup, {
+    fromX: 100,
+    fromY: 400,
+    toX: 190,
+    toY: 405,
+  });
+  setup.listeners.get("hashchange")();
+
+  assert.equal(setup.animations.length, 2);
+  assert.equal(setup.animations[0].cancelled, true);
+  assert.equal(
+    setup.animations[1].keyframes[0].transform,
+    "translate3d(-28px, 0, 0) scale(0.992)",
+  );
+});
+
+test("respektiert die Systemeinstellung für reduzierte Bewegung", () => {
+  const setup = fixture("#analysis", { reducedMotion: true });
+  setup.controller.initialize();
+
+  swipe(setup, {
+    fromX: 300,
+    fromY: 400,
+    toX: 210,
+    toY: 405,
+  });
+  setup.listeners.get("hashchange")();
+
+  assert.equal(setup.windowRef.location.hash, "#history");
+  assert.equal(setup.animations.length, 0);
 });
 
 test("ignoriert Wischgesten auf Bedienelementen und am Displayrand", () => {
