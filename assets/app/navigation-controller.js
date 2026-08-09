@@ -3,6 +3,45 @@ const VIEW_HASHES = {
   analysis: "#analysis",
   history: "#history",
 };
+const VIEW_ORDER = ["today", "analysis", "history"];
+const SWIPE_MIN_DISTANCE = 56;
+const SWIPE_MAX_DURATION = 1_000;
+const SWIPE_DIRECTION_RATIO = 1.25;
+const SWIPE_EDGE_GUARD = 24;
+const SWIPE_BLOCK_SELECTOR = [
+  "a",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "dialog",
+  '[contenteditable="true"]',
+  ".metric-tabs",
+  ".segment-control",
+  '[data-view-swipe="ignore"]',
+].join(",");
+
+export function swipeDestination(
+  currentView,
+  { deltaX = 0, deltaY = 0, duration = 0 } = {},
+) {
+  const index = VIEW_ORDER.indexOf(currentView);
+  const horizontalDistance = Math.abs(deltaX);
+  if (
+    index < 0 ||
+    horizontalDistance < SWIPE_MIN_DISTANCE ||
+    horizontalDistance < Math.abs(deltaY) * SWIPE_DIRECTION_RATIO ||
+    duration > SWIPE_MAX_DURATION
+  )
+    return null;
+
+  const nextIndex = index + (deltaX < 0 ? 1 : -1);
+  return VIEW_ORDER[nextIndex] || null;
+}
+
+function blocksViewSwipe(target) {
+  return Boolean(target?.closest?.(SWIPE_BLOCK_SELECTOR));
+}
 
 export function routeFromHash(hash = "") {
   const normalized = String(hash).toLocaleLowerCase("de-DE");
@@ -18,13 +57,16 @@ export function routeFromHash(hash = "") {
 
 export function createNavigationController({
   windowRef = window,
+  gestureSurface = null,
   sections,
   links,
   entrySection,
   beforeNavigate = () => {},
   onViewChange = () => {},
+  now = () => Date.now(),
 }) {
   let currentView = null;
+  let swipeStart = null;
 
   function applyRoute({ initial = false } = {}) {
     const route = routeFromHash(windowRef.location.hash);
@@ -62,14 +104,69 @@ export function createNavigationController({
     return view;
   }
 
+  function handleTouchStart(event) {
+    if (event.touches?.length !== 1 || blocksViewSwipe(event.target)) {
+      swipeStart = null;
+      return;
+    }
+    const touch = event.touches[0];
+    const viewportWidth = Number(windowRef.innerWidth);
+    if (
+      touch.clientX <= SWIPE_EDGE_GUARD ||
+      (Number.isFinite(viewportWidth) &&
+        touch.clientX >= viewportWidth - SWIPE_EDGE_GUARD)
+    ) {
+      swipeStart = null;
+      return;
+    }
+    swipeStart = {
+      identifier: touch.identifier,
+      x: touch.clientX,
+      y: touch.clientY,
+      time: now(),
+    };
+  }
+
+  function handleTouchEnd(event) {
+    const start = swipeStart;
+    swipeStart = null;
+    if (!start) return;
+    const touch = Array.from(event.changedTouches || []).find(
+      (item) => item.identifier === start.identifier,
+    );
+    if (!touch) return;
+    const destination = swipeDestination(currentView, {
+      deltaX: touch.clientX - start.x,
+      deltaY: touch.clientY - start.y,
+      duration: now() - start.time,
+    });
+    if (destination) navigate(destination);
+  }
+
+  function cancelTouchGesture() {
+    swipeStart = null;
+  }
+
   function initialize() {
     const view = applyRoute({ initial: true });
     windowRef.addEventListener("hashchange", applyRoute);
+    gestureSurface?.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    gestureSurface?.addEventListener("touchend", handleTouchEnd, {
+      passive: true,
+    });
+    gestureSurface?.addEventListener("touchcancel", cancelTouchGesture, {
+      passive: true,
+    });
     return view;
   }
 
   function destroy() {
     windowRef.removeEventListener("hashchange", applyRoute);
+    gestureSurface?.removeEventListener("touchstart", handleTouchStart);
+    gestureSurface?.removeEventListener("touchend", handleTouchEnd);
+    gestureSurface?.removeEventListener("touchcancel", cancelTouchGesture);
   }
 
   return {

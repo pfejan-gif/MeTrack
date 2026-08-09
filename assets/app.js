@@ -27,7 +27,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.7.3";
+const APP_VERSION = "2.8.0";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
   "metrack_pre_reset_backup_v1",
@@ -428,6 +428,7 @@ const {
 } = entryController;
 
 navigation = createNavigationController({
+  gestureSurface: document,
   sections: $$('[data-app-view]'),
   links: $$('[data-view-link]'),
   entrySection: $("entry"),
