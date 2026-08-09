@@ -5,7 +5,7 @@ import {
   formatDate,
   formatNumber,
 } from "../core.js";
-import { createExerciseIconSvg } from "../exercise-icons.js";
+import { createExerciseIconImage } from "../exercise-icons.js";
 
 export const HISTORY_PAGE_SIZE = 20;
 
@@ -145,7 +145,7 @@ export function createHistoryController({ state, elements }) {
       const value = exerciseHistoryValue(entry, exercise);
       if (!value) continue;
       const line = document.createElement("span");
-      line.append(createExerciseIconSvg(exercise.icon));
+      line.append(createExerciseIconImage(exercise.icon));
       const name = document.createElement("strong");
       name.textContent = exercise.name;
       line.append(name, ` ${value}`);
@@ -220,7 +220,7 @@ export function createHistoryController({ state, elements }) {
       const metric = document.createElement("div");
       metric.className = "history-metric";
       const small = document.createElement("span");
-      if (icon) small.append(createExerciseIconSvg(icon));
+      if (icon) small.append(createExerciseIconImage(icon));
       small.append(label);
       const strong = document.createElement("strong");
       strong.textContent = value;

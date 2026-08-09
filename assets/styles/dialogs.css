@@ -298,7 +298,7 @@
 
 .exercise-icon-tile {
   display: grid;
-  min-height: 72px;
+  min-height: 86px;
   padding: 9px 5px 7px;
   place-items: center;
   align-content: center;
@@ -308,6 +308,11 @@
   color: var(--muted);
   background: var(--surface-soft);
   transition: 160ms ease;
+}
+
+.exercise-icon-tile .exercise-icon-image {
+  width: 44px;
+  height: 44px;
 }
 
 .exercise-icon-tile small {

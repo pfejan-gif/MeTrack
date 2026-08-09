@@ -10,7 +10,7 @@ import {
   metricDefinition,
   todayLocal,
 } from "../core.js";
-import { createExerciseIconSvg } from "../exercise-icons.js";
+import { createExerciseIconImage } from "../exercise-icons.js";
 import {
   clearCanvas,
   drawChart as drawChartCanvas,
@@ -40,7 +40,7 @@ export function createDashboardController({ state, elements, setText }) {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.metric = exerciseMetricKey(exercise.id);
-      button.append(createExerciseIconSvg(exercise.icon));
+      button.append(createExerciseIconImage(exercise.icon));
       const label = document.createElement("span");
       label.textContent = exercise.name;
       button.append(label);
@@ -97,7 +97,7 @@ export function createDashboardController({ state, elements, setText }) {
     const spotlight = active[0] || state.exercises[0] || null;
     if (spotlight) {
       elements.spotlightExerciseIcon.replaceChildren(
-        createExerciseIconSvg(spotlight.icon),
+        createExerciseIconImage(spotlight.icon),
       );
       elements.spotlightExerciseIcon.hidden = false;
       const definition = exerciseDefinition(spotlight);

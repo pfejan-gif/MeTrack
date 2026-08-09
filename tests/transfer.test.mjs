@@ -38,19 +38,25 @@ test("erstellt Excel-freundliches CSV für alle Übungen", () => {
 });
 
 test("exportiert und importiert eine v6-Sicherung verlustfrei", () => {
-  const situps = { id: "custom-situps", name: "Sit-Ups", kind: "reps", icon: "sit-up", active: false };
+  const burpees = {
+    id: "custom-burpees",
+    name: "Burpees",
+    kind: "reps",
+    icon: "burpee",
+    active: false,
+  };
   const stretch = {
-    id: "custom-hip-stretch",
-    name: "Hüftbeuger",
+    id: "custom-wrist-stretch",
+    name: "Unterarme",
     kind: "stretch",
-    icon: "hip-stretch",
+    icon: "wrist-stretch",
     active: true,
     instructions: "30 Sekunden pro Seite halten.",
   };
-  const exercises = [...catalog, situps, stretch];
+  const exercises = [...catalog, burpees, stretch];
   const entries = [{
     date: "2026-08-05",
-    exerciseSets: [{ exerciseId: situps.id, values: [20, 24, 22] }],
+    exerciseSets: [{ exerciseId: burpees.id, values: [20, 24, 22] }],
     exerciseChecks: [{ exerciseId: stretch.id, completed: false }],
     weight: null,
     waist: null,
@@ -60,7 +66,10 @@ test("exportiert und importiert eine v6-Sicherung verlustfrei", () => {
   assert.equal(backup.version, BACKUP_VERSION);
   assert.equal(backup.schemaVersion, DATA_SCHEMA_VERSION);
   assert.deepEqual(restored.exercises, exercises);
-  assert.deepEqual(entryExerciseValues(restored.entries[0], situps.id), [20, 24, 22]);
+  assert.deepEqual(
+    entryExerciseValues(restored.entries[0], burpees.id),
+    [20, 24, 22],
+  );
   assert.equal(entryExerciseCompletion(restored.entries[0], stretch.id), false);
   assert.equal(restored.settings.theme, "dark");
 });
@@ -90,4 +99,3 @@ test("weist übergroße Sicherungen vor der Verarbeitung zurück", () => {
   const entries = Array.from({ length: MAX_BACKUP_ENTRIES + 1 }, (_, index) => ({ date: `2025-01-${String((index % 28) + 1).padStart(2, "0")}` }));
   assert.throws(() => parseBackup(JSON.stringify({ app: "MeTrack", version: 4, exercises: catalog, entries })), /mehr als/);
 });
-
