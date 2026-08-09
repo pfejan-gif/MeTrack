@@ -20,6 +20,17 @@ import {
 } from "./chart-renderer.js";
 import { exerciseIconBadge } from "./exercise-icon-ui.js";
 
+export function exerciseHistoryValue(entry, exercise) {
+  if (exercise.kind === "stretch")
+    return entryExerciseCompletion(entry, exercise.id) === true
+      ? "Erledigt ✓"
+      : null;
+  const values = entryExerciseValues(entry, exercise.id);
+  if (values.every((value) => value === null)) return null;
+  const unit = exerciseDefinition(exercise).unit;
+  return `${values.map((value) => formatNumber(value)).join(" · ")} ${unit}`;
+}
+
 export function createDashboardController({ state, elements, setText }) {
   const drawChart = (canvas, entries, key, options = {}) =>
     drawChartCanvas(canvas, entries, key, state.exercises, options);
@@ -111,12 +122,7 @@ export function createDashboardController({ state, elements, setText }) {
         setText("spotlightExerciseLabel", `${spotlight.name} durchgeführt`);
         setText("spotlightExerciseValue", formatNumber(summary.completed));
         setText("spotlightExerciseUnit", "×");
-        setText(
-          "spotlightExerciseTrend",
-          summary.tracked
-            ? `${summary.rate} % · Serie ${summary.currentStreak} ${summary.currentStreak === 1 ? "Tag" : "Tage"}`
-            : "Noch kein Tagesstatus",
-        );
+        setText("spotlightExerciseTrend", "Insgesamt durchgeführt");
       } else {
         const summary = metricSummary(exerciseMetricKey(spotlight.id));
         setText("spotlightExerciseLabel", `${spotlight.name} Bestwert`);
@@ -170,9 +176,7 @@ export function createDashboardController({ state, elements, setText }) {
         );
         number.textContent = formatNumber(summary.completed);
         unit.textContent = "×";
-        note.textContent = summary.tracked
-          ? `${summary.rate} % der erfassten Tage · Serie ${summary.currentStreak}`
-          : "Noch kein Tagesstatus";
+        note.textContent = "Insgesamt durchgeführt";
       } else {
         const summary = metricSummary(exerciseMetricKey(exercise.id));
         number.textContent = formatNumber(summary.best);
@@ -212,7 +216,7 @@ export function createDashboardController({ state, elements, setText }) {
     drawChart(elements.progressChart, entries, state.metric);
     if (!entries.length) {
       elements.chartSummary.textContent = definition.completion
-        ? `Noch kein Tagesstatus für ${definition.label}.`
+        ? `${definition.label} wurde im ausgewählten Zeitraum noch nicht durchgeführt.`
         : `Noch keine Werte für ${definition.label}.`;
     } else if (definition.completion) {
       const summary = exerciseCompletionSummary(
@@ -220,7 +224,9 @@ export function createDashboardController({ state, elements, setText }) {
         definition.exerciseId,
         state.exercises,
       );
-      elements.chartSummary.textContent = `${summary.completed} von ${summary.tracked} erfassten ${summary.tracked === 1 ? "Tag" : "Tagen"} durchgeführt (${summary.rate} %). Aktuelle Serie: ${summary.currentStreak} ${summary.currentStreak === 1 ? "Tag" : "Tage"}.`;
+      elements.chartSummary.textContent = summary.completed === 1
+        ? "1-mal im ausgewählten Zeitraum durchgeführt."
+        : `${summary.completed}-mal im ausgewählten Zeitraum durchgeführt.`;
     } else {
       const first = entryMetricValue(entries[0], state.metric, state.exercises);
       const last = entryMetricValue(entries[entries.length - 1], state.metric, state.exercises);
@@ -229,23 +235,12 @@ export function createDashboardController({ state, elements, setText }) {
     elements.progressChart.setAttribute("aria-label", `${definition.label}-Verlauf: ${elements.chartSummary.textContent}`);
   }
   
-  function exerciseDisplay(entry, exercise) {
-    if (exercise.kind === "stretch") {
-      const completed = entryExerciseCompletion(entry, exercise.id);
-      return completed === null ? null : completed ? "Erledigt ✓" : "Nicht erledigt";
-    }
-    const values = entryExerciseValues(entry, exercise.id);
-    if (values.every((value) => value === null)) return null;
-    const unit = exerciseDefinition(exercise).unit;
-    return `${values.map((value) => formatNumber(value)).join(" · ")} ${unit}`;
-  }
-  
   function exerciseCell(entry) {
     const cell = document.createElement("td");
     cell.className = "custom-history-cell";
     let count = 0;
     for (const exercise of state.exercises) {
-      const value = exerciseDisplay(entry, exercise);
+      const value = exerciseHistoryValue(entry, exercise);
       if (!value) continue;
       const line = document.createElement("span");
       line.append(createExerciseIconSvg(exercise.icon));
@@ -319,7 +314,7 @@ export function createDashboardController({ state, elements, setText }) {
       const items = [
         ...state.exercises.map((exercise) => ({
           label: exercise.name,
-          value: exerciseDisplay(entry, exercise),
+          value: exerciseHistoryValue(entry, exercise),
           icon: exercise.icon,
         })),
         { label: "Gewicht", value: entry.weight === null ? null : `${formatNumber(entry.weight, 1)} kg` },

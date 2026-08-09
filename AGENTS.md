@@ -35,8 +35,10 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 - Übungen und Dehnungen lassen sich aktivieren und deaktivieren. Vollständiges
   Löschen ist möglich, muss aber klar vor dem Verlust historischer Werte warnen.
 - Für gemessene Übungen verwendet das Dashboard als Tageswert den besten der
-  drei Sätze. Dehnungen werden anhand erledigter Tage, Quote/Serie und Ja/Nein-
-  Verlauf ausgewertet.
+  drei Sätze. Dehnungen werden ausschließlich nach der Anzahl ihrer
+  Durchführungen ausgewertet. Nicht erledigte Dehnungen bleiben für die
+  Tagesbearbeitung gespeichert, werden aber weder im Verlauf angezeigt noch als
+  Auswertungswert berücksichtigt.
 - Körperwerte Gewicht und Bauchumfang bleiben optional und tagesbezogen.
 - Kalenderdaten werden als lokale `YYYY-MM-DD`-Werte behandelt. Keine UTC-
   Konvertierung einführen, die den Tag in europäischen Zeitzonen verschiebt.

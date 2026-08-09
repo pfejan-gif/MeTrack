@@ -16,9 +16,9 @@ Ein fokussierter, iPhone-optimierter Fitness-Tracker für den täglichen Fortsch
 - jede Übung – auch Plank, Liegestütze und Kniebeugen – deaktivieren, ohne frühere Trainingswerte zu löschen
 - Übungen nach einer deutlichen Warnung mitsamt allen historischen Werten ganz löschen
 - Gewicht und Bauchumfang dokumentieren
-- persönliche Bestwerte, Veränderungen sowie Trainings- und Dehnungsserien sehen
+- persönliche Bestwerte, Veränderungen sowie Trainingsserien sehen
 - Verlauf nach Messwert und Zeitraum auswerten
-- Dehnungen nach Anzahl, Erfüllungsquote und täglichem Ja/Nein-Verlauf auswerten
+- Dehnungen ausschließlich nach der Anzahl ihrer Durchführungen auswerten
 - Einträge mobil und am Desktop bearbeiten oder mit Rückgängig löschen
 - Excel-kompatibles CSV exportieren
 - versionierte JSON-Sicherungen exportieren, prüfen und wiederherstellen

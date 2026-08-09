@@ -110,7 +110,7 @@ test("ganz löschen entfernt Übung und historische Werte", () => {
   assert.equal(exerciseUsageCount(entries, plank.id), 3);
 });
 
-test("speichert Dehnungen als erfassten Tagesstatus und berechnet die Statistik", () => {
+test("speichert Dehnungsstatus und zählt ausschließlich Durchführungen", () => {
   const stretch = {
     id: "custom-hip-stretch",
     name: "Hüftbeuger",
@@ -150,11 +150,11 @@ test("speichert Dehnungen als erfassten Tagesstatus und berechnet die Statistik"
   assert.equal(entryExerciseCompletion(normalized[1], stretch.id), false);
   assert.equal(
     entryMetricValue(normalized[1], exerciseMetricKey(stretch.id), exercises),
-    0,
+    null,
   );
   assert.deepEqual(
-    exerciseCompletionSummary(normalized, stretch.id, exercises, "2026-08-08"),
-    { completed: 3, tracked: 4, rate: 75, currentStreak: 2 },
+    exerciseCompletionSummary(normalized, stretch.id, exercises),
+    { completed: 3 },
   );
   assert.equal(
     validateEntry({
@@ -205,4 +205,3 @@ test("führt einen expliziten Dehnungsstatus beim Import deterministisch zusamme
   assert.equal(entryExerciseCompletion(merged[0], stretch.id), false);
   assert.equal(entryMetricValue(merged[0], pushupsMetric, exercises), 10);
 });
-
