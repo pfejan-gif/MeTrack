@@ -26,6 +26,7 @@ const appModules = [
   "assets/app/entry-controller.js",
   "assets/app/exercise-controller.js",
   "assets/app/exercise-icon-ui.js",
+  "assets/app/history-controller.js",
   "assets/app/pwa-controller.js",
   "assets/app/timer-controller.js",
   "assets/app/transfer-controller.js",

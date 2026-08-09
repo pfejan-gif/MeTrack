@@ -169,6 +169,10 @@
     padding-inline: 7px;
   }
 
+  .history-summary {
+    min-height: 72px;
+  }
+
   .desktop-history {
     display: none !important;
   }
@@ -246,6 +250,15 @@
   .data-actions .button {
     gap: 5px;
     font-size: 0.7rem;
+  }
+
+  .history-summary {
+    padding-left: 13px;
+  }
+
+  .history-summary-chip {
+    padding-inline: 7px;
+    font-size: 0.59rem;
   }
 
   .update-banner-copy small {

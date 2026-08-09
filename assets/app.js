@@ -15,6 +15,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 import { createDashboardController } from "./app/dashboard-controller.js";
+import { HISTORY_PAGE_SIZE } from "./app/history-controller.js";
 import { ENTRY_DRAFT_KEY } from "./app/entry-draft.js";
 import { createEntryController } from "./app/entry-controller.js";
 import { createExerciseController } from "./app/exercise-controller.js";
@@ -25,7 +26,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.5.4";
+const APP_VERSION = "2.6.0";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
   "metrack_pre_reset_backup_v1",
@@ -121,7 +122,7 @@ const state = {
   exercises: cloneDefaults(),
   metric: exerciseMetricKey(DEFAULT_EXERCISES[0].id),
   period: "30",
-  historyLimit: 50,
+  historyLimit: HISTORY_PAGE_SIZE,
   editingDate: null,
   editingExerciseId: null,
   settings: { theme: "system", installHintDismissed: false },
@@ -575,7 +576,7 @@ function bindEvents() {
   elements.historyRows.addEventListener("click", handleHistoryAction);
   elements.mobileHistory.addEventListener("click", handleHistoryAction);
   elements.showMoreHistoryButton.addEventListener("click", () => {
-    state.historyLimit += 50;
+    state.historyLimit += HISTORY_PAGE_SIZE;
     renderHistory();
   });
   elements.metricTabs.addEventListener("click", (event) => {

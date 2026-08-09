@@ -241,6 +241,21 @@ tbody tr:hover td {
   background: color-mix(in srgb, var(--surface-hover) 55%, transparent);
 }
 
+.history-month-row th {
+  padding-block: 10px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom-color: var(--line-strong);
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-soft) 78%, var(--bg-elevated));
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.history-month-row:first-child th {
+  border-top: 0;
+}
+
 .row-actions {
   display: flex;
   justify-content: flex-end;
@@ -277,7 +292,7 @@ tbody tr:hover td {
 
 .mobile-history {
   display: grid;
-  gap: 10px;
+  gap: 20px;
 }
 
 .history-more {
@@ -285,30 +300,145 @@ tbody tr:hover td {
   margin-top: 14px;
 }
 
-.history-item {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--bg-elevated);
+.history-month {
+  min-width: 0;
 }
 
-.history-item-header {
+.history-month-heading {
   display: flex;
-  margin-bottom: 13px;
-  align-items: center;
+  margin: 0 4px 8px;
+  align-items: baseline;
   justify-content: space-between;
   gap: 12px;
 }
 
-.history-date {
+.history-month-heading h3 {
+  margin: 0;
   color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 820;
+  font-size: 0.86rem;
+  font-weight: 850;
+  letter-spacing: -0.01em;
 }
 
-.history-item-actions {
+.history-month-heading span {
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 720;
+}
+
+.history-month-list {
+  display: grid;
+  gap: 8px;
+}
+
+.history-item {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.history-item[open] {
+  border-color: color-mix(in srgb, var(--mint) 33%, var(--line));
+  background: color-mix(in srgb, var(--bg-elevated) 92%, var(--mint));
+}
+
+.history-summary {
+  display: grid;
+  min-height: 76px;
+  padding: 13px 10px 13px 15px;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.history-summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-summary-copy,
+.history-summary-date {
+  display: block;
+}
+
+.history-summary-date {
+  color: var(--text);
+  font-size: 0.87rem;
+  font-weight: 850;
+}
+
+.history-summary-chips {
   display: flex;
-  gap: 3px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.history-summary-chip {
+  display: inline-flex;
+  min-height: 23px;
+  padding: 3px 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 0.62rem;
+  font-weight: 790;
+  line-height: 1.1;
+}
+
+.history-summary-chip.training {
+  border-color: color-mix(in srgb, var(--blue) 24%, var(--line));
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, var(--surface-soft));
+}
+
+.history-summary-chip.stretch {
+  border-color: color-mix(in srgb, var(--mint) 25%, var(--line));
+  color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 8%, var(--surface-soft));
+}
+
+.history-summary-chevron {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--muted);
+  background: var(--surface-soft);
+}
+
+.history-summary-chevron svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 160ms ease;
+}
+
+.history-item[open] .history-summary-chevron {
+  color: var(--mint);
+}
+
+.history-item[open] .history-summary-chevron svg {
+  transform: rotate(180deg);
+}
+
+.history-details {
+  padding: 0 13px 13px;
+}
+
+.history-details::before {
+  display: block;
+  height: 1px;
+  margin-bottom: 12px;
+  background: var(--line);
+  content: "";
 }
 
 .history-metrics {
@@ -344,6 +474,37 @@ tbody tr:hover td {
   font-variant-numeric: tabular-nums;
 }
 
+.history-detail-actions {
+  display: grid;
+  margin-top: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.row-action.history-detail-action {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  color: var(--text-soft);
+  background: var(--surface-soft);
+  font-size: 0.72rem;
+  font-weight: 790;
+}
+
+.row-action.history-detail-action.danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.history-detail-action svg {
+  width: 17px;
+  height: 17px;
+}
+
 .text-button {
   min-height: 44px;
   padding: 8px;
@@ -368,4 +529,3 @@ tbody tr:hover td {
   font-size: 0.72rem;
   text-align: center;
 }
-

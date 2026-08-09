@@ -2,13 +2,10 @@ import {
   BODY_METRIC_KEYS,
   METRICS,
   calculateStreak,
-  entryExerciseCompletion,
-  entryExerciseValues,
   entryMetricValue,
   exerciseCompletionSummary,
   exerciseDefinition,
   exerciseMetricKey,
-  formatDate,
   formatNumber,
   metricDefinition,
   todayLocal,
@@ -19,21 +16,12 @@ import {
   drawChart as drawChartCanvas,
 } from "./chart-renderer.js";
 import { exerciseIconBadge } from "./exercise-icon-ui.js";
-
-export function exerciseHistoryValue(entry, exercise) {
-  if (exercise.kind === "stretch")
-    return entryExerciseCompletion(entry, exercise.id) === true
-      ? "Erledigt ✓"
-      : null;
-  const values = entryExerciseValues(entry, exercise.id);
-  if (values.every((value) => value === null)) return null;
-  const unit = exerciseDefinition(exercise).unit;
-  return `${values.map((value) => formatNumber(value)).join(" · ")} ${unit}`;
-}
+import { createHistoryController } from "./history-controller.js";
 
 export function createDashboardController({ state, elements, setText }) {
   const drawChart = (canvas, entries, key, options = {}) =>
     drawChartCanvas(canvas, entries, key, state.exercises, options);
+  const { renderHistory } = createHistoryController({ state, elements });
 
   function metricFallback() {
     return state.exercises.length
@@ -233,107 +221,6 @@ export function createDashboardController({ state, elements, setText }) {
       elements.chartSummary.textContent = `${entries.length} ${entries.length === 1 ? "Wert" : "Werte"}. Zuletzt ${formatNumber(last, definition.decimals)} ${definition.unit}${entries.length > 1 ? ` · Veränderung ${signed(last - first, definition.decimals, definition.unit)}` : ""}.`;
     }
     elements.progressChart.setAttribute("aria-label", `${definition.label}-Verlauf: ${elements.chartSummary.textContent}`);
-  }
-  
-  function exerciseCell(entry) {
-    const cell = document.createElement("td");
-    cell.className = "custom-history-cell";
-    let count = 0;
-    for (const exercise of state.exercises) {
-      const value = exerciseHistoryValue(entry, exercise);
-      if (!value) continue;
-      const line = document.createElement("span");
-      line.append(createExerciseIconSvg(exercise.icon));
-      const name = document.createElement("strong");
-      name.textContent = exercise.name;
-      line.append(name, ` ${value}`);
-      cell.append(line);
-      count += 1;
-    }
-    if (!count) cell.textContent = "—";
-    return cell;
-  }
-  
-  function actionButton(action, date, label, danger = false) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `row-action${danger ? " danger" : ""}`;
-    button.dataset.action = action;
-    button.dataset.date = date;
-    button.setAttribute("aria-label", label);
-    button.textContent = action === "edit" ? "✎" : "×";
-    return button;
-  }
-  
-  function renderHistory() {
-    const entries = [...state.entries].reverse();
-    const visible = entries.slice(0, state.historyLimit);
-    const empty = entries.length === 0;
-    elements.historyEmpty.hidden = !empty;
-    elements.desktopHistory.hidden = empty;
-    elements.mobileHistory.hidden = empty;
-    elements.showMoreHistoryButton.hidden = entries.length <= visible.length;
-    elements.entryCount.textContent = empty
-      ? "Noch keine Einträge"
-      : `${entries.length} ${entries.length === 1 ? "Eintrag" : "Einträge"}`;
-    elements.historyRows.replaceChildren();
-    elements.mobileHistory.replaceChildren();
-    for (const entry of visible) {
-      const row = document.createElement("tr");
-      const date = document.createElement("td");
-      date.textContent = formatDate(entry.date);
-      const weight = document.createElement("td");
-      weight.textContent = entry.weight === null ? "—" : `${formatNumber(entry.weight, 1)} kg`;
-      const waist = document.createElement("td");
-      waist.textContent = entry.waist === null ? "—" : `${formatNumber(entry.waist, 1)} cm`;
-      const actions = document.createElement("td");
-      actions.className = "row-actions";
-      actions.append(
-        actionButton("edit", entry.date, `Eintrag vom ${formatDate(entry.date)} bearbeiten`),
-        actionButton("delete", entry.date, `Eintrag vom ${formatDate(entry.date)} löschen`, true),
-      );
-      row.append(date, exerciseCell(entry), weight, waist, actions);
-      elements.historyRows.append(row);
-  
-      const card = document.createElement("article");
-      card.className = "history-item";
-      const header = document.createElement("div");
-      header.className = "history-item-header";
-      const dateLabel = document.createElement("span");
-      dateLabel.className = "history-date";
-      dateLabel.textContent = formatDate(entry.date);
-      const mobileActions = document.createElement("div");
-      mobileActions.className = "history-item-actions";
-      mobileActions.append(
-        actionButton("edit", entry.date, "Eintrag bearbeiten"),
-        actionButton("delete", entry.date, "Eintrag löschen", true),
-      );
-      header.append(dateLabel, mobileActions);
-      const metrics = document.createElement("div");
-      metrics.className = "history-metrics";
-      const items = [
-        ...state.exercises.map((exercise) => ({
-          label: exercise.name,
-          value: exerciseHistoryValue(entry, exercise),
-          icon: exercise.icon,
-        })),
-        { label: "Gewicht", value: entry.weight === null ? null : `${formatNumber(entry.weight, 1)} kg` },
-        { label: "Bauch", value: entry.waist === null ? null : `${formatNumber(entry.waist, 1)} cm` },
-      ].filter((item) => item.value);
-      for (const { label, value, icon } of items) {
-        const metric = document.createElement("div");
-        metric.className = "history-metric";
-        const small = document.createElement("span");
-        if (icon) small.append(createExerciseIconSvg(icon));
-        small.append(label);
-        const strong = document.createElement("strong");
-        strong.textContent = value;
-        metric.append(small, strong);
-        metrics.append(metric);
-      }
-      card.append(header, metrics);
-      elements.mobileHistory.append(card);
-    }
   }
   
   function render() {
