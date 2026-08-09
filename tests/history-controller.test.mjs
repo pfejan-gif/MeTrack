@@ -5,9 +5,11 @@ import {
   HISTORY_PAGE_SIZE,
   createHistoryController,
   exerciseHistoryValue,
+  filterHistoryEntries,
   formatHistoryDay,
   formatHistoryMonth,
   groupHistoryEntries,
+  historyMonthOptions,
   historyEntrySummary,
 } from "../assets/app/history-controller.js";
 
@@ -54,6 +56,24 @@ test("gruppiert die kompakte Historie nach Monaten", () => {
   );
   assert.equal(formatHistoryMonth("2026-08-09"), "August 2026");
   assert.match(formatHistoryDay("2026-08-09"), /09\. Aug/);
+});
+
+test("erstellt dynamische Monatsfilter und filtert vor der Seitengrenze", () => {
+  const entries = [
+    { date: "2026-09-01" },
+    { date: "2026-08-09" },
+    { date: "2026-08-08" },
+  ];
+
+  assert.deepEqual(historyMonthOptions(entries), [
+    { value: "2026-09", label: "September 2026", count: 1 },
+    { value: "2026-08", label: "August 2026", count: 2 },
+  ]);
+  assert.deepEqual(
+    filterHistoryEntries(entries, "2026-08").map((item) => item.date),
+    ["2026-08-09", "2026-08-08"],
+  );
+  assert.equal(filterHistoryEntries(entries, "all"), entries);
 });
 
 test("fasst sichtbare Tageswerte für die geschlossene Karte zusammen", () => {
@@ -150,6 +170,7 @@ test("rendert viele Einträge kompakt, begrenzt und aufklappbar", () => {
         "showMoreHistoryButton",
         "entryCount",
         "historyRows",
+        "historyMonthFilter",
       ].map((key) => [key, new FakeElement("div")]),
     );
     const entries = Array.from({ length: 21 }, (_, index) => ({
@@ -160,7 +181,12 @@ test("rendert viele Einträge kompakt, begrenzt und aufklappbar", () => {
       waist: null,
     }));
     const controller = createHistoryController({
-      state: { entries, exercises: [], historyLimit: HISTORY_PAGE_SIZE },
+      state: {
+        entries,
+        exercises: [],
+        historyLimit: HISTORY_PAGE_SIZE,
+        historyMonth: "all",
+      },
       elements,
     });
 
@@ -189,6 +215,62 @@ test("rendert viele Einträge kompakt, begrenzt und aufklappbar", () => {
         "M10 11v5m4-5v5",
       ],
     );
+  } finally {
+    globalThis.document = previousDocument;
+  }
+});
+
+test("wendet den Monatsfilter vor der 20er-Seitengrenze an", () => {
+  const previousDocument = globalThis.document;
+  globalThis.document = {
+    createElement: (tagName) => new FakeElement(tagName),
+    createElementNS: (_namespace, tagName) => new FakeElement(tagName),
+  };
+
+  try {
+    const elements = Object.fromEntries(
+      [
+        "historyEmpty",
+        "desktopHistory",
+        "mobileHistory",
+        "showMoreHistoryButton",
+        "entryCount",
+        "historyRows",
+        "historyMonthFilter",
+      ].map((key) => [key, new FakeElement("div")]),
+    );
+    const august = Array.from({ length: 20 }, (_, index) => ({
+      date: `2026-08-${String(index + 1).padStart(2, "0")}`,
+      exerciseSets: [],
+      exerciseChecks: [],
+      weight: 80,
+      waist: null,
+    }));
+    const july = ["2026-07-02", "2026-07-01"].map((date) => ({
+      date,
+      exerciseSets: [],
+      exerciseChecks: [],
+      weight: 81,
+      waist: null,
+    }));
+    const controller = createHistoryController({
+      state: {
+        entries: [...july].reverse().concat(august),
+        exercises: [],
+        historyLimit: HISTORY_PAGE_SIZE,
+        historyMonth: "2026-07",
+      },
+      elements,
+    });
+
+    controller.renderHistory();
+
+    assert.equal(
+      descendantsWithClass(elements.mobileHistory, "history-item").length,
+      2,
+    );
+    assert.equal(elements.showMoreHistoryButton.hidden, true);
+    assert.equal(elements.entryCount.textContent, "2 Einträge · Juli 2026");
   } finally {
     globalThis.document = previousDocument;
   }

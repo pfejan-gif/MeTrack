@@ -243,3 +243,24 @@
   white-space: nowrap;
 }
 
+.form-status-stack {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.draft-status {
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 750;
+  text-align: right;
+}
+
+.draft-status[data-state="saved"],
+.draft-status[data-state="restored"] {
+  color: var(--mint);
+}
+
+.draft-status[data-state="error"] {
+  color: var(--danger);
+}

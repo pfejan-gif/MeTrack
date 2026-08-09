@@ -19,6 +19,7 @@ import { HISTORY_PAGE_SIZE } from "./app/history-controller.js";
 import { ENTRY_DRAFT_KEY } from "./app/entry-draft.js";
 import { createEntryController } from "./app/entry-controller.js";
 import { createExerciseController } from "./app/exercise-controller.js";
+import { createNavigationController } from "./app/navigation-controller.js";
 import { createPwaController } from "./app/pwa-controller.js";
 import {
   TIMER_KEY,
@@ -26,7 +27,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.6.1";
+const APP_VERSION = "2.7.0";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
   "metrack_pre_reset_backup_v1",
@@ -89,6 +90,10 @@ const elements = {
   timerApplyButton: $("timerApplyButton"),
   timerWakeStatus: $("timerWakeStatus"),
   formMode: $("formMode"),
+  draftStatus: $("draftStatus"),
+  entryProgressWrap: $("entryProgressWrap"),
+  entryProgress: $("entryProgress"),
+  entryProgressLabel: $("entryProgressLabel"),
   saveButtonLabel: $("saveButtonLabel"),
   cancelEditButton: $("cancelEditButton"),
   formError: $("formError"),
@@ -104,6 +109,10 @@ const elements = {
   historyRows: $("historyRows"),
   showMoreHistoryButton: $("showMoreHistoryButton"),
   entryCount: $("entryCount"),
+  historyMonthFilter: $("historyMonthFilter"),
+  dataMenuButton: $("dataMenuButton"),
+  dataActionsDialog: $("dataActionsDialog"),
+  closeDataActionsButton: $("closeDataActionsButton"),
   csvButton: $("csvButton"),
   backupButton: $("backupButton"),
   importButton: $("importButton"),
@@ -123,6 +132,7 @@ const state = {
   metric: exerciseMetricKey(DEFAULT_EXERCISES[0].id),
   period: "30",
   historyLimit: HISTORY_PAGE_SIZE,
+  historyMonth: "all",
   editingDate: null,
   editingExerciseId: null,
   settings: { theme: "system", installHintDismissed: false },
@@ -372,6 +382,7 @@ const {
 } = timer;
 
 let entryController;
+let navigation;
 const exerciseController = createExerciseController({
   state,
   elements,
@@ -404,14 +415,29 @@ entryController = createEntryController({
   persistData,
   showToast,
   render,
+  openEntryView: () => navigation.navigate("today", { entry: true }),
+  onEditingFinished: () => navigation.navigate("history"),
 });
 const {
+  cancelEditing,
   handleHistoryAction,
   handleSubmit,
   resetForm,
   restoreDraft,
   saveDraft,
 } = entryController;
+
+navigation = createNavigationController({
+  sections: $$('[data-app-view]'),
+  links: $$('[data-view-link]'),
+  entrySection: $("entry"),
+  beforeNavigate: (from) => {
+    if (from === "today") saveDraft();
+  },
+  onViewChange: (view) => {
+    if (view === "analysis") requestAnimationFrame(renderCharts);
+  },
+});
 
 const transferController = createTransferController({
   state,
@@ -520,7 +546,7 @@ function bindEvents() {
     if (!button) return;
     openTimer(button.dataset.timerExercise, Number(button.dataset.timerSet));
   });
-  elements.cancelEditButton.addEventListener("click", resetForm);
+  elements.cancelEditButton.addEventListener("click", cancelEditing);
   elements.openExerciseDialogButton.addEventListener("click", () => {
     saveDraft();
     openExerciseDialog();
@@ -579,6 +605,11 @@ function bindEvents() {
     state.historyLimit += HISTORY_PAGE_SIZE;
     renderHistory();
   });
+  elements.historyMonthFilter.addEventListener("change", () => {
+    state.historyMonth = elements.historyMonthFilter.value;
+    state.historyLimit = HISTORY_PAGE_SIZE;
+    renderHistory();
+  });
   elements.metricTabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-metric]");
     if (!button) return;
@@ -593,9 +624,24 @@ function bindEvents() {
     $$('[data-period]').forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
     renderCharts();
   });
-  elements.csvButton.addEventListener("click", exportCsv);
-  elements.backupButton.addEventListener("click", exportBackup);
-  elements.importButton.addEventListener("click", () => elements.importFile.click());
+  elements.dataMenuButton.addEventListener("click", () => {
+    elements.dataActionsDialog.showModal();
+  });
+  elements.closeDataActionsButton.addEventListener("click", () => {
+    elements.dataActionsDialog.close();
+  });
+  elements.csvButton.addEventListener("click", () => {
+    elements.dataActionsDialog.close();
+    exportCsv();
+  });
+  elements.backupButton.addEventListener("click", () => {
+    elements.dataActionsDialog.close();
+    exportBackup();
+  });
+  elements.importButton.addEventListener("click", () => {
+    elements.dataActionsDialog.close();
+    elements.importFile.click();
+  });
   elements.recoverImportButton.addEventListener("click", () => elements.importFile.click());
   elements.importFile.addEventListener("change", () => readImportFile(elements.importFile.files?.[0]));
   elements.downloadRawButton.addEventListener("click", downloadCorruptPayload);
@@ -686,6 +732,7 @@ function initialize() {
   updateStorageUi();
   updateInstallUi();
   render();
+  navigation.initialize();
   restoreTimer();
   registerServiceWorker();
   if (!state.storageWritable && !state.storageCorrupt)

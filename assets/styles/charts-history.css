@@ -113,11 +113,39 @@
   align-items: center;
 }
 
-.data-actions {
+.history-controls {
   display: flex;
-  flex-wrap: wrap;
+  align-items: end;
   justify-content: flex-end;
   gap: 7px;
+}
+
+.history-month-control {
+  display: grid;
+  gap: 4px;
+}
+
+.history-month-control > span {
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 800;
+}
+
+.history-month-control select {
+  min-width: 170px;
+  min-height: 44px;
+  padding: 8px 34px 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--surface-soft);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 780;
+}
+
+.history-month-control select:disabled {
+  opacity: 0.55;
 }
 
 .compact-button {

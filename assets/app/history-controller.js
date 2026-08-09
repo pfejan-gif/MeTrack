@@ -56,6 +56,19 @@ export function groupHistoryEntries(entries) {
   return [...groups.values()];
 }
 
+export function historyMonthOptions(entries) {
+  return groupHistoryEntries(entries).map((group) => ({
+    value: group.key,
+    label: group.label,
+    count: group.entries.length,
+  }));
+}
+
+export function filterHistoryEntries(entries, month = "all") {
+  if (month === "all") return entries;
+  return entries.filter((entry) => entry.date.startsWith(`${month}-`));
+}
+
 export function historyEntrySummary(entry, exercises) {
   let exercisesCompleted = 0;
   let stretchesCompleted = 0;
@@ -105,6 +118,25 @@ function createSvgIcon(pathData) {
 }
 
 export function createHistoryController({ state, elements }) {
+  function renderMonthFilter(allEntries) {
+    const months = historyMonthOptions(allEntries);
+    if (!months.some((month) => month.value === state.historyMonth))
+      state.historyMonth = "all";
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.textContent = "Alle Monate";
+    const options = months.map((month) => {
+      const option = document.createElement("option");
+      option.value = month.value;
+      option.textContent = `${month.label} (${month.count})`;
+      return option;
+    });
+    elements.historyMonthFilter.replaceChildren(allOption, ...options);
+    elements.historyMonthFilter.value = state.historyMonth;
+    elements.historyMonthFilter.disabled = allEntries.length === 0;
+    return months;
+  }
+
   function exerciseCell(entry) {
     const cell = document.createElement("td");
     cell.className = "custom-history-cell";
@@ -285,7 +317,9 @@ export function createHistoryController({ state, elements }) {
   }
 
   function renderHistory() {
-    const entries = [...state.entries].reverse();
+    const allEntries = [...state.entries].reverse();
+    const months = renderMonthFilter(allEntries);
+    const entries = filterHistoryEntries(allEntries, state.historyMonth);
     const visible = entries.slice(0, state.historyLimit);
     const visibleGroups = groupHistoryEntries(visible);
     const monthTotals = new Map(
@@ -294,7 +328,7 @@ export function createHistoryController({ state, elements }) {
         group.entries.length,
       ]),
     );
-    const empty = entries.length === 0;
+    const empty = allEntries.length === 0;
     const remaining = entries.length - visible.length;
     elements.historyEmpty.hidden = !empty;
     elements.desktopHistory.hidden = empty;
@@ -306,11 +340,16 @@ export function createHistoryController({ state, elements }) {
         nextCount === 1 ? "weiteren Eintrag" : "weitere Einträge"
       } anzeigen`;
     }
+    const selectedMonth = months.find(
+      (month) => month.value === state.historyMonth,
+    );
     elements.entryCount.textContent = empty
       ? "Noch keine Einträge"
       : `${entries.length} ${
           entries.length === 1 ? "Eintrag" : "Einträge"
-        }${remaining > 0 ? ` · ${visible.length} angezeigt` : ""}`;
+        }${selectedMonth ? ` · ${selectedMonth.label}` : ""}${
+          remaining > 0 ? ` · ${visible.length} angezeigt` : ""
+        }`;
     elements.historyRows.replaceChildren();
     elements.mobileHistory.replaceChildren();
 

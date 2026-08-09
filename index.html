@@ -56,7 +56,7 @@
 
     <header class="app-header">
       <div class="header-inner">
-        <a class="brand" href="#overview" aria-label="MeTrack Startseite">
+        <a class="brand" href="#today" aria-label="MeTrack – Heute">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 1024 1024" role="img">
               <path d="M244 720V360L506 612 780 300" />
@@ -68,6 +68,30 @@
             <small>Mein Fortschritt</small>
           </span>
         </a>
+
+        <nav
+          class="app-nav desktop-app-nav"
+          aria-label="Hauptnavigation in der Kopfzeile"
+        >
+          <a href="#today" data-view-link="today">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16v13H4zM8 3v4m8-4v4M4 11h16" />
+            </svg>
+            <span>Heute</span>
+          </a>
+          <a href="#analysis" data-view-link="analysis">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 19V5m0 14h16M7 15l4-4 3 2 5-6" />
+            </svg>
+            <span>Auswertung</span>
+          </a>
+          <a href="#history" data-view-link="history">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4" />
+            </svg>
+            <span>Historie</span>
+          </a>
+        </nav>
 
         <div class="header-actions">
           <button
@@ -132,6 +156,30 @@
         </div>
       </div>
     </header>
+
+    <nav
+      class="app-nav mobile-app-nav"
+      aria-label="Hauptnavigation am unteren Rand"
+    >
+      <a href="#today" data-view-link="today">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 7h16v13H4zM8 3v4m8-4v4M4 11h16" />
+        </svg>
+        <span>Heute</span>
+      </a>
+      <a href="#analysis" data-view-link="analysis">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 19V5m0 14h16M7 15l4-4 3 2 5-6" />
+        </svg>
+        <span>Auswertung</span>
+      </a>
+      <a href="#history" data-view-link="history">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4" />
+        </svg>
+        <span>Historie</span>
+      </a>
+    </nav>
 
     <aside
       class="update-banner"
@@ -246,7 +294,9 @@
       <section
         class="overview-section"
         id="overview"
+        data-app-view="analysis"
         aria-labelledby="overviewTitle"
+        hidden
       >
         <div class="section-heading hero-heading">
           <div>
@@ -343,7 +393,12 @@
         </div>
       </section>
 
-      <section class="content-section" id="entry" aria-labelledby="entryTitle">
+      <section
+        class="content-section"
+        id="entry"
+        data-app-view="today"
+        aria-labelledby="entryTitle"
+      >
         <article class="card form-card">
           <div class="card-heading">
             <div>
@@ -351,47 +406,71 @@
               <h2 id="entryTitle">Heute eintragen</h2>
               <p>Nur das ausfüllen, was du heute gemessen hast.</p>
             </div>
-            <span class="status-chip" id="formMode">Neuer Eintrag</span>
+            <div class="form-status-stack">
+              <span class="status-chip" id="formMode">Neuer Eintrag</span>
+              <span
+                class="draft-status"
+                id="draftStatus"
+                role="status"
+                aria-live="polite"
+                hidden
+              ></span>
+            </div>
           </div>
 
           <form id="entryForm" novalidate>
-            <div class="form-grid measurement-grid">
+            <div class="date-entry-row">
               <div class="field date-field">
                 <label for="date">Datum</label>
                 <input id="date" name="date" type="date" required />
                 <small class="field-error" id="dateError"></small>
               </div>
-
-              <div class="field">
-                <label for="weight">Gewicht <span>kg</span></label>
-                <input
-                  id="weight"
-                  name="weight"
-                  type="number"
-                  min="20"
-                  max="400"
-                  step="0.1"
-                  inputmode="decimal"
-                  placeholder="82,0"
-                />
-                <small class="field-error" id="weightError"></small>
-              </div>
-
-              <div class="field">
-                <label for="waist">Bauchumfang <span>cm</span></label>
-                <input
-                  id="waist"
-                  name="waist"
-                  type="number"
-                  min="30"
-                  max="300"
-                  step="0.1"
-                  inputmode="decimal"
-                  placeholder="95,0"
-                />
-                <small class="field-error" id="waistError"></small>
-              </div>
             </div>
+
+            <fieldset class="body-metrics-group">
+              <legend>
+                Körperwerte
+                <span>optional</span>
+              </legend>
+              <div class="form-grid body-metrics-grid">
+                <div class="field">
+                  <label for="weight">Gewicht <span>kg</span></label>
+                  <input
+                    id="weight"
+                    name="weight"
+                    type="number"
+                    min="20"
+                    max="400"
+                    step="0.1"
+                    inputmode="decimal"
+                    placeholder="82,0"
+                  />
+                  <small class="field-error" id="weightError"></small>
+                </div>
+
+                <div class="field">
+                  <label for="waist">Bauchumfang <span>cm</span></label>
+                  <input
+                    id="waist"
+                    name="waist"
+                    type="number"
+                    min="30"
+                    max="300"
+                    step="0.1"
+                    inputmode="decimal"
+                    placeholder="95,0"
+                  />
+                  <small class="field-error" id="waistError"></small>
+                </div>
+              </div>
+              <p class="body-metrics-tip">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 11v5M12 8h.01" />
+                </svg>
+                Möglichst immer unter ähnlichen Bedingungen messen.
+              </p>
+            </fieldset>
 
             <section
               class="custom-exercises"
@@ -413,6 +492,13 @@
                   </svg>
                   Verwalten
                 </button>
+              </div>
+              <div class="entry-progress" id="entryProgressWrap">
+                <div>
+                  <strong id="entryProgressLabel">0 von 0 erfasst</strong>
+                  <span>Nur Training und erledigte Dehnungen</span>
+                </div>
+                <progress id="entryProgress" max="1" value="0">0 von 0</progress>
               </div>
               <div class="custom-exercise-empty" id="customExerciseEmpty">
                 Kein aktiver Trainingseintrag. Tippe auf „Verwalten“, um
@@ -449,22 +535,15 @@
               </button>
             </div>
           </form>
-
-          <p class="form-tip">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5M12 8h.01" />
-            </svg>
-            Miss Gewicht und Bauchumfang möglichst immer unter ähnlichen
-            Bedingungen.
-          </p>
         </article>
       </section>
 
       <section
         class="content-section"
         id="progress"
+        data-app-view="analysis"
         aria-labelledby="progressTitle"
+        hidden
       >
         <article class="card progress-card">
           <div class="card-heading split-heading">
@@ -523,7 +602,9 @@
       <section
         class="content-section"
         id="history"
+        data-app-view="history"
         aria-labelledby="historyTitle"
+        hidden
       >
         <article class="card history-card">
           <div class="card-heading split-heading history-heading">
@@ -532,36 +613,22 @@
               <h2 id="historyTitle">Alle Einträge</h2>
               <p id="entryCount">Noch keine Einträge</p>
             </div>
-            <div class="data-actions">
+            <div class="history-controls">
+              <label class="history-month-control">
+                <span>Zeitraum</span>
+                <select id="historyMonthFilter" aria-label="Historie nach Monat filtern">
+                  <option value="all">Alle Monate</option>
+                </select>
+              </label>
               <button
                 class="button secondary compact-button"
-                id="csvButton"
+                id="dataMenuButton"
                 type="button"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+                  <path d="M5 7h14M5 12h14M5 17h14" />
                 </svg>
-                CSV
-              </button>
-              <button
-                class="button secondary compact-button"
-                id="backupButton"
-                type="button"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 16V4m0 0 4 4m-4-4L8 8M5 14v5h14v-5" />
-                </svg>
-                Sichern
-              </button>
-              <button
-                class="button secondary compact-button"
-                id="importButton"
-                type="button"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 4v12m0 0 4-4m-4 4-4-4M5 19h14" />
-                </svg>
-                Import
+                Daten
               </button>
             </div>
           </div>
@@ -574,8 +641,8 @@
             </div>
             <h3>Dein erster Fortschritt wartet</h3>
             <p>
-              Trage oben einen Messwert ein. Er erscheint danach automatisch
-              hier.
+              Erfasse unter „Heute“ deinen ersten Wert. Er erscheint danach
+              automatisch hier.
             </p>
             <a class="button secondary" href="#entry"
               >Ersten Eintrag erstellen</a
@@ -617,6 +684,60 @@
     </footer>
 
     <input id="importFile" type="file" accept="application/json,.json" hidden />
+
+    <dialog
+      class="modal data-actions-modal"
+      id="dataActionsDialog"
+      aria-labelledby="dataActionsDialogTitle"
+    >
+      <div class="data-actions-dialog-content">
+        <div class="data-actions-dialog-heading">
+          <div>
+            <p class="eyebrow">Daten &amp; Sicherung</p>
+            <h2 id="dataActionsDialogTitle">Daten verwalten</h2>
+          </div>
+          <button
+            class="icon-button compact"
+            id="closeDataActionsButton"
+            type="button"
+            aria-label="Dialog schließen"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+        <p class="data-actions-copy">
+          Exportiere eine Tabelle oder sichere und übertrage alle lokalen Daten.
+        </p>
+        <div class="data-actions-list">
+          <button class="data-action-button" id="csvButton" type="button">
+            <span class="data-action-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+              </svg>
+            </span>
+            <span><strong>CSV exportieren</strong><small>Tabelle für Excel &amp; Co.</small></span>
+          </button>
+          <button class="data-action-button" id="backupButton" type="button">
+            <span class="data-action-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 16V4m0 0 4 4m-4-4L8 8M5 14v5h14v-5" />
+              </svg>
+            </span>
+            <span><strong>Sicherung erstellen</strong><small>Alle Daten als JSON-Datei</small></span>
+          </button>
+          <button class="data-action-button" id="importButton" type="button">
+            <span class="data-action-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 4v12m0 0 4-4m-4 4-4-4M5 19h14" />
+              </svg>
+            </span>
+            <span><strong>Sicherung importieren</strong><small>Vorhandene Datei auswählen</small></span>
+          </button>
+        </div>
+      </div>
+    </dialog>
 
     <dialog
       class="modal exercise-modal"

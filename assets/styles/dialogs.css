@@ -18,6 +18,93 @@
   padding: 26px;
 }
 
+.data-actions-modal {
+  width: min(calc(100% - 32px), 470px);
+}
+
+.data-actions-dialog-content {
+  padding: 24px;
+}
+
+.data-actions-dialog-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.data-actions-dialog-heading h2,
+.data-actions-dialog-heading p {
+  margin: 0;
+}
+
+.data-actions-dialog-heading h2 {
+  margin-top: 2px;
+}
+
+.data-actions-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.data-actions-list {
+  display: grid;
+  margin-top: 19px;
+  gap: 8px;
+}
+
+.data-action-button {
+  display: grid;
+  width: 100%;
+  min-height: 68px;
+  padding: 11px 13px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  color: var(--text);
+  background: var(--surface-soft);
+  text-align: left;
+  cursor: pointer;
+}
+
+.data-action-button:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+}
+
+.data-action-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.data-action-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+}
+
+.data-action-button strong,
+.data-action-button small {
+  display: block;
+}
+
+.data-action-button strong {
+  font-size: 0.8rem;
+}
+
+.data-action-button small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+
 .exercise-modal {
   width: min(calc(100% - 24px), 580px);
   max-height: min(86dvh, 760px);
@@ -568,4 +655,3 @@
   font-weight: 850;
   cursor: pointer;
 }
-
