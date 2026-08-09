@@ -42,6 +42,41 @@ const coreModules = [
   "assets/core/transfer.js",
   "assets/core/value-utils.js",
 ];
+const exerciseIconIds = [
+  "activity",
+  "plank",
+  "push-up",
+  "squat",
+  "sit-up",
+  "dumbbell",
+  "kettlebell",
+  "running",
+  "cycling",
+  "pull-up",
+  "lunge",
+  "jump-rope",
+  "rowing",
+  "target",
+  "burpee",
+  "jumping-jack",
+  "mountain-climber",
+  "stretch",
+  "hip-stretch",
+  "hamstring",
+  "shoulder-stretch",
+  "neck-stretch",
+  "side-stretch",
+  "butterfly",
+  "calf-stretch",
+  "back-stretch",
+  "yoga",
+  "quadriceps-stretch",
+  "chest-stretch",
+  "wrist-stretch",
+];
+const exerciseIconFiles = exerciseIconIds.map(
+  (id) => `assets/icons/exercises/${id}.webp`,
+);
 const appShellFiles = [
   "index.html",
   "manifest.webmanifest",
@@ -50,6 +85,7 @@ const appShellFiles = [
   ...appModules,
   ...coreModules,
   "assets/exercise-icons.js",
+  ...exerciseIconFiles,
   "assets/icons/favicon.svg",
   "assets/icons/apple-touch-icon.png",
   "assets/icons/icon-192.png",
@@ -219,6 +255,21 @@ assertOpaquePng("assets/icons/icon-192.png");
 assertOpaquePng("assets/icons/icon-512.png");
 assertOpaquePng("assets/icons/apple-touch-icon.png");
 
+for (const path of exerciseIconFiles) {
+  const bytes = readFileSync(resolve(root, path));
+  assert.equal(
+    bytes.toString("ascii", 0, 4),
+    "RIFF",
+    `${path} hat keinen gültigen WebP-Header.`,
+  );
+  assert.equal(
+    bytes.toString("ascii", 8, 12),
+    "WEBP",
+    `${path} ist kein WebP-Bild.`,
+  );
+  assert.ok(bytes.length < 64_000, `${path} ist für den App-Shell-Cache zu groß.`);
+}
+
 const serviceWorker = read("service-worker.js");
 assert.doesNotMatch(app, /label\.textContent\s*=\s*"Timer"/);
 const packageJson = JSON.parse(read("package.json"));
@@ -244,7 +295,7 @@ assert.ok(
 );
 assert.match(core, /DATA_KEY = "metrack_data_v6"/);
 assert.match(core, /DATA_SCHEMA_VERSION = 6/);
-assert.match(app, /createExerciseIconSvg/);
+assert.match(app, /createExerciseIconImage/);
 assert.match(core, /entryExerciseCompletion/);
 assert.match(core, /exerciseCompletionSummary/);
 assert.match(core, /export function timerElapsedMs/);

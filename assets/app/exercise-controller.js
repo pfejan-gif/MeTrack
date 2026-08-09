@@ -11,7 +11,7 @@ import {
   validateExercise,
 } from "../core.js";
 import {
-  createExerciseIconSvg,
+  createExerciseIconImage,
   defaultExerciseIcon,
   iconOptionsForKind,
   isExerciseIconAllowed,
@@ -65,7 +65,7 @@ export function createExerciseController({
       input.checked = option.id === selected;
       const tile = document.createElement("span");
       tile.className = "exercise-icon-tile";
-      tile.append(createExerciseIconSvg(option.id));
+      tile.append(createExerciseIconImage(option.id));
       const name = document.createElement("small");
       name.textContent = option.label;
       tile.append(name);

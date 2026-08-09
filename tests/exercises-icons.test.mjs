@@ -10,6 +10,7 @@ import {
 import {
   EXERCISE_ICONS,
   defaultExerciseIcon,
+  exerciseIconSource,
   iconOptionsForKind,
   isExerciseIconAllowed,
 } from "../assets/exercise-icons.js";
@@ -38,16 +39,19 @@ test("validiert neue Übungen und verhindert doppelte Namen", () => {
 test("bietet getrennte, eindeutige Symbolpaletten für Übungen und Dehnungen", () => {
   const exerciseIcons = iconOptionsForKind("reps");
   const stretchIcons = iconOptionsForKind("stretch");
-  assert.equal(EXERCISE_ICONS.length, 24);
-  assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 24);
+  assert.equal(EXERCISE_ICONS.length, 30);
+  assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 30);
   assert.equal(
-    new Set(EXERCISE_ICONS.map((icon) => JSON.stringify(icon.shapes))).size,
-    24,
+    new Set(EXERCISE_ICONS.map((icon) => exerciseIconSource(icon.id))).size,
+    30,
   );
-  assert.equal(exerciseIcons.length, 14);
-  assert.equal(stretchIcons.length, 10);
+  assert.equal(exerciseIcons.length, 17);
+  assert.equal(stretchIcons.length, 13);
   assert.equal(isExerciseIconAllowed("dumbbell", "seconds"), true);
+  assert.equal(isExerciseIconAllowed("burpee", "reps"), true);
+  assert.equal(isExerciseIconAllowed("wrist-stretch", "stretch"), true);
   assert.equal(isExerciseIconAllowed("hip-stretch", "reps"), false);
+  assert.equal(isExerciseIconAllowed("burpee", "stretch"), false);
   assert.equal(defaultExerciseIcon("reps", plank.id), "plank");
 });
 

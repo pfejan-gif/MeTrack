@@ -55,7 +55,6 @@
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
-  color: var(--mint);
   background: color-mix(in srgb, var(--mint) 10%, transparent);
 }
 
@@ -65,17 +64,27 @@
   border-radius: 11px;
 }
 
-.spotlight-exercise-icon svg,
-.exercise-symbol svg,
-.exercise-icon-tile svg,
-.metric-tabs button svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.exercise-icon-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.16))
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.22));
+}
+
+.spotlight-exercise-icon .exercise-icon-image,
+.exercise-symbol .exercise-icon-image {
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+}
+
+.metric-tabs button .exercise-icon-image {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
 }
 
 .metric-label {
