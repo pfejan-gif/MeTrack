@@ -28,7 +28,8 @@ export function createExerciseController({
   askForConfirmation,
   timer,
   dashboard,
-  resetForm,
+  saveEntryDraft,
+  restoreEntryDraft,
 }) {
   const {
     clearTimer,
@@ -394,12 +395,13 @@ export function createExerciseController({
           exercise.id === current.id ? validation.exercise : exercise,
         )
       : [...state.exercises, validation.exercise];
+    saveEntryDraft();
     if (!persistData(state.entries, nextExercises))
       return false;
     const edited = Boolean(current);
     resetExerciseEditor();
     renderExerciseCatalogUi();
-    resetForm();
+    restoreEntryDraft();
     render();
     if (!edited && elements.exerciseDialog.open) elements.exerciseDialog.close();
     if (!edited) {
@@ -424,9 +426,10 @@ export function createExerciseController({
         ? { ...exercise, active: !exercise.active }
         : exercise,
     );
+    saveEntryDraft();
     if (!persistData(state.entries, next)) return;
     renderExerciseCatalogUi();
-    resetForm();
+    restoreEntryDraft();
     render();
     showToast(
       current.active
@@ -477,12 +480,13 @@ export function createExerciseController({
           exerciseId,
           remaining,
         );
+        saveEntryDraft();
         if (!persistData(entries, remaining)) return;
         if (state.editingExerciseId === exerciseId) resetExerciseEditor();
         if (state.metric === exerciseMetricKey(exerciseId))
           state.metric = metricFallback();
         renderExerciseCatalogUi();
-        resetForm();
+        restoreEntryDraft();
         render();
         showToast(`${exercise.name} ganz gelöscht`);
       },

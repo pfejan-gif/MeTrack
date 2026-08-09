@@ -15,6 +15,7 @@ import {
   validateExerciseCatalog,
 } from "./core.js";
 import { createDashboardController } from "./app/dashboard-controller.js";
+import { ENTRY_DRAFT_KEY } from "./app/entry-draft.js";
 import { createEntryController } from "./app/entry-controller.js";
 import { createExerciseController } from "./app/exercise-controller.js";
 import { createPwaController } from "./app/pwa-controller.js";
@@ -24,7 +25,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.5.3";
+const APP_VERSION = "2.5.4";
 const RECOVERY_KEYS = [
   "metrack_pre_import_backup_v1",
   "metrack_pre_reset_backup_v1",
@@ -380,7 +381,8 @@ const exerciseController = createExerciseController({
   askForConfirmation,
   timer,
   dashboard,
-  resetForm: (...args) => entryController.resetForm(...args),
+  saveEntryDraft: (...args) => entryController.saveDraft(...args),
+  restoreEntryDraft: (...args) => entryController.restoreDraft(...args),
 });
 const {
   addExercise,
@@ -402,7 +404,13 @@ entryController = createEntryController({
   showToast,
   render,
 });
-const { handleHistoryAction, handleSubmit, resetForm } = entryController;
+const {
+  handleHistoryAction,
+  handleSubmit,
+  resetForm,
+  restoreDraft,
+  saveDraft,
+} = entryController;
 
 const transferController = createTransferController({
   state,
@@ -413,6 +421,7 @@ const transferController = createTransferController({
   applyTheme,
   renderExerciseCatalogUi,
   resetForm,
+  restoreDraft,
   render,
   reconcileTimer,
 });
@@ -434,7 +443,16 @@ const {
 } = pwaController;
 
 function removeAllStorageKeys() {
-  [DATA_KEY, PREVIOUS_DATA_KEY, V3_DATA_KEY, V2_DATA_KEY, STORAGE_KEY, TIMER_KEY, ...RECOVERY_KEYS].forEach(
+  [
+    DATA_KEY,
+    PREVIOUS_DATA_KEY,
+    V3_DATA_KEY,
+    V2_DATA_KEY,
+    STORAGE_KEY,
+    TIMER_KEY,
+    ENTRY_DRAFT_KEY,
+    ...RECOVERY_KEYS,
+  ].forEach(
     (key) => localStorage.removeItem(key),
   );
 }
@@ -494,13 +512,18 @@ function bindEvents() {
     elements.updateBanner.hidden = true;
   });
   elements.entryForm.addEventListener("submit", handleSubmit);
+  elements.entryForm.addEventListener("input", saveDraft);
+  elements.entryForm.addEventListener("change", saveDraft);
   elements.exerciseFields.addEventListener("click", (event) => {
     const button = event.target.closest("[data-timer-exercise]");
     if (!button) return;
     openTimer(button.dataset.timerExercise, Number(button.dataset.timerSet));
   });
   elements.cancelEditButton.addEventListener("click", resetForm);
-  elements.openExerciseDialogButton.addEventListener("click", openExerciseDialog);
+  elements.openExerciseDialogButton.addEventListener("click", () => {
+    saveDraft();
+    openExerciseDialog();
+  });
   elements.closeExerciseDialogButton.addEventListener("click", () => {
     resetExerciseEditor();
     elements.exerciseDialog.close();
@@ -596,7 +619,10 @@ function bindEvents() {
   window.addEventListener("offline", () => { elements.networkBanner.hidden = false; });
   window.addEventListener("resize", renderCharts, { passive: true });
   window.addEventListener("pageshow", refreshTodayUi);
-  window.addEventListener("pagehide", saveTimerState);
+  window.addEventListener("pagehide", () => {
+    saveDraft();
+    saveTimerState();
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       paintTimer();
@@ -606,6 +632,7 @@ function bindEvents() {
       }
     } else {
       releaseTimerWakeLock();
+      saveDraft();
       saveTimerState();
     }
   });
@@ -626,7 +653,8 @@ function bindEvents() {
     }
     renderExerciseCatalogUi();
     reconcileTimer();
-    resetForm();
+    resetForm({ clearStoredDraft: false });
+    restoreDraft();
     render();
   });
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -649,7 +677,8 @@ function initialize() {
   $("appVersion").textContent = `v${APP_VERSION}`;
   bindEvents();
   renderExerciseCatalogUi();
-  resetForm();
+  resetForm({ clearStoredDraft: false });
+  restoreDraft();
   refreshTodayUi();
   applyTheme();
   elements.networkBanner.hidden = navigator.onLine;

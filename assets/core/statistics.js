@@ -38,7 +38,7 @@ export function entryMetricValue(
   if (!exerciseId || !exercise) return null;
   if (exercise.kind === "stretch") {
     const completed = entryExerciseCompletion(entry, exerciseId);
-    return completed === null ? null : Number(completed);
+    return completed === true ? 1 : null;
   }
   const completed = rawExerciseValues(entry, exerciseId).filter(
     (value) => value !== null && value !== undefined,
@@ -132,29 +132,13 @@ export function exerciseCompletionSummary(
   entries,
   exerciseId,
   exercises = DEFAULT_EXERCISES,
-  referenceDate = todayLocal(),
 ) {
   const exercise = sanitizeExerciseCatalog(exercises).find(
     (item) => item.id === exerciseId && item.kind === "stretch",
   );
-  if (!exercise)
-    return { completed: 0, tracked: 0, rate: 0, currentStreak: 0 };
-  const trackedEntries = normalizeEntries(entries, exercises)
-    .map((entry) => ({
-      date: entry.date,
-      completed: entryExerciseCompletion(entry, exerciseId),
-    }))
-    .filter((item) => item.completed !== null);
-  const completedEntries = trackedEntries.filter((item) => item.completed);
-  return {
-    completed: completedEntries.length,
-    tracked: trackedEntries.length,
-    rate: trackedEntries.length
-      ? Math.round((completedEntries.length / trackedEntries.length) * 100)
-      : 0,
-    currentStreak: calculateDateStreak(
-      completedEntries.map((item) => item.date),
-      referenceDate,
-    ),
-  };
+  if (!exercise) return { completed: 0 };
+  const completed = normalizeEntries(entries, exercises).filter(
+    (entry) => entryExerciseCompletion(entry, exerciseId) === true,
+  ).length;
+  return { completed };
 }
