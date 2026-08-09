@@ -361,10 +361,6 @@ export function createTimerController({
     state.timer.accumulatedMs = parsed.accumulatedMs;
     state.timer.lastRenderedTenth = null;
     updateTimerButtons();
-    showToast("Stoppuhr wiederhergestellt", {
-      label: "Öffnen",
-      callback: () => activateTimer(exercise.id, parsed.setIndex),
-    });
   }
   
   function reconcileTimer() {
