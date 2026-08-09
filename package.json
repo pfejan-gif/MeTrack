@@ -1,6 +1,6 @@
 {
   "name": "metrack",
-  "version": "2.8.2",
+  "version": "2.8.3",
   "private": true,
   "type": "module",
   "description": "Offline-fähiger Fitness-Tracker für GitHub Pages",
