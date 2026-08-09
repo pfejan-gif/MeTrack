@@ -18,6 +18,7 @@ export function createTransferController({
   applyTheme,
   renderExerciseCatalogUi,
   resetForm,
+  restoreDraft,
   render,
   reconcileTimer,
 }) {
@@ -134,14 +135,16 @@ export function createTransferController({
     }
     state.pendingImport = null;
     renderExerciseCatalogUi();
-    resetForm();
+    resetForm({ clearStoredDraft: false });
+    restoreDraft();
     render();
     showToast(mode === "merge" ? "Sicherung zusammengeführt ✓" : "Sicherung wiederhergestellt ✓", {
       label: "Rückgängig",
       callback: () => {
         if (persistData(previousEntries, previousExercises, { allowRecovery: true })) {
           renderExerciseCatalogUi();
-          resetForm();
+          resetForm({ clearStoredDraft: false });
+          restoreDraft();
           render();
         }
       },

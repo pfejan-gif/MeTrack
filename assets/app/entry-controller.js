@@ -11,6 +11,14 @@ import {
   upsertEntry,
   validateEntry,
 } from "../core.js";
+import {
+  InvalidEntryDraftError,
+  createEntryDraft,
+  entryDraftHasContent,
+  readEntryDraft,
+  removeEntryDraft,
+  writeEntryDraft,
+} from "./entry-draft.js";
 
 export function createEntryController({
   state,
@@ -20,6 +28,114 @@ export function createEntryController({
   showToast,
   render,
 }) {
+  let currentDraft = null;
+
+  function setFormMode(editing) {
+    elements.formMode.textContent = editing
+      ? "Eintrag bearbeiten"
+      : "Neuer Eintrag";
+    elements.saveButtonLabel.textContent = editing
+      ? "Änderungen speichern"
+      : "Eintrag speichern";
+    elements.cancelEditButton.hidden = !editing;
+  }
+
+  function draftFromForm() {
+    const exerciseIds = new Set(state.exercises.map((exercise) => exercise.id));
+    const exerciseValues = Object.fromEntries(
+      Object.entries(currentDraft?.exerciseValues || {}).filter(([exerciseId]) =>
+        exerciseIds.has(exerciseId),
+      ),
+    );
+    const exerciseChecks = Object.fromEntries(
+      Object.entries(currentDraft?.exerciseChecks || {}).filter(([exerciseId]) =>
+        exerciseIds.has(exerciseId),
+      ),
+    );
+    for (const exercise of state.exercises) {
+      if (exercise.kind === "stretch") {
+        const input = $(exerciseCheckFieldName(exercise.id));
+        if (input) exerciseChecks[exercise.id] = input.checked === true;
+        continue;
+      }
+      const inputs = Array.from({ length: SET_COUNT }, (_, index) =>
+        $(exerciseFieldName(exercise.id, index)),
+      );
+      if (inputs.every(Boolean))
+        exerciseValues[exercise.id] = inputs.map((input) => input.value);
+    }
+    return createEntryDraft({
+      date: $("date").value,
+      editingDate: state.editingDate,
+      bodyMetrics: Object.fromEntries(
+        BODY_METRIC_KEYS.map((key) => [key, $(key).value]),
+      ),
+      exerciseValues,
+      exerciseChecks,
+    });
+  }
+
+  function clearDraft() {
+    currentDraft = null;
+    try {
+      removeEntryDraft(localStorage);
+    } catch {
+      // Der Entwurf ist optional; der allgemeine Speicherhinweis bleibt maßgeblich.
+    }
+  }
+
+  function saveDraft() {
+    try {
+      const draft = draftFromForm();
+      if (!entryDraftHasContent(draft, todayLocal())) {
+        clearDraft();
+        return true;
+      }
+      currentDraft = writeEntryDraft(localStorage, draft);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function restoreDraft() {
+    let draft;
+    try {
+      draft = readEntryDraft(localStorage);
+    } catch (error) {
+      clearDraft();
+      if (error instanceof InvalidEntryDraftError)
+        showToast("Beschädigter Entwurf wurde verworfen.");
+      return false;
+    }
+    if (!draft) return false;
+    currentDraft = draft;
+    state.editingDate =
+      draft.editingDate &&
+      state.entries.some((entry) => entry.date === draft.editingDate)
+        ? draft.editingDate
+        : null;
+    $("date").value = draft.date;
+    for (const key of BODY_METRIC_KEYS) $(key).value = draft.bodyMetrics[key];
+    for (const exercise of state.exercises.filter((item) => item.active)) {
+      if (exercise.kind === "stretch") {
+        const input = $(exerciseCheckFieldName(exercise.id));
+        if (input && exercise.id in draft.exerciseChecks)
+          input.checked = draft.exerciseChecks[exercise.id];
+        continue;
+      }
+      const values = draft.exerciseValues[exercise.id];
+      if (!values) continue;
+      values.forEach((value, index) => {
+        const input = $(exerciseFieldName(exercise.id, index));
+        if (input) input.value = value;
+      });
+    }
+    clearErrors();
+    setFormMode(Boolean(state.editingDate));
+    return true;
+  }
+
   function allFormFieldIds() {
     return [
       "date",
@@ -58,20 +174,20 @@ export function createEntryController({
     first?.focus();
   }
   
-  function resetForm() {
+  function resetForm({ clearStoredDraft = true } = {}) {
     state.editingDate = null;
     elements.entryForm.reset();
     clearErrors();
     $("date").value = todayLocal();
     $("date").max = todayLocal();
-    elements.formMode.textContent = "Neuer Eintrag";
-    elements.saveButtonLabel.textContent = "Eintrag speichern";
-    elements.cancelEditButton.hidden = true;
+    setFormMode(false);
+    if (clearStoredDraft) clearDraft();
   }
   
   function startEditing(date) {
     const entry = state.entries.find((item) => item.date === date);
     if (!entry) return;
+    clearDraft();
     state.editingDate = date;
     clearErrors();
     $("date").value = entry.date;
@@ -87,9 +203,8 @@ export function createEntryController({
         $(exerciseFieldName(exercise.id, index)).value = value ?? "";
       });
     }
-    elements.formMode.textContent = "Eintrag bearbeiten";
-    elements.saveButtonLabel.textContent = "Änderungen speichern";
-    elements.cancelEditButton.hidden = false;
+    setFormMode(true);
+    saveDraft();
     $("entry").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   
@@ -195,6 +310,9 @@ export function createEntryController({
   
 
   return {
+    saveDraft,
+    restoreDraft,
+    clearDraft,
     resetForm,
     startEditing,
     handleSubmit,

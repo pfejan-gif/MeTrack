@@ -22,6 +22,7 @@ const appModules = [
   "assets/app.js",
   "assets/app/chart-renderer.js",
   "assets/app/dashboard-controller.js",
+  "assets/app/entry-draft.js",
   "assets/app/entry-controller.js",
   "assets/app/exercise-controller.js",
   "assets/app/exercise-icon-ui.js",
@@ -70,6 +71,7 @@ const html = read("index.html");
 const styleEntry = read("assets/styles.css");
 const styles = styleModules.map(read).join("\n");
 const app = appModules.map(read).join("\n");
+const exerciseController = read("assets/app/exercise-controller.js");
 const core = coreModules.map(read).join("\n");
 for (const module of styleModules)
   assert.ok(
@@ -216,6 +218,11 @@ assert.doesNotMatch(
 );
 assert.match(app, /navigator\.wakeLock\.request\("screen"\)/);
 assert.match(app, /TIMER_KEY = "metrack_active_timer_v1"/);
+assert.match(app, /ENTRY_DRAFT_KEY = "metrack_entry_draft_v1"/);
+assert.match(app, /entryForm\.addEventListener\("input", saveDraft\)/);
+assert.match(exerciseController, /saveEntryDraft\(\)/);
+assert.match(exerciseController, /restoreEntryDraft\(\)/);
+assert.doesNotMatch(exerciseController, /\bresetForm\b/);
 assert.match(app, /updateViaCache:\s*"none"/);
 assert.match(app, /registration\s*\.update\(\)/);
 assert.match(html, />Übungen &amp; Dehnungen<\/h3>/);
