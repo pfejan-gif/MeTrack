@@ -99,8 +99,13 @@ assert.match(
 );
 assert.match(
   responsiveStyles,
-  /\.app-nav\s*\{[^}]*height:\s*var\(--app-nav-height\);[^}]*padding:\s*5px max\(10px, env\(safe-area-inset-right\)\)\s*5px\s*max\(10px, env\(safe-area-inset-left\)\);[^}]*align-items:\s*center/s,
+  /\.app-nav\s*\{[^}]*height:\s*var\(--app-nav-height\);[^}]*padding:\s*5px max\(14px, env\(safe-area-inset-right\)\)\s*5px\s*max\(14px, env\(safe-area-inset-left\)\);[^}]*align-items:\s*center/s,
   "Die mobile Navigation muss ihre Ziele innerhalb der iPhone-Safe-Area zentrieren.",
+);
+assert.match(
+  responsiveStyles,
+  /\.app-nav a\s*\{[^}]*min-height:\s*48px;[^}]*padding:\s*3px 8px/s,
+  "Die mobilen Touchziele müssen mindestens 44 px groß sein und Abstand zum Rand halten.",
 );
 assert.match(html, /Content-Security-Policy/);
 assert.match(html, /viewport-fit=cover/);
