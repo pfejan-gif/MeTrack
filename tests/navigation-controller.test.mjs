@@ -286,7 +286,7 @@ test("speichert vor einem Ansichtswechsel und unterstützt den Eintragsanker", (
   assert.equal(setup.controller.currentView, "today");
 });
 
-test("behält die Scrollposition beim Tabwechsel und merkt sie je Ansicht", () => {
+test("behält beim Tabwechsel einfach die aktuelle Scrollposition bei", () => {
   const setup = fixture("#analysis");
   setup.controller.initialize();
   setup.windowRef.scrollY = 420;
@@ -298,11 +298,11 @@ test("behält die Scrollposition beim Tabwechsel und merkt sie je Ansicht", () =
   setup.windowRef.scrollY = 180;
   setup.links[1].click();
   assert.equal(setup.windowRef.location.hash, "#analysis");
-  assert.deepEqual(setup.scrollCalls, [420, 420]);
+  assert.deepEqual(setup.scrollCalls, [420, 180]);
 
   setup.windowRef.scrollY = 510;
   setup.links[2].click();
-  assert.deepEqual(setup.scrollCalls, [420, 420, 180]);
+  assert.deepEqual(setup.scrollCalls, [420, 180, 510]);
 });
 
 test("verhindert das native Hash-Springen nur bei normalen Tabklicks", () => {

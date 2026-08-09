@@ -111,7 +111,6 @@ export function createNavigationController({
   let viewAnimation = null;
   let transitionGeneration = 0;
   let swipeTransitionActive = false;
-  const scrollPositions = new Map();
   const linkListeners = new Map();
   let previousScrollRestoration = null;
 
@@ -120,10 +119,7 @@ export function createNavigationController({
     return Number.isFinite(value) ? Math.max(0, value) : 0;
   }
 
-  function restoreScrollPosition(view, fallback) {
-    const top = scrollPositions.has(view)
-      ? scrollPositions.get(view)
-      : fallback;
+  function preserveScrollPosition(top) {
     windowRef.requestAnimationFrame(() =>
       windowRef.scrollTo({ top, behavior: "auto" }),
     );
@@ -235,8 +231,6 @@ export function createNavigationController({
     const route = routeFromHash(windowRef.location.hash);
     const previousScroll = scrollPosition();
     const changed = currentView !== route.view;
-    if (!initial && changed && currentView)
-      scrollPositions.set(currentView, previousScroll);
     if (!initial && currentView && route.view !== currentView)
       beforeNavigate(currentView, route.view);
 
@@ -255,7 +249,7 @@ export function createNavigationController({
         entrySection?.scrollIntoView({ behavior: "smooth", block: "start" }),
       );
     else if (!initial && changed)
-      restoreScrollPosition(route.view, previousScroll);
+      preserveScrollPosition(previousScroll);
     if (!initial && changed && transitionDirection)
       animateIncomingView(transitionDirection);
     else if (!initial && changed)
