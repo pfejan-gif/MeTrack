@@ -73,8 +73,12 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
   Migrationen, Import/Export und Basisfunktionen. Abhängigkeiten verlaufen von
   Konstanten über Modell/Einträge zu Statistik, Migration und Transfer – niemals
   zurück über `assets/core.js`.
-- `assets/exercise-icons.js`: erlaubte persistente Icon-IDs und lokale Inline-
-  SVG-Erzeugung.
+- `assets/exercise-icons.js`: erlaubte persistente Übungs-/Dehnungs-Icon-IDs
+  und lokaler WebP-Bild-Renderer.
+- `assets/body-metric-icons.js`: Zuordnung der nicht persistenten Körperwert-
+  IDs zu ihren lokalen WebP-Assets.
+- `assets/icons/exercises/` und `assets/icons/metrics/`: transparente,
+  optimierte Produktions-Icons im gemeinsamen MeTrack-Bildstil.
 - `assets/styles.css`: geordneter CSS-Einstieg mit `@import`-Anweisungen.
 - `assets/styles/`: Basis, Dashboard, Training, Charts/History, Dialoge und
   responsive Regeln. Die Importreihenfolge ist Teil des visuellen Verhaltens.
@@ -189,15 +193,35 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
 ## Symbole und visuelle Assets
 
 - Die App lädt zur Laufzeit keine Icon-Fonts, CDN-Bibliotheken oder externen
-  Bilder. Icons bleiben lokale, sichere Inline-SVGs bzw. gebündelte PWA-Assets.
-- Der aktuelle Katalog enthält persistente IDs in `assets/exercise-icons.js`.
-  Neue Symbole müssen bei 22–24 px ohne Beschriftung eindeutig erkennbar sein.
-- Für eine neue Palette darf Bildgenerierung als Konzept- oder Variantenblatt
-  dienen. Produktionssymbole anschließend als konsistente, manuell bereinigte
-  24×24-SVGs umsetzen: gleiche Strichstärke, Rundungen, optische Größe und sichere
-  Innenabstände; Übungen und Dehnungen dürfen sich nicht nur minimal unterscheiden.
-- Neue Icons nach Typ filtern, mit sinnvollen deutschen Labels versehen und in
-  Daten-, Backup- und Import-Roundtrips testen.
+  Bilder. Produktions-Icons bleiben lokale, gebündelte PWA-Assets.
+- Die aktuelle Bildsprache ist ein freundlicher, abgerundeter 3D-Clay-Stil:
+  dunkelblaues Hauptmotiv, Mint-/Türkis-Akzente, weiche Studiobeleuchtung,
+  transparenter Hintergrund, kein Text, Logo, Rahmen oder Wasserzeichen. Neue
+  Motive müssen ohne Beschriftung bei 22–24 px eindeutig erkennbar sein und sich
+  semantisch klar von vorhandenen Motiven unterscheiden.
+- Produktions-Icons als transparente 256×256-WebPs ablegen. Die sichtbare Form
+  erhält gleichmäßige sichere Innenabstände, eine zum Katalog passende optische
+  Größe und einen alpha-gewichteten visuellen Schwerpunkt in der Bildmitte.
+  Nicht nur die geometrische Bounding-Box zentrieren. Einzeldateien bleiben
+  unter 64 KB und sollen nach Möglichkeit deutlich kleiner sein.
+- Bei generierten Motiven einen vollkommen einfarbigen Chroma-Key-Hintergrund
+  verwenden, ihn lokal sauber entfernen und Kanten auf Farbsäume prüfen. Danach
+  das freigestellte Motiv auf 256×256 normalisieren, als WebP optimieren und auf
+  hellem sowie dunklem Untergrund kontrollieren. Keine externen Bild-URLs oder
+  zur Laufzeit erzeugten Varianten einführen.
+- Persistente Übungs-/Dehnungs-IDs stehen in `assets/exercise-icons.js` und
+  dürfen ohne getestete Migration nicht umbenannt oder neu belegt werden.
+  Körperwert-Icons stehen in `assets/body-metric-icons.js`; ihre IDs müssen den
+  kanonischen `BODY_METRIC_KEYS` entsprechen. Neue Icons nach Typ filtern und mit
+  sinnvollen deutschen Labels versehen.
+- Jedes neue Laufzeit-Asset sowohl dem `APP_SHELL` in `service-worker.js` als
+  auch `scripts/check-static.mjs` hinzufügen. Der statische Check validiert
+  WebP-Header und Dateigröße; Zuordnung und Eindeutigkeit erhalten Unit-Tests.
+- Neue Icons in der Auswahlpalette, im Tagesformular, in Übersicht/Auswertung
+  und Historie dort prüfen, wo ihr Typ vorkommt: mindestens bei 320 px und 375 px,
+  in Hell-/Dunkelmodus sowie nach warmer Offline-Neuladung. Persistente
+  Übungs-/Dehnungs-Icons zusätzlich in Daten-, Backup- und Import-Roundtrips
+  testen.
 - App-Icon und Wortmarke nur als zusammengehöriges Set ändern. Apple-Touch- und
   Manifest-PNGs müssen vollflächig, opak und in den geprüften Größen bleiben.
 

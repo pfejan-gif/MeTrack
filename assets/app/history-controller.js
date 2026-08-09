@@ -5,6 +5,7 @@ import {
   formatDate,
   formatNumber,
 } from "../core.js";
+import { createBodyMetricIconImage } from "../body-metric-icons.js";
 import { createExerciseIconImage } from "../exercise-icons.js";
 
 export const HISTORY_PAGE_SIZE = 20;
@@ -204,11 +205,13 @@ export function createHistoryController({ state, elements }) {
       })),
       {
         label: "Gewicht",
+        bodyMetricIcon: "weight",
         value:
           entry.weight === null ? null : `${formatNumber(entry.weight, 1)} kg`,
       },
       {
         label: "Bauch",
+        bodyMetricIcon: "waist",
         value:
           entry.waist === null ? null : `${formatNumber(entry.waist, 1)} cm`,
       },
@@ -216,11 +219,18 @@ export function createHistoryController({ state, elements }) {
   }
 
   function appendHistoryMetrics(container, entry) {
-    for (const { label, value, icon } of historyMetricItems(entry)) {
+    for (const {
+      label,
+      value,
+      icon,
+      bodyMetricIcon,
+    } of historyMetricItems(entry)) {
       const metric = document.createElement("div");
       metric.className = "history-metric";
       const small = document.createElement("span");
       if (icon) small.append(createExerciseIconImage(icon));
+      else if (bodyMetricIcon)
+        small.append(createBodyMetricIconImage(bodyMetricIcon));
       small.append(label);
       const strong = document.createElement("strong");
       strong.textContent = value;

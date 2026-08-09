@@ -257,7 +257,7 @@ td {
 }
 
 .custom-history-cell .exercise-icon-image,
-.history-metric span .exercise-icon-image {
+.history-metric span :is(.exercise-icon-image, .body-metric-icon-image) {
   width: 22px;
   height: 22px;
   flex: 0 0 auto;

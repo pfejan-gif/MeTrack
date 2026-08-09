@@ -358,9 +358,16 @@
 
           <article class="card metric-card">
             <div class="metric-icon mint" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="M5 20h14M7 20v-7h10v7M9 13V8h6v5M12 8V4" />
-              </svg>
+              <img
+                class="body-metric-icon-image"
+                src="./assets/icons/metrics/weight.webp"
+                data-body-metric-icon="weight"
+                alt=""
+                width="256"
+                height="256"
+                decoding="async"
+                draggable="false"
+              />
             </div>
             <div>
               <p class="metric-label">Gewicht</p>
@@ -373,12 +380,16 @@
 
           <article class="card metric-card">
             <div class="metric-icon blue" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="8" />
-                <path
-                  d="M4 12h16M12 4a13 13 0 0 1 0 16M12 4a13 13 0 0 0 0 16"
-                />
-              </svg>
+              <img
+                class="body-metric-icon-image"
+                src="./assets/icons/metrics/waist.webp"
+                data-body-metric-icon="waist"
+                alt=""
+                width="256"
+                height="256"
+                decoding="async"
+                draggable="false"
+              />
             </div>
             <div>
               <p class="metric-label">Bauchumfang</p>
@@ -576,10 +587,32 @@
             aria-label="Messwert auswählen"
           >
             <button type="button" data-metric="weight" aria-pressed="false">
-              Gewicht
+              <img
+                class="body-metric-icon-image"
+                src="./assets/icons/metrics/weight.webp"
+                data-body-metric-icon="weight"
+                alt=""
+                width="256"
+                height="256"
+                decoding="async"
+                draggable="false"
+                aria-hidden="true"
+              />
+              <span>Gewicht</span>
             </button>
             <button type="button" data-metric="waist" aria-pressed="false">
-              Bauch
+              <img
+                class="body-metric-icon-image"
+                src="./assets/icons/metrics/waist.webp"
+                data-body-metric-icon="waist"
+                alt=""
+                width="256"
+                height="256"
+                decoding="async"
+                draggable="false"
+                aria-hidden="true"
+              />
+              <span>Bauch</span>
             </button>
           </div>
 

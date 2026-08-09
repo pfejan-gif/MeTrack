@@ -42,6 +42,10 @@ const coreModules = [
   "assets/core/transfer.js",
   "assets/core/value-utils.js",
 ];
+const visualAssetModules = [
+  "assets/body-metric-icons.js",
+  "assets/exercise-icons.js",
+];
 const exerciseIconIds = [
   "activity",
   "plank",
@@ -77,6 +81,11 @@ const exerciseIconIds = [
 const exerciseIconFiles = exerciseIconIds.map(
   (id) => `assets/icons/exercises/${id}.webp`,
 );
+const bodyMetricIconIds = ["weight", "waist"];
+const bodyMetricIconFiles = bodyMetricIconIds.map(
+  (id) => `assets/icons/metrics/${id}.webp`,
+);
+const runtimeIconFiles = [...exerciseIconFiles, ...bodyMetricIconFiles];
 const appShellFiles = [
   "index.html",
   "manifest.webmanifest",
@@ -84,8 +93,8 @@ const appShellFiles = [
   ...styleModules,
   ...appModules,
   ...coreModules,
-  "assets/exercise-icons.js",
-  ...exerciseIconFiles,
+  ...visualAssetModules,
+  ...runtimeIconFiles,
   "assets/icons/favicon.svg",
   "assets/icons/apple-touch-icon.png",
   "assets/icons/icon-192.png",
@@ -113,6 +122,7 @@ const responsiveStyles = read("assets/styles/responsive.css");
 const app = appModules.map(read).join("\n");
 const exerciseController = read("assets/app/exercise-controller.js");
 const exerciseIconModule = read("assets/exercise-icons.js");
+const bodyMetricIconModule = read("assets/body-metric-icons.js");
 const core = coreModules.map(read).join("\n");
 for (const module of styleModules)
   assert.ok(
@@ -164,6 +174,13 @@ assert.match(html, /id="draftStatus"/);
 assert.match(html, /id="entryProgress"/);
 assert.match(html, /id="historyMonthFilter"/);
 assert.match(html, /id="dataActionsDialog"/);
+for (const id of bodyMetricIconIds) {
+  assert.match(
+    html,
+    new RegExp(`src=["']\\./assets/icons/metrics/${id}\\.webp["']`),
+    `Körperwert-Symbol fehlt im statischen HTML: ${id}.`,
+  );
+}
 assert.doesNotMatch(html, /id="resetButton"/);
 assert.doesNotMatch(html, /Alle Daten löschen/);
 assert.doesNotMatch(html, /privat/i);
@@ -256,7 +273,7 @@ assertOpaquePng("assets/icons/icon-192.png");
 assertOpaquePng("assets/icons/icon-512.png");
 assertOpaquePng("assets/icons/apple-touch-icon.png");
 
-for (const path of exerciseIconFiles) {
+for (const path of runtimeIconFiles) {
   const bytes = readFileSync(resolve(root, path));
   assert.equal(
     bytes.toString("ascii", 0, 4),
@@ -268,7 +285,28 @@ for (const path of exerciseIconFiles) {
     "WEBP",
     `${path} ist kein WebP-Bild.`,
   );
-  assert.ok(bytes.length < 64_000, `${path} ist für den App-Shell-Cache zu groß.`);
+  assert.equal(
+    bytes.toString("ascii", 12, 16),
+    "VP8X",
+    `${path} braucht einen erweiterten WebP-Header.`,
+  );
+  assert.equal(
+    bytes[20] & 0x10,
+    0x10,
+    `${path} muss einen transparenten Alphakanal besitzen.`,
+  );
+  assert.deepEqual(
+    {
+      width: bytes.readUIntLE(24, 3) + 1,
+      height: bytes.readUIntLE(27, 3) + 1,
+    },
+    { width: 256, height: 256 },
+    `${path} muss exakt 256×256 Pixel groß sein.`,
+  );
+  assert.ok(
+    bytes.length < 64_000,
+    `${path} ist für den App-Shell-Cache zu groß.`,
+  );
 }
 
 const serviceWorker = read("service-worker.js");
@@ -297,7 +335,9 @@ assert.ok(
 assert.match(core, /DATA_KEY = "metrack_data_v6"/);
 assert.match(core, /DATA_SCHEMA_VERSION = 6/);
 assert.match(app, /createExerciseIconImage/);
+assert.match(app, /createBodyMetricIconImage/);
 assert.match(exerciseIconModule, /dataset\.exerciseIcon/);
+assert.match(bodyMetricIconModule, /dataset\.bodyMetricIcon/);
 for (const id of exerciseIconIds) {
   assert.match(
     styles,
@@ -352,6 +392,7 @@ assert.doesNotMatch(
 const modularSources = [
   ...appModules,
   ...coreModules,
+  ...visualAssetModules,
   ...styleModules,
   ...readdirTestFiles(),
 ];

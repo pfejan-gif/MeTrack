@@ -10,6 +10,7 @@ import {
   metricDefinition,
   todayLocal,
 } from "../core.js";
+import { createBodyMetricIconImage } from "../body-metric-icons.js";
 import { createExerciseIconImage } from "../exercise-icons.js";
 import {
   clearCanvas,
@@ -52,7 +53,10 @@ export function createDashboardController({ state, elements, setText }) {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.metric = key;
-      button.textContent = METRICS[key].shortLabel;
+      button.append(createBodyMetricIconImage(key));
+      const label = document.createElement("span");
+      label.textContent = METRICS[key].shortLabel;
+      button.append(label);
       button.setAttribute("aria-pressed", String(state.metric === key));
       elements.metricTabs.append(button);
     }
