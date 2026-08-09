@@ -148,10 +148,10 @@ export function createHistoryController({ state, elements }) {
               "M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z",
             ]
           : [
-              "M4 7h16",
-              "M9 7V4h6v3",
-              "m8 7-1 10H8L7 7",
-              "M10 11v4m4-4v4",
+              "M3 6h18",
+              "M8 6V4h8v2",
+              "M5 6l1 14h12l1-14",
+              "M10 11v5m4-5v5",
             ],
       ),
     );
