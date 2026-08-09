@@ -19,25 +19,31 @@ import {
 import { exerciseIconBadge } from "./exercise-icon-ui.js";
 import { createHistoryController } from "./history-controller.js";
 
+export function chartableExercises(exercises = []) {
+  return exercises.filter((exercise) => exercise.kind !== "stretch");
+}
+
 export function createDashboardController({ state, elements, setText }) {
   const drawChart = (canvas, entries, key, options = {}) =>
     drawChartCanvas(canvas, entries, key, state.exercises, options);
   const { renderHistory } = createHistoryController({ state, elements });
 
   function metricFallback() {
-    return state.exercises.length
-      ? exerciseMetricKey(state.exercises[0].id)
+    const exercises = chartableExercises(state.exercises);
+    return exercises.length
+      ? exerciseMetricKey(exercises[0].id)
       : "weight";
   }
   
   function renderMetricTabs() {
+    const exercises = chartableExercises(state.exercises);
     const valid = new Set([
-      ...state.exercises.map((exercise) => exerciseMetricKey(exercise.id)),
+      ...exercises.map((exercise) => exerciseMetricKey(exercise.id)),
       ...BODY_METRIC_KEYS,
     ]);
     if (!valid.has(state.metric)) state.metric = metricFallback();
     elements.metricTabs.replaceChildren();
-    for (const exercise of state.exercises) {
+    for (const exercise of exercises) {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.metric = exerciseMetricKey(exercise.id);
