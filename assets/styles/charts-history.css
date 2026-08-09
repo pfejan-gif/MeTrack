@@ -61,20 +61,23 @@
 
 .chart-container {
   position: relative;
-  height: 330px;
+  height: 300px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px),
-    color-mix(in srgb, var(--bg-elevated) 72%, transparent);
-  background-size:
-    100% 25%,
-    20% 100%;
+  background: color-mix(in srgb, var(--bg-elevated) 78%, transparent);
 }
 
 .chart-container canvas {
   position: relative;
   z-index: 1;
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.chart-container canvas:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -4px;
 }
 
 .chart-empty {
@@ -103,8 +106,48 @@
 }
 
 .chart-summary {
-  min-height: 1.4em;
-  margin: 12px 2px 0;
+  display: grid;
+  min-height: 58px;
+  margin: 10px 0 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chart-summary-item {
+  display: grid;
+  min-width: 0;
+  padding: 9px 11px;
+  align-content: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 68%, transparent);
+}
+
+.chart-summary-item > span,
+.chart-summary-item > small {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.chart-summary-item > strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-summary-item[data-tone="accent"] > strong {
+  color: var(--mint);
+}
+
+.chart-summary-message {
+  margin: 0;
+  grid-column: 1 / -1;
+  align-self: center;
   color: var(--muted);
   font-size: 0.78rem;
 }

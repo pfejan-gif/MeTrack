@@ -111,6 +111,23 @@ export function createNavigationController({
   let viewAnimation = null;
   let transitionGeneration = 0;
   let swipeTransitionActive = false;
+  const scrollPositions = new Map();
+  const linkListeners = new Map();
+  let previousScrollRestoration = null;
+
+  function scrollPosition() {
+    const value = Number(windowRef.scrollY ?? windowRef.pageYOffset ?? 0);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  }
+
+  function restoreScrollPosition(view, fallback) {
+    const top = scrollPositions.has(view)
+      ? scrollPositions.get(view)
+      : fallback;
+    windowRef.requestAnimationFrame(() =>
+      windowRef.scrollTo({ top, behavior: "auto" }),
+    );
+  }
 
   function prefersReducedMotion() {
     return Boolean(
@@ -216,6 +233,10 @@ export function createNavigationController({
     const transitionDirection = pendingTransitionDirection;
     pendingTransitionDirection = 0;
     const route = routeFromHash(windowRef.location.hash);
+    const previousScroll = scrollPosition();
+    const changed = currentView !== route.view;
+    if (!initial && changed && currentView)
+      scrollPositions.set(currentView, previousScroll);
     if (!initial && currentView && route.view !== currentView)
       beforeNavigate(currentView, route.view);
 
@@ -227,7 +248,6 @@ export function createNavigationController({
       else link.removeAttribute("aria-current");
     }
 
-    const changed = currentView !== route.view;
     currentView = route.view;
     onViewChange(route.view, { changed, initial });
     if (route.focusEntry)
@@ -235,7 +255,7 @@ export function createNavigationController({
         entrySection?.scrollIntoView({ behavior: "smooth", block: "start" }),
       );
     else if (!initial && changed)
-      windowRef.scrollTo({ top: 0, behavior: "auto" });
+      restoreScrollPosition(route.view, previousScroll);
     if (!initial && changed && transitionDirection)
       animateIncomingView(transitionDirection);
     else if (!initial && changed)
@@ -255,8 +275,26 @@ export function createNavigationController({
       windowRef.history.replaceState(null, "", hash);
       return applyRoute();
     }
+    if (windowRef.history.pushState) {
+      windowRef.history.pushState(null, "", hash);
+      return applyRoute();
+    }
     windowRef.location.hash = hash;
     return view;
+  }
+
+  function handleViewLink(link, event) {
+    if (
+      event.defaultPrevented ||
+      (Number.isFinite(event.button) && event.button !== 0) ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    event.preventDefault();
+    navigate(link.dataset.viewLink);
   }
 
   function handleTouchStart(event) {
@@ -309,8 +347,18 @@ export function createNavigationController({
   }
 
   function initialize() {
+    if ("scrollRestoration" in windowRef.history) {
+      previousScrollRestoration = windowRef.history.scrollRestoration;
+      windowRef.history.scrollRestoration = "manual";
+    }
     const view = applyRoute({ initial: true });
     windowRef.addEventListener("hashchange", applyRoute);
+    windowRef.addEventListener("popstate", applyRoute);
+    for (const link of links) {
+      const listener = (event) => handleViewLink(link, event);
+      linkListeners.set(link, listener);
+      link.addEventListener?.("click", listener);
+    }
     gestureSurface?.addEventListener("touchstart", handleTouchStart, {
       passive: true,
     });
@@ -325,6 +373,12 @@ export function createNavigationController({
 
   function destroy() {
     windowRef.removeEventListener("hashchange", applyRoute);
+    windowRef.removeEventListener("popstate", applyRoute);
+    for (const [link, listener] of linkListeners)
+      link.removeEventListener?.("click", listener);
+    linkListeners.clear();
+    if (previousScrollRestoration !== null)
+      windowRef.history.scrollRestoration = previousScrollRestoration;
     gestureSurface?.removeEventListener("touchstart", handleTouchStart);
     gestureSurface?.removeEventListener("touchend", handleTouchEnd);
     gestureSurface?.removeEventListener("touchcancel", cancelTouchGesture);

@@ -226,7 +226,7 @@
   }
 
   .chart-container {
-    height: 270px;
+    height: 230px;
   }
 
   .history-heading {
@@ -364,6 +364,14 @@
   .history-summary-chip {
     padding-inline: 7px;
     font-size: 0.59rem;
+  }
+
+  .chart-summary-item {
+    padding-inline: 8px;
+  }
+
+  .chart-summary-item > strong {
+    font-size: 0.78rem;
   }
 
   .update-banner-copy small {

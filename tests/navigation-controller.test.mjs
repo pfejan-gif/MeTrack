@@ -16,6 +16,7 @@ class FakeElement {
     this.dataset = dataset;
     this.hidden = false;
     this.attributes = new Map();
+    this.listeners = new Map();
     this.scrolled = false;
   }
 
@@ -25,6 +26,27 @@ class FakeElement {
 
   removeAttribute(name) {
     this.attributes.delete(name);
+  }
+
+  addEventListener(name, callback) {
+    this.listeners.set(name, callback);
+  }
+
+  removeEventListener(name) {
+    this.listeners.delete(name);
+  }
+
+  click(options = {}) {
+    let prevented = false;
+    this.listeners.get("click")?.({
+      button: 0,
+      defaultPrevented: false,
+      preventDefault: () => {
+        prevented = true;
+      },
+      ...options,
+    });
+    return prevented;
   }
 
   scrollIntoView() {
@@ -47,12 +69,18 @@ function fixture(
   );
   const entrySection = new FakeElement();
   const changes = [];
+  const scrollCalls = [];
   const transitions = [];
   let currentTime = initialNow;
   const windowRef = {
     innerWidth: 393,
+    scrollY: 0,
     location: { hash },
     history: {
+      scrollRestoration: "auto",
+      pushState: (_state, _title, nextHash) => {
+        windowRef.location.hash = nextHash;
+      },
       replaceState: (_state, _title, nextHash) => {
         windowRef.location.hash = nextHash;
       },
@@ -61,7 +89,10 @@ function fixture(
     removeEventListener: (name) => listeners.delete(name),
     matchMedia: () => ({ matches: reducedMotion }),
     requestAnimationFrame: (callback) => callback(),
-    scrollTo() {},
+    scrollTo({ top }) {
+      windowRef.scrollY = top;
+      scrollCalls.push(top);
+    },
   };
   const gestureSurface = {
     addEventListener: (name, callback) => gestureListeners.set(name, callback),
@@ -115,6 +146,7 @@ function fixture(
     gestureListeners,
     links,
     listeners,
+    scrollCalls,
     sections,
     transitions,
     windowRef,
@@ -252,6 +284,45 @@ test("speichert vor einem Ansichtswechsel und unterstützt den Eintragsanker", (
   assert.deepEqual(setup.transitions, [["history", "today"]]);
   assert.equal(setup.entrySection.scrolled, true);
   assert.equal(setup.controller.currentView, "today");
+});
+
+test("behält die Scrollposition beim Tabwechsel und merkt sie je Ansicht", () => {
+  const setup = fixture("#analysis");
+  setup.controller.initialize();
+  setup.windowRef.scrollY = 420;
+
+  assert.equal(setup.links[2].click(), true);
+  assert.equal(setup.windowRef.location.hash, "#history");
+  assert.deepEqual(setup.scrollCalls, [420]);
+
+  setup.windowRef.scrollY = 180;
+  setup.links[1].click();
+  assert.equal(setup.windowRef.location.hash, "#analysis");
+  assert.deepEqual(setup.scrollCalls, [420, 420]);
+
+  setup.windowRef.scrollY = 510;
+  setup.links[2].click();
+  assert.deepEqual(setup.scrollCalls, [420, 420, 180]);
+});
+
+test("verhindert das native Hash-Springen nur bei normalen Tabklicks", () => {
+  const setup = fixture("#today");
+  setup.controller.initialize();
+
+  assert.equal(setup.links[1].click({ metaKey: true }), false);
+  assert.equal(setup.windowRef.location.hash, "#today");
+  assert.equal(setup.links[1].click(), true);
+  assert.equal(setup.windowRef.location.hash, "#analysis");
+});
+
+test("stellt die Browser-Scrollsteuerung beim Aufräumen wieder her", () => {
+  const setup = fixture("#today");
+  setup.controller.initialize();
+  assert.equal(setup.windowRef.history.scrollRestoration, "manual");
+
+  setup.controller.destroy();
+  assert.equal(setup.windowRef.history.scrollRestoration, "auto");
+  assert.equal(setup.links[0].listeners.has("click"), false);
 });
 
 test("wechselt erst nach dem Herausgleiten zum benachbarten Tab", async () => {
