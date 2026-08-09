@@ -27,6 +27,7 @@ const appModules = [
   "assets/app/exercise-controller.js",
   "assets/app/exercise-icon-ui.js",
   "assets/app/history-controller.js",
+  "assets/app/navigation-controller.js",
   "assets/app/pwa-controller.js",
   "assets/app/timer-controller.js",
   "assets/app/transfer-controller.js",
@@ -92,6 +93,13 @@ assert.match(html, /id="exerciseInstructions"/);
 assert.match(html, /id="exerciseIconPalette"/);
 assert.match(html, /id="timerDialog"/);
 assert.match(html, /id="timerStartPauseButton"/);
+assert.match(html, /data-view-link="today"/);
+assert.match(html, /data-view-link="analysis"/);
+assert.match(html, /data-view-link="history"/);
+assert.match(html, /id="draftStatus"/);
+assert.match(html, /id="entryProgress"/);
+assert.match(html, /id="historyMonthFilter"/);
+assert.match(html, /id="dataActionsDialog"/);
 assert.doesNotMatch(html, /id="resetButton"/);
 assert.doesNotMatch(html, /Alle Daten löschen/);
 assert.doesNotMatch(html, /privat/i);
@@ -104,6 +112,7 @@ assert.match(styles, /touch-action:\s*pan-x pan-y/);
 assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
 assert.match(styles, /\.set-field-header\s*\{/);
+assert.match(styles, /\.app-nav\s*\{/);
 assert.match(
   styles,
   /\.set-timer-button\s*\{[^}]*position:\s*absolute/s,

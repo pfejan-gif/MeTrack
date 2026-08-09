@@ -15,6 +15,7 @@ import {
   InvalidEntryDraftError,
   createEntryDraft,
   entryDraftHasContent,
+  entryDraftProgress,
   readEntryDraft,
   removeEntryDraft,
   writeEntryDraft,
@@ -27,6 +28,8 @@ export function createEntryController({
   persistData,
   showToast,
   render,
+  openEntryView,
+  onEditingFinished,
 }) {
   let currentDraft = null;
 
@@ -38,6 +41,12 @@ export function createEntryController({
       ? "Änderungen speichern"
       : "Eintrag speichern";
     elements.cancelEditButton.hidden = !editing;
+  }
+
+  function setDraftStatus(message = "", status = "") {
+    elements.draftStatus.textContent = message;
+    elements.draftStatus.dataset.state = status;
+    elements.draftStatus.hidden = message === "";
   }
 
   function draftFromForm() {
@@ -84,16 +93,34 @@ export function createEntryController({
     }
   }
 
+  function renderEntryProgress(draft = null) {
+    const progress = entryDraftProgress(draft || draftFromForm(), state.exercises);
+    const label = progress.total === 0
+      ? "Keine aktiven Trainingseinträge"
+      : `${progress.completed} von ${progress.total} erfasst`;
+    elements.entryProgressWrap.hidden = progress.total === 0;
+    elements.entryProgressLabel.textContent = label;
+    elements.entryProgress.max = Math.max(progress.total, 1);
+    elements.entryProgress.value = progress.completed;
+    elements.entryProgress.textContent = label;
+    elements.entryProgress.setAttribute("aria-label", label);
+    return progress;
+  }
+
   function saveDraft() {
     try {
       const draft = draftFromForm();
+      renderEntryProgress(draft);
       if (!entryDraftHasContent(draft, todayLocal())) {
         clearDraft();
+        setDraftStatus();
         return true;
       }
       currentDraft = writeEntryDraft(localStorage, draft);
+      setDraftStatus("Entwurf gespeichert", "saved");
       return true;
     } catch {
+      setDraftStatus("Entwurf nicht gespeichert", "error");
       return false;
     }
   }
@@ -108,7 +135,11 @@ export function createEntryController({
         showToast("Beschädigter Entwurf wurde verworfen.");
       return false;
     }
-    if (!draft) return false;
+    if (!draft) {
+      renderEntryProgress();
+      setDraftStatus();
+      return false;
+    }
     currentDraft = draft;
     state.editingDate =
       draft.editingDate &&
@@ -133,6 +164,8 @@ export function createEntryController({
     }
     clearErrors();
     setFormMode(Boolean(state.editingDate));
+    renderEntryProgress(draft);
+    setDraftStatus("Entwurf wiederhergestellt", "restored");
     return true;
   }
 
@@ -181,7 +214,15 @@ export function createEntryController({
     $("date").value = todayLocal();
     $("date").max = todayLocal();
     setFormMode(false);
+    renderEntryProgress();
+    setDraftStatus();
     if (clearStoredDraft) clearDraft();
+  }
+
+  function cancelEditing() {
+    const wasEditing = Boolean(state.editingDate);
+    resetForm();
+    if (wasEditing) onEditingFinished?.();
   }
   
   function startEditing(date) {
@@ -205,7 +246,8 @@ export function createEntryController({
     }
     setFormMode(true);
     saveDraft();
-    $("entry").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (openEntryView) openEntryView();
+    else $("entry").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   
   function formCandidate() {
@@ -267,6 +309,7 @@ export function createEntryController({
       showErrors(validation.errors);
       return;
     }
+    const wasEditing = Boolean(state.editingDate);
     const entries = upsertEntry(
       state.entries,
       validation.entry,
@@ -282,6 +325,7 @@ export function createEntryController({
     resetForm();
     render();
     showToast(`${message} ✓`);
+    if (wasEditing) onEditingFinished?.();
   }
   
   function handleHistoryAction(event) {
@@ -313,7 +357,9 @@ export function createEntryController({
     saveDraft,
     restoreDraft,
     clearDraft,
+    renderEntryProgress,
     resetForm,
+    cancelEditing,
     startEditing,
     handleSubmit,
     handleHistoryAction,

@@ -1,4 +1,12 @@
 @media (max-width: 900px) {
+  .desktop-app-nav a {
+    padding-inline: 9px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -29,6 +37,7 @@
 @media (max-width: 700px) {
   :root {
     --header-height: 68px;
+    --app-nav-height: 66px;
   }
 
   .header-inner,
@@ -52,8 +61,51 @@
     height: 44px;
   }
 
+  .desktop-app-nav {
+    display: none;
+  }
+
+  .mobile-app-nav {
+    display: flex;
+  }
+
+  .app-nav {
+    position: fixed;
+    z-index: 170;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: calc(var(--app-nav-height) + env(safe-area-inset-bottom));
+    padding: 5px max(10px, env(safe-area-inset-right))
+      calc(5px + env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+    justify-content: center;
+    gap: 4px;
+    border-width: 1px 0 0;
+    border-radius: 0;
+    background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
+    box-shadow: 0 -12px 34px color-mix(in srgb, #000 15%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(1.25);
+    backdrop-filter: blur(22px) saturate(1.25);
+  }
+
+  .app-nav a {
+    min-width: 0;
+    min-height: 54px;
+    padding: 5px 8px;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.62rem;
+  }
+
+  .app-nav svg {
+    width: 20px;
+    height: 20px;
+  }
+
   .app-shell {
-    padding-top: 32px;
+    padding: 24px 0 22px;
   }
 
   .section-heading,
@@ -105,18 +157,36 @@
   }
 
   .content-section {
-    padding-top: 54px;
+    padding-top: 0;
+  }
+
+  #progress {
+    padding-top: 34px;
   }
 
   .form-card,
   .progress-card,
   .history-card {
-    padding: 18px;
-    border-radius: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .status-chip {
+    margin-top: 0;
+  }
+
+  .form-status-stack {
     margin-top: 13px;
+    justify-items: start;
+  }
+
+  .draft-status {
+    text-align: left;
   }
 
   .form-grid {
@@ -131,7 +201,7 @@
   .form-actions {
     position: sticky;
     z-index: 20;
-    bottom: max(10px, env(safe-area-inset-bottom));
+    bottom: calc(var(--app-nav-height) + env(safe-area-inset-bottom) + 8px);
     margin: 6px -5px -5px;
     padding: 8px;
     border: 1px solid var(--line);
@@ -159,10 +229,16 @@
     margin-bottom: 18px;
   }
 
-  .data-actions {
+  .history-controls {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) auto;
     margin-top: 17px;
+    align-items: end;
+  }
+
+  .history-month-control select {
+    width: 100%;
+    min-width: 0;
   }
 
   .compact-button {
@@ -224,6 +300,31 @@
   .exercise-icon-palette {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .data-actions-modal {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 54px);
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .data-actions-dialog-content {
+    padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .network-banner {
+    bottom: calc(var(--app-nav-height) + env(safe-area-inset-bottom) + 10px);
+  }
+
+  .toast {
+    bottom: calc(var(--app-nav-height) + env(safe-area-inset-bottom) + 10px);
+  }
+
+  .app-footer {
+    padding-bottom: calc(24px + var(--app-nav-height) + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-width: 420px) {
@@ -247,9 +348,9 @@
     padding-inline: 11px;
   }
 
-  .data-actions .button {
-    gap: 5px;
-    font-size: 0.7rem;
+  .entry-progress {
+    grid-template-columns: 1fr;
+    gap: 9px;
   }
 
   .history-summary {
@@ -288,6 +389,10 @@
 
   .exercise-icon-palette {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .body-metrics-group {
+    padding-inline: 13px;
   }
 
   .exercise-manager-item {
@@ -331,10 +436,11 @@
 
 @media print {
   .app-header,
+  .app-nav,
   .update-banner,
   .install-card,
   .form-card,
-  .data-actions,
+  .history-controls,
   .app-footer,
   .row-actions {
     display: none !important;

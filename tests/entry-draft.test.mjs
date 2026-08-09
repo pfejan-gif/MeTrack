@@ -5,6 +5,7 @@ import {
   ENTRY_DRAFT_KEY,
   createEntryDraft,
   entryDraftHasContent,
+  entryDraftProgress,
   parseEntryDraft,
   readEntryDraft,
   removeEntryDraft,
@@ -71,6 +72,26 @@ test("erkennt leere und tatsächlich begonnene Entwürfe", () => {
       "2026-08-09",
     ),
     true,
+  );
+});
+
+test("zählt nur ausgefüllte Übungen und erledigte Dehnungen", () => {
+  const progress = entryDraftProgress(draft(), [
+    { id: "exercise-plank", kind: "seconds", active: true },
+    { id: "stretch-hamstrings", kind: "stretch", active: true },
+    { id: "inactive", kind: "reps", active: false },
+  ]);
+
+  assert.deepEqual(progress, { completed: 1, total: 2 });
+  assert.deepEqual(
+    entryDraftProgress(
+      draft({ exerciseChecks: { "stretch-hamstrings": true } }),
+      [
+        { id: "exercise-plank", kind: "seconds", active: true },
+        { id: "stretch-hamstrings", kind: "stretch", active: true },
+      ],
+    ),
+    { completed: 2, total: 2 },
   );
 });
 

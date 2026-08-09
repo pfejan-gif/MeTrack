@@ -118,6 +118,18 @@ export function entryDraftHasContent(draft, defaultDate) {
   );
 }
 
+export function entryDraftProgress(draft, exercises) {
+  const active = exercises.filter((exercise) => exercise.active);
+  const completed = active.filter((exercise) => {
+    if (exercise.kind === "stretch")
+      return draft.exerciseChecks[exercise.id] === true;
+    return (draft.exerciseValues[exercise.id] || []).some(
+      (value) => value !== "",
+    );
+  }).length;
+  return { completed, total: active.length };
+}
+
 export function parseEntryDraft(raw) {
   assertDraft(typeof raw === "string" && raw.length <= MAX_DRAFT_LENGTH);
   try {

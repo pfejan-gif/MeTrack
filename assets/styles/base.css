@@ -26,6 +26,7 @@
   --radius-lg: 28px;
   --max-width: 1140px;
   --header-height: 76px;
+  --app-nav-height: 0px;
   font-family:
     Inter,
     ui-sans-serif,
@@ -389,6 +390,52 @@ svg {
   gap: 8px;
 }
 
+.app-nav {
+  display: flex;
+  padding: 4px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.app-nav a {
+  display: inline-flex;
+  min-height: 44px;
+  padding: 8px 13px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 11px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.app-nav a:hover {
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.app-nav a[aria-current="page"] {
+  color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 10%, var(--surface-soft));
+}
+
+.app-nav svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mobile-app-nav {
+  display: none;
+}
+
 .icon-button {
   display: inline-grid;
   width: 46px;
@@ -674,4 +721,3 @@ h3 {
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
-
