@@ -77,8 +77,9 @@
     left: 0;
     height: calc(var(--app-nav-height) + env(safe-area-inset-bottom));
     padding: 5px max(10px, env(safe-area-inset-right))
-      calc(5px + env(safe-area-inset-bottom))
+      5px
       max(10px, env(safe-area-inset-left));
+    align-items: center;
     justify-content: center;
     gap: 4px;
     border-width: 1px 0 0;
