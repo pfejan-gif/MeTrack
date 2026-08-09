@@ -73,9 +73,11 @@ export function exerciseIconSource(iconId) {
 }
 
 export function createExerciseIconImage(iconId) {
+  const definition = exerciseIconDefinition(iconId);
   const image = document.createElement("img");
   image.className = "exercise-icon-image";
-  image.src = exerciseIconSource(iconId);
+  image.src = definition.src;
+  image.dataset.exerciseIcon = definition.id;
   image.alt = "";
   image.width = 256;
   image.height = 256;
