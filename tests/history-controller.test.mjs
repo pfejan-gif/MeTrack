@@ -124,6 +124,16 @@ function descendantsWithClass(element, className) {
   return matches;
 }
 
+function descendantsWithTag(element, tagName) {
+  const matches = [];
+  for (const child of element.children) {
+    if (!(child instanceof FakeElement)) continue;
+    if (child.tagName === tagName) matches.push(child);
+    matches.push(...descendantsWithTag(child, tagName));
+  }
+  return matches;
+}
+
 test("rendert viele Einträge kompakt, begrenzt und aufklappbar", () => {
   const previousDocument = globalThis.document;
   globalThis.document = {
@@ -166,6 +176,19 @@ test("rendert viele Einträge kompakt, begrenzt und aufklappbar", () => {
     assert.equal(cards.length, 20);
     assert.equal(cards.filter((card) => card.open).length, 1);
     assert.equal(elements.mobileHistory.children.length, 1);
+    const deleteButton = descendantsWithClass(
+      elements.mobileHistory,
+      "danger",
+    )[0];
+    assert.deepEqual(
+      descendantsWithTag(deleteButton, "path").map((path) => path.d),
+      [
+        "M3 6h18",
+        "M8 6V4h8v2",
+        "M5 6l1 14h12l1-14",
+        "M10 11v5m4-5v5",
+      ],
+    );
   } finally {
     globalThis.document = previousDocument;
   }
