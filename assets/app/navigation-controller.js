@@ -10,7 +10,7 @@ const SWIPE_DIRECTION_RATIO = 1.25;
 const SWIPE_EDGE_GUARD = 24;
 const VIEW_TRANSITION_DISTANCE = 28;
 const VIEW_TRANSITION_OPTIONS = {
-  duration: 260,
+  duration: 380,
   easing: "cubic-bezier(0.22, 1, 0.36, 1)",
 };
 const SWIPE_BLOCK_SELECTOR = [

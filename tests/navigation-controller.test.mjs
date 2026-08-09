@@ -248,7 +248,7 @@ test("animiert den neuen Inhalt passend zur Wischrichtung", () => {
     "translate3d(28px, 0, 0) scale(0.992)",
   );
   assert.deepEqual(setup.animations[0].options, {
-    duration: 260,
+    duration: 380,
     easing: "cubic-bezier(0.22, 1, 0.36, 1)",
   });
 
