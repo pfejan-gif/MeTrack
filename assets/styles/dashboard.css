@@ -81,6 +81,17 @@
   transform-origin: center;
 }
 
+.body-metric-icon-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.14))
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.2));
+}
+
 .exercise-icon-image:is(
     [data-exercise-icon="activity"],
     [data-exercise-icon="plank"],
@@ -288,7 +299,7 @@
   height: calc(100% - 4px);
 }
 
-.metric-tabs button .exercise-icon-image {
+.metric-tabs button :is(.exercise-icon-image, .body-metric-icon-image) {
   width: 28px;
   height: 28px;
   flex: 0 0 auto;
@@ -384,6 +395,11 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 13px;
+}
+
+.metric-icon .body-metric-icon-image {
+  width: 100%;
+  height: 100%;
 }
 
 .metric-icon.mint {

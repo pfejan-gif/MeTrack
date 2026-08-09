@@ -10,6 +10,7 @@ const moduleFiles = [
   ...readdirSync("assets/core")
     .filter((file) => file.endsWith(".js"))
     .map((file) => `assets/core/${file}`),
+  "assets/body-metric-icons.js",
   "assets/exercise-icons.js",
   "service-worker.js",
   "scripts/check-static.mjs",
