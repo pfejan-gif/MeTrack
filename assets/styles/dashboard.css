@@ -76,8 +76,8 @@
   user-select: none;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.16))
     drop-shadow(0 0 1px rgba(255, 255, 255, 0.22));
-  transform: translate(var(--exercise-icon-x), var(--exercise-icon-y))
-    scale(var(--exercise-icon-scale));
+  transform: scale(var(--exercise-icon-scale))
+    translate(var(--exercise-icon-x), var(--exercise-icon-y));
   transform-origin: center;
 }
 
@@ -131,13 +131,155 @@
   --exercise-icon-scale: 0.75;
 }
 
+/* Alpha-weighted optical centers for the asymmetric illustrations. */
+.exercise-icon-image[data-exercise-icon="activity"] {
+  --exercise-icon-x: -9%;
+  --exercise-icon-y: 7.4%;
+}
+
 .exercise-icon-image[data-exercise-icon="plank"] {
-  --exercise-icon-x: -2%;
+  --exercise-icon-x: -6.5%;
+  --exercise-icon-y: -0.5%;
 }
 
 .exercise-icon-image[data-exercise-icon="push-up"] {
-  --exercise-icon-x: -2%;
+  --exercise-icon-x: -5.9%;
+  --exercise-icon-y: 12.8%;
+}
+
+.exercise-icon-image[data-exercise-icon="squat"] {
+  --exercise-icon-x: -4.4%;
+  --exercise-icon-y: 5.4%;
+}
+
+.exercise-icon-image[data-exercise-icon="sit-up"] {
+  --exercise-icon-x: -1.4%;
+  --exercise-icon-y: 7.9%;
+}
+
+.exercise-icon-image[data-exercise-icon="dumbbell"] {
+  --exercise-icon-x: -5.3%;
+  --exercise-icon-y: 12.5%;
+}
+
+.exercise-icon-image[data-exercise-icon="kettlebell"] {
+  --exercise-icon-x: -12.8%;
+  --exercise-icon-y: 5.8%;
+}
+
+.exercise-icon-image[data-exercise-icon="running"] {
+  --exercise-icon-x: -9.3%;
+  --exercise-icon-y: 7.8%;
+}
+
+.exercise-icon-image[data-exercise-icon="cycling"] {
+  --exercise-icon-x: -9%;
+  --exercise-icon-y: 1.2%;
+}
+
+.exercise-icon-image[data-exercise-icon="pull-up"] {
+  --exercise-icon-x: -14.8%;
+  --exercise-icon-y: 8.6%;
+}
+
+.exercise-icon-image[data-exercise-icon="lunge"] {
+  --exercise-icon-x: -9.5%;
+  --exercise-icon-y: 4.2%;
+}
+
+.exercise-icon-image[data-exercise-icon="jump-rope"] {
+  --exercise-icon-x: -10.8%;
+  --exercise-icon-y: 4%;
+}
+
+.exercise-icon-image[data-exercise-icon="rowing"] {
+  --exercise-icon-x: -0.1%;
+  --exercise-icon-y: 1.4%;
+}
+
+.exercise-icon-image[data-exercise-icon="target"] {
+  --exercise-icon-x: 0.1%;
+  --exercise-icon-y: 0.1%;
+}
+
+.exercise-icon-image[data-exercise-icon="burpee"] {
+  --exercise-icon-x: -4.2%;
+  --exercise-icon-y: 12%;
+}
+
+.exercise-icon-image[data-exercise-icon="jumping-jack"] {
+  --exercise-icon-x: -8.8%;
+  --exercise-icon-y: 7.1%;
+}
+
+.exercise-icon-image[data-exercise-icon="mountain-climber"] {
+  --exercise-icon-x: -9.2%;
+  --exercise-icon-y: 11.9%;
+}
+
+.exercise-icon-image[data-exercise-icon="stretch"] {
+  --exercise-icon-x: -15.1%;
+  --exercise-icon-y: 4.2%;
+}
+
+.exercise-icon-image[data-exercise-icon="hip-stretch"] {
+  --exercise-icon-x: -8.9%;
+  --exercise-icon-y: 0.7%;
+}
+
+.exercise-icon-image[data-exercise-icon="hamstring"] {
+  --exercise-icon-x: -4.7%;
+  --exercise-icon-y: 4.4%;
+}
+
+.exercise-icon-image[data-exercise-icon="shoulder-stretch"] {
+  --exercise-icon-x: -2.4%;
+  --exercise-icon-y: -1.4%;
+}
+
+.exercise-icon-image[data-exercise-icon="neck-stretch"] {
+  --exercise-icon-x: -11.8%;
+  --exercise-icon-y: 3.8%;
+}
+
+.exercise-icon-image[data-exercise-icon="side-stretch"] {
+  --exercise-icon-x: -9.8%;
+  --exercise-icon-y: 6.4%;
+}
+
+.exercise-icon-image[data-exercise-icon="butterfly"] {
+  --exercise-icon-x: -7.2%;
+  --exercise-icon-y: 0.3%;
+}
+
+.exercise-icon-image[data-exercise-icon="calf-stretch"] {
+  --exercise-icon-x: -15.7%;
   --exercise-icon-y: 2%;
+}
+
+.exercise-icon-image[data-exercise-icon="back-stretch"] {
+  --exercise-icon-x: -8.1%;
+  --exercise-icon-y: 10.8%;
+}
+
+.exercise-icon-image[data-exercise-icon="yoga"] {
+  --exercise-icon-x: -14.6%;
+  --exercise-icon-y: 6.6%;
+}
+
+.exercise-icon-image[data-exercise-icon="quadriceps-stretch"] {
+  --exercise-icon-x: -9.7%;
+  --exercise-icon-y: 7.4%;
+}
+
+.exercise-icon-image[data-exercise-icon="chest-stretch"] {
+  --exercise-icon-x: -15.7%;
+  --exercise-icon-y: -3.7%;
+}
+
+.exercise-icon-image[data-exercise-icon="wrist-stretch"] {
+  --exercise-icon-x: -4.6%;
+  --exercise-icon-y: -0.9%;
 }
 
 .spotlight-exercise-icon .exercise-icon-image,

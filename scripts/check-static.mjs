@@ -298,15 +298,31 @@ assert.match(core, /DATA_KEY = "metrack_data_v6"/);
 assert.match(core, /DATA_SCHEMA_VERSION = 6/);
 assert.match(app, /createExerciseIconImage/);
 assert.match(exerciseIconModule, /dataset\.exerciseIcon/);
+for (const id of exerciseIconIds) {
+  assert.match(
+    styles,
+    new RegExp(
+      `\\.exercise-icon-image\\[data-exercise-icon="${id}"\\]\\s*\\{[^}]*` +
+        `--exercise-icon-x:[^;]+;[^}]*--exercise-icon-y:`,
+      "s",
+    ),
+    `Optische Zentrierung fehlt für ${id}.`,
+  );
+}
 assert.match(
   styles,
-  /data-exercise-icon=["']plank["'][^}]*--exercise-icon-x:\s*-2%/s,
+  /data-exercise-icon=["']plank["'][^}]*--exercise-icon-x:\s*-6\.5%/s,
   "Plank braucht eine optische Schwerpunktkorrektur.",
 );
 assert.match(
   styles,
   /data-exercise-icon=["']push-up["'][^}]*--exercise-icon-scale:\s*1\.16/s,
   "Liegestütz muss im Verhältnis zu hochformatigen Motiven größer erscheinen.",
+);
+assert.match(
+  styles,
+  /transform:\s*scale\(var\(--exercise-icon-scale\)\)\s*translate\(/s,
+  "Die Schwerpunktkorrektur muss innerhalb der optischen Skalierung erfolgen.",
 );
 assert.match(core, /entryExerciseCompletion/);
 assert.match(core, /exerciseCompletionSummary/);
