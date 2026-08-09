@@ -114,6 +114,8 @@
 }
 
 .history-controls {
+  --history-control-height: 44px;
+
   display: flex;
   align-items: end;
   justify-content: flex-end;
@@ -131,12 +133,17 @@
   font-weight: 800;
 }
 
+.history-month-control select,
+.history-controls > .compact-button {
+  height: var(--history-control-height);
+  min-height: var(--history-control-height);
+  border-radius: 12px;
+}
+
 .history-month-control select {
   min-width: 170px;
-  min-height: 44px;
   padding: 8px 34px 8px 11px;
   border: 1px solid var(--line);
-  border-radius: 12px;
   color: var(--text);
   background: var(--surface-soft);
   font: inherit;
@@ -152,6 +159,10 @@
   min-height: 44px;
   padding: 9px 12px;
   font-size: 0.77rem;
+}
+
+.history-controls > .compact-button {
+  padding-block: 0;
 }
 
 .compact-button svg {

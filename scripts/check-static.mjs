@@ -72,6 +72,8 @@ for (const file of requiredFiles)
 const html = read("index.html");
 const styleEntry = read("assets/styles.css");
 const styles = styleModules.map(read).join("\n");
+const chartHistoryStyles = read("assets/styles/charts-history.css");
+const responsiveStyles = read("assets/styles/responsive.css");
 const app = appModules.map(read).join("\n");
 const exerciseController = read("assets/app/exercise-controller.js");
 const core = coreModules.map(read).join("\n");
@@ -80,6 +82,21 @@ for (const module of styleModules)
     styleEntry.includes(`@import "./${module.slice("assets/".length)}";`),
     `Stylesheet-Einstieg importiert ${module} nicht.`,
   );
+assert.match(
+  chartHistoryStyles,
+  /\.history-controls\s*\{[^}]*--history-control-height:\s*44px/s,
+  "Monatsauswahl und Daten-Button brauchen eine gemeinsame Zielhöhe.",
+);
+assert.match(
+  chartHistoryStyles,
+  /\.history-month-control select,\s*\.history-controls > \.compact-button\s*\{[^}]*height:\s*var\(--history-control-height\)[^}]*min-height:\s*var\(--history-control-height\)/s,
+  "Monatsauswahl und Daten-Button müssen exakt gleich hoch sein.",
+);
+assert.match(
+  responsiveStyles,
+  /height:\s*calc\(var\(--app-nav-height\) \+ env\(safe-area-inset-bottom\)\);[^}]*padding:\s*5px max\(10px, env\(safe-area-inset-right\)\)\s*5px\s*max\(10px, env\(safe-area-inset-left\)\);[^}]*align-items:\s*center/s,
+  "Die mobile Navigation muss ihre Ziele innerhalb der iPhone-Safe-Area zentrieren.",
+);
 assert.match(html, /Content-Security-Policy/);
 assert.match(html, /viewport-fit=cover/);
 assert.match(html, /maximum-scale=1/);
