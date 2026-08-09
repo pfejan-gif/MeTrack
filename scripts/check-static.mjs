@@ -94,7 +94,12 @@ assert.match(
 );
 assert.match(
   responsiveStyles,
-  /height:\s*calc\(var\(--app-nav-height\) \+ env\(safe-area-inset-bottom\)\);[^}]*padding:\s*5px max\(10px, env\(safe-area-inset-right\)\)\s*5px\s*max\(10px, env\(safe-area-inset-left\)\);[^}]*align-items:\s*center/s,
+  /--app-nav-height:\s*max\(\s*64px,\s*calc\(44px \+ env\(safe-area-inset-bottom\)\)\s*\);/s,
+  "Die mobile Navigation muss eine kompakte, iPhone-sichere Gesamthöhe verwenden.",
+);
+assert.match(
+  responsiveStyles,
+  /\.app-nav\s*\{[^}]*height:\s*var\(--app-nav-height\);[^}]*padding:\s*5px max\(10px, env\(safe-area-inset-right\)\)\s*5px\s*max\(10px, env\(safe-area-inset-left\)\);[^}]*align-items:\s*center/s,
   "Die mobile Navigation muss ihre Ziele innerhalb der iPhone-Safe-Area zentrieren.",
 );
 assert.match(html, /Content-Security-Policy/);

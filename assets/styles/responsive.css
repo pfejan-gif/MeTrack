@@ -37,7 +37,10 @@
 @media (max-width: 700px) {
   :root {
     --header-height: 68px;
-    --app-nav-height: 66px;
+    --app-nav-height: max(
+      64px,
+      calc(44px + env(safe-area-inset-bottom))
+    );
   }
 
   .header-inner,
@@ -75,7 +78,7 @@
     right: 0;
     bottom: 0;
     left: 0;
-    height: calc(var(--app-nav-height) + env(safe-area-inset-bottom));
+    height: var(--app-nav-height);
     padding: 5px max(10px, env(safe-area-inset-right))
       5px
       max(10px, env(safe-area-inset-left));
@@ -202,7 +205,7 @@
   .form-actions {
     position: sticky;
     z-index: 20;
-    bottom: calc(var(--app-nav-height) + env(safe-area-inset-bottom) + 8px);
+    bottom: calc(var(--app-nav-height) + 8px);
     margin: 6px -5px -5px;
     padding: 8px;
     border: 1px solid var(--line);
@@ -316,15 +319,15 @@
   }
 
   .network-banner {
-    bottom: calc(var(--app-nav-height) + env(safe-area-inset-bottom) + 10px);
+    bottom: calc(var(--app-nav-height) + 10px);
   }
 
   .toast {
-    bottom: calc(var(--app-nav-height) + env(safe-area-inset-bottom) + 10px);
+    bottom: calc(var(--app-nav-height) + 10px);
   }
 
   .app-footer {
-    padding-bottom: calc(24px + var(--app-nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: calc(24px + var(--app-nav-height));
   }
 }
 
