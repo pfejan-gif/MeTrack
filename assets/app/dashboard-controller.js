@@ -80,6 +80,78 @@ export function createDashboardController({ state, elements, setText }) {
     if (value === null) return null;
     return `${value > 0 ? "+" : ""}${formatNumber(value, decimals)} ${unit}`;
   }
+
+  function summaryItem(label, value, { detail = "", tone = "" } = {}) {
+    const item = document.createElement("div");
+    item.className = "chart-summary-item";
+    if (tone) item.dataset.tone = tone;
+    const itemLabel = document.createElement("span");
+    itemLabel.textContent = label;
+    const itemValue = document.createElement("strong");
+    itemValue.textContent = value;
+    item.append(itemLabel, itemValue);
+    if (detail) {
+      const itemDetail = document.createElement("small");
+      itemDetail.textContent = detail;
+      item.append(itemDetail);
+    }
+    return item;
+  }
+
+  function renderChartSummary(entries, definition) {
+    elements.chartSummary.replaceChildren();
+    if (!entries.length) {
+      const message = document.createElement("p");
+      message.className = "chart-summary-message";
+      message.textContent = definition.completion
+        ? `${definition.label} wurde im ausgewählten Zeitraum noch nicht durchgeführt.`
+        : `Noch keine Werte für ${definition.label}.`;
+      elements.chartSummary.append(message);
+      return message.textContent;
+    }
+
+    if (definition.completion) {
+      const summary = exerciseCompletionSummary(
+        entries,
+        definition.exerciseId,
+        state.exercises,
+      );
+      const count = summary.completed;
+      elements.chartSummary.append(
+        summaryItem("Durchgeführt", `${count}×`, { tone: "accent" }),
+        summaryItem("Einträge", formatNumber(entries.length)),
+      );
+      return count === 1
+        ? "1-mal im ausgewählten Zeitraum durchgeführt"
+        : `${count}-mal im ausgewählten Zeitraum durchgeführt`;
+    }
+
+    const first = entryMetricValue(entries[0], state.metric, state.exercises);
+    const last = entryMetricValue(entries.at(-1), state.metric, state.exercises);
+    const change = entries.length > 1 ? last - first : null;
+    const percentage = change !== null && first !== 0
+      ? `${change > 0 ? "+" : ""}${formatNumber((change / Math.abs(first)) * 100, 1)} %`
+      : "";
+    elements.chartSummary.append(
+      summaryItem("Zuletzt", `${formatNumber(last, definition.decimals)} ${definition.unit}`),
+      summaryItem(
+        "Veränderung",
+        signed(change, definition.decimals, definition.unit) || "Noch offen",
+        {
+          detail: percentage || (entries.length === 1 ? "Weiterer Wert nötig" : ""),
+          tone: change === null || change === 0 ? "" : "accent",
+        },
+      ),
+      summaryItem("Messungen", formatNumber(entries.length)),
+    );
+    const parts = [
+      `${entries.length} ${entries.length === 1 ? "Wert" : "Werte"}`,
+      `zuletzt ${formatNumber(last, definition.decimals)} ${definition.unit}`,
+    ];
+    if (change !== null)
+      parts.push(`Veränderung ${signed(change, definition.decimals, definition.unit)}`);
+    return parts.join(" · ");
+  }
   
   function renderOverview() {
     const weight = metricSummary("weight");
@@ -204,27 +276,16 @@ export function createDashboardController({ state, elements, setText }) {
     const entries = filteredMetricEntries();
     const periodLabel = state.period === "all" ? "gesamter Zeitraum" : `letzte ${state.period} Tage`;
     elements.chartSubtitle.textContent = `${definition.label} · ${periodLabel}`;
-    elements.chartEmpty.hidden = entries.length >= 2;
-    drawChart(elements.progressChart, entries, state.metric);
-    if (!entries.length) {
-      elements.chartSummary.textContent = definition.completion
-        ? `${definition.label} wurde im ausgewählten Zeitraum noch nicht durchgeführt.`
-        : `Noch keine Werte für ${definition.label}.`;
-    } else if (definition.completion) {
-      const summary = exerciseCompletionSummary(
-        entries,
-        definition.exerciseId,
-        state.exercises,
-      );
-      elements.chartSummary.textContent = summary.completed === 1
-        ? "1-mal im ausgewählten Zeitraum durchgeführt."
-        : `${summary.completed}-mal im ausgewählten Zeitraum durchgeführt.`;
-    } else {
-      const first = entryMetricValue(entries[0], state.metric, state.exercises);
-      const last = entryMetricValue(entries[entries.length - 1], state.metric, state.exercises);
-      elements.chartSummary.textContent = `${entries.length} ${entries.length === 1 ? "Wert" : "Werte"}. Zuletzt ${formatNumber(last, definition.decimals)} ${definition.unit}${entries.length > 1 ? ` · Veränderung ${signed(last - first, definition.decimals, definition.unit)}` : ""}.`;
-    }
-    elements.progressChart.setAttribute("aria-label", `${definition.label}-Verlauf: ${elements.chartSummary.textContent}`);
+    elements.chartEmpty.hidden = entries.length > 0;
+    drawChart(elements.progressChart, entries, state.metric, {
+      period: state.period,
+      today: todayLocal(),
+    });
+    const summaryText = renderChartSummary(entries, definition);
+    elements.progressChart.setAttribute(
+      "aria-label",
+      `${definition.label}-Verlauf: ${summaryText}`,
+    );
   }
   
   function render() {
