@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  VIEW_ENTER_TRANSITION_OPTIONS,
+  VIEW_EXIT_TRANSITION_OPTIONS,
   createNavigationController,
   routeFromHash,
   swipeDestination,
-  viewTransitionKeyframes,
+  viewEnterKeyframes,
+  viewExitKeyframes,
 } from "../assets/app/navigation-controller.js";
 
 class FakeElement {
@@ -66,10 +69,25 @@ function fixture(
   };
   const transitionSurface = {
     animate: (keyframes, options) => {
+      let resolveFinished;
+      let rejectFinished;
+      let settled = false;
       const animation = {
         cancelled: false,
+        finished: new Promise((resolve, reject) => {
+          resolveFinished = resolve;
+          rejectFinished = reject;
+        }),
         cancel() {
           this.cancelled = true;
+          if (settled) return;
+          settled = true;
+          rejectFinished(new Error("cancelled"));
+        },
+        finish() {
+          if (settled) return;
+          settled = true;
+          resolveFinished();
         },
         keyframes,
         options,
@@ -104,6 +122,12 @@ function fixture(
       currentTime += value;
     },
   };
+}
+
+async function finishAnimation(animation) {
+  animation.finish();
+  await animation.finished;
+  await Promise.resolve();
 }
 
 function touch(identifier, clientX, clientY) {
@@ -179,11 +203,21 @@ test("ignoriert Tab-Grenzen, kurze, vertikale und zu langsame Gesten", () => {
   );
 });
 
-test("erzeugt einen dezenten Übergang aus der Wischrichtung", () => {
-  assert.deepEqual(viewTransitionKeyframes(1), [
+test("erzeugt getrennte Aus- und Einblendphasen aus der Wischrichtung", () => {
+  assert.deepEqual(viewExitKeyframes(1), [
     {
-      opacity: 0.66,
-      transform: "translate3d(28px, 0, 0) scale(0.992)",
+      opacity: 1,
+      transform: "translate3d(0, 0, 0) scale(1)",
+    },
+    {
+      opacity: 0,
+      transform: "translate3d(-32px, 0, 0) scale(0.99)",
+    },
+  ]);
+  assert.deepEqual(viewEnterKeyframes(1), [
+    {
+      opacity: 0,
+      transform: "translate3d(40px, 0, 0) scale(0.99)",
     },
     {
       opacity: 1,
@@ -191,8 +225,12 @@ test("erzeugt einen dezenten Übergang aus der Wischrichtung", () => {
     },
   ]);
   assert.equal(
-    viewTransitionKeyframes(-1)[0].transform,
-    "translate3d(-28px, 0, 0) scale(0.992)",
+    viewExitKeyframes(-1)[1].transform,
+    "translate3d(32px, 0, 0) scale(0.99)",
+  );
+  assert.equal(
+    viewEnterKeyframes(-1)[0].transform,
+    "translate3d(-40px, 0, 0) scale(0.99)",
   );
 });
 
@@ -216,7 +254,7 @@ test("speichert vor einem Ansichtswechsel und unterstützt den Eintragsanker", (
   assert.equal(setup.controller.currentView, "today");
 });
 
-test("wechselt per Wischgeste zum benachbarten Tab", () => {
+test("wechselt erst nach dem Herausgleiten zum benachbarten Tab", async () => {
   const setup = fixture("#analysis");
   setup.controller.initialize();
 
@@ -227,10 +265,13 @@ test("wechselt per Wischgeste zum benachbarten Tab", () => {
     toY: 410,
   });
 
+  assert.equal(setup.windowRef.location.hash, "#analysis");
+  assert.equal(setup.animations.length, 1);
+  await finishAnimation(setup.animations[0]);
   assert.equal(setup.windowRef.location.hash, "#history");
 });
 
-test("animiert den neuen Inhalt passend zur Wischrichtung", () => {
+test("animiert alte und neue Ansicht nacheinander in Wischrichtung", async () => {
   const setup = fixture("#analysis");
   setup.controller.initialize();
 
@@ -240,17 +281,25 @@ test("animiert den neuen Inhalt passend zur Wischrichtung", () => {
     toX: 210,
     toY: 405,
   });
-  setup.listeners.get("hashchange")();
 
   assert.equal(setup.animations.length, 1);
   assert.equal(
-    setup.animations[0].keyframes[0].transform,
-    "translate3d(28px, 0, 0) scale(0.992)",
+    setup.animations[0].keyframes[1].transform,
+    "translate3d(-32px, 0, 0) scale(0.99)",
   );
-  assert.deepEqual(setup.animations[0].options, {
-    duration: 380,
-    easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-  });
+  assert.deepEqual(setup.animations[0].options, VIEW_EXIT_TRANSITION_OPTIONS);
+
+  await finishAnimation(setup.animations[0]);
+  setup.listeners.get("hashchange")();
+
+  assert.equal(setup.animations.length, 2);
+  assert.equal(setup.animations[0].cancelled, true);
+  assert.equal(
+    setup.animations[1].keyframes[0].transform,
+    "translate3d(40px, 0, 0) scale(0.99)",
+  );
+  assert.deepEqual(setup.animations[1].options, VIEW_ENTER_TRANSITION_OPTIONS);
+  await finishAnimation(setup.animations[1]);
 
   swipe(setup, {
     fromX: 100,
@@ -258,13 +307,19 @@ test("animiert den neuen Inhalt passend zur Wischrichtung", () => {
     toX: 190,
     toY: 405,
   });
+
+  assert.equal(setup.animations.length, 3);
+  assert.equal(
+    setup.animations[2].keyframes[1].transform,
+    "translate3d(32px, 0, 0) scale(0.99)",
+  );
+  await finishAnimation(setup.animations[2]);
   setup.listeners.get("hashchange")();
 
-  assert.equal(setup.animations.length, 2);
-  assert.equal(setup.animations[0].cancelled, true);
+  assert.equal(setup.animations.length, 4);
   assert.equal(
-    setup.animations[1].keyframes[0].transform,
-    "translate3d(-28px, 0, 0) scale(0.992)",
+    setup.animations[3].keyframes[0].transform,
+    "translate3d(-40px, 0, 0) scale(0.99)",
   );
 });
 
@@ -282,6 +337,45 @@ test("respektiert die Systemeinstellung für reduzierte Bewegung", () => {
 
   assert.equal(setup.windowRef.location.hash, "#history");
   assert.equal(setup.animations.length, 0);
+});
+
+test("ignoriert weitere Wischgesten während des Übergangs", async () => {
+  const setup = fixture("#analysis");
+  setup.controller.initialize();
+
+  swipe(setup, {
+    fromX: 300,
+    fromY: 400,
+    toX: 210,
+    toY: 405,
+  });
+  swipe(setup, {
+    fromX: 100,
+    fromY: 400,
+    toX: 190,
+    toY: 405,
+  });
+
+  assert.equal(setup.animations.length, 1);
+  assert.equal(setup.windowRef.location.hash, "#analysis");
+  await finishAnimation(setup.animations[0]);
+  assert.equal(setup.windowRef.location.hash, "#history");
+});
+
+test("bricht den Wischübergang bei einer direkten Navigation sauber ab", () => {
+  const setup = fixture("#analysis");
+  setup.controller.initialize();
+
+  swipe(setup, {
+    fromX: 300,
+    fromY: 400,
+    toX: 210,
+    toY: 405,
+  });
+  setup.controller.navigate("today");
+
+  assert.equal(setup.animations[0].cancelled, true);
+  assert.equal(setup.windowRef.location.hash, "#today");
 });
 
 test("ignoriert Wischgesten auf Bedienelementen und am Displayrand", () => {

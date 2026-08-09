@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "metrack-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v2.8.2`;
+const CACHE_NAME = `${CACHE_PREFIX}v2.8.3`;
 const APP_SHELL = [
   "./",
   "./index.html",
