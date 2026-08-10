@@ -4,3 +4,20 @@
 @import "./styles/charts-history.css";
 @import "./styles/dialogs.css";
 @import "./styles/responsive.css";
+
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+#main-content {
+  touch-action: pan-y;
+}
