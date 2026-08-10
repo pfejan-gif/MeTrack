@@ -449,7 +449,7 @@ test("bricht den Wischübergang bei einer direkten Navigation sauber ab", () => 
   assert.equal(setup.windowRef.location.hash, "#today");
 });
 
-test("ignoriert Wischgesten auf Bedienelementen und am Displayrand", () => {
+test("ignoriert Wischgesten auf Bedienelementen und erlaubt Displayrand-Swipes", async () => {
   const setup = fixture("#analysis");
   setup.controller.initialize();
   const blockedTarget = { closest: () => ({}) };
@@ -469,5 +469,7 @@ test("ignoriert Wischgesten auf Bedienelementen und am Displayrand", () => {
     toX: 100,
     toY: 405,
   });
-  assert.equal(setup.windowRef.location.hash, "#analysis");
+  assert.equal(setup.animations.length, 1);
+  await finishAnimation(setup.animations[0]);
+  assert.equal(setup.windowRef.location.hash, "#today");
 });

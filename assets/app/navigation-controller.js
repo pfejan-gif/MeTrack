@@ -10,7 +10,6 @@ const SWIPE_FLICK_MAX_DURATION = 260;
 const SWIPE_FLICK_MIN_VELOCITY = 0.4;
 const SWIPE_MAX_DURATION = 1_000;
 const SWIPE_DIRECTION_RATIO = 1.25;
-const SWIPE_EDGE_GUARD = 24;
 const SWIPE_INTENT_DISTANCE = 10;
 const SWIPE_INTENT_RATIO = 1.1;
 const SWIPE_VISUAL_FACTOR = 0.34;
@@ -435,15 +434,6 @@ export function createNavigationController({
       return;
     }
     const touch = event.touches[0];
-    const viewportWidth = Number(windowRef.innerWidth);
-    if (
-      touch.clientX <= SWIPE_EDGE_GUARD ||
-      (Number.isFinite(viewportWidth) &&
-        touch.clientX >= viewportWidth - SWIPE_EDGE_GUARD)
-    ) {
-      swipeStart = null;
-      return;
-    }
     swipeStart = {
       identifier: touch.identifier,
       x: touch.clientX,
