@@ -21,6 +21,7 @@ export function createTransferController({
   restoreDraft,
   render,
   reconcileTimer,
+  backupBeforeImport,
 }) {
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
@@ -122,6 +123,7 @@ export function createTransferController({
         mode === "merge"
           ? mergeEntries(state.entries, state.pendingImport.entries, exercises)
           : normalizeEntries(state.pendingImport.entries, exercises);
+      if (!backupBeforeImport()) return;
       if (!persistData(entries, exercises, { allowRecovery: true })) return;
       reconcileTimer();
       if (THEME_ORDER.includes(state.pendingImport.settings?.theme)) {
