@@ -1,18 +1,9 @@
 import {
   DATA_KEY,
   DEFAULT_EXERCISES,
-  PREVIOUS_DATA_KEY,
   SETTINGS_KEY,
-  STORAGE_KEY,
-  V2_DATA_KEY,
-  V3_DATA_KEY,
-  V4_DATA_KEY,
-  createDataEnvelope,
   exerciseMetricKey,
-  migrateDataEnvelope,
-  migrateLegacyEntries,
   sanitizeExerciseCatalog,
-  validateExerciseCatalog,
 } from "./core.js";
 import { createDashboardController } from "./app/dashboard-controller.js";
 import { HISTORY_PAGE_SIZE } from "./app/history-controller.js";
@@ -21,18 +12,14 @@ import { createEntryController } from "./app/entry-controller.js";
 import { createExerciseController } from "./app/exercise-controller.js";
 import { createNavigationController } from "./app/navigation-controller.js";
 import { createPwaController } from "./app/pwa-controller.js";
+import { createStorageController } from "./app/storage-controller.js";
 import {
   TIMER_KEY,
   createTimerController,
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.11.2";
-const RECOVERY_KEYS = [
-  "metrack_pre_import_backup_v1",
-  "metrack_pre_reset_backup_v1",
-  "metrack_corrupt_payload_backup_v1",
-];
+const APP_VERSION = "2.11.3";
 const THEME_ORDER = ["system", "light", "dark"];
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -179,104 +166,6 @@ function saveSettings() {
   }
 }
 
-function testStorage() {
-  try {
-    localStorage.setItem("metrack_storage_test", "1");
-    localStorage.removeItem("metrack_storage_test");
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function markStorageCorrupt(raw, key) {
-  state.storageCorrupt = true;
-  state.corruptStorageValue = raw;
-  state.corruptStorageKey = key;
-  state.storageWritable = false;
-}
-
-function writeMigratedData(data) {
-  if (!state.storageWritable) return;
-  try {
-    const serialized = JSON.stringify(
-      createDataEnvelope(data.entries, data.exercises),
-    );
-    localStorage.setItem(DATA_KEY, serialized);
-    if (localStorage.getItem(DATA_KEY) !== serialized)
-      throw new Error("Migration verification failed");
-  } catch {
-    state.storageWritable = false;
-  }
-}
-
-function loadData() {
-  state.storageWritable = testStorage();
-  const candidates = [
-    { key: DATA_KEY, migrate: migrateDataEnvelope },
-    { key: PREVIOUS_DATA_KEY, migrate: migrateDataEnvelope },
-    { key: V4_DATA_KEY, migrate: migrateDataEnvelope },
-    { key: V3_DATA_KEY, migrate: migrateDataEnvelope },
-    { key: V2_DATA_KEY, migrate: migrateDataEnvelope },
-    { key: STORAGE_KEY, migrate: migrateLegacyEntries },
-  ];
-  for (const candidate of candidates) {
-    let raw;
-    try {
-      raw = localStorage.getItem(candidate.key);
-    } catch {
-      state.storageWritable = false;
-      return { entries: [], exercises: cloneDefaults() };
-    }
-    if (raw === null) continue;
-    try {
-      const parsed = JSON.parse(raw);
-      const migrated = candidate.migrate(parsed);
-      if (candidate.key !== DATA_KEY) writeMigratedData(migrated);
-      return migrated;
-    } catch {
-      markStorageCorrupt(raw, candidate.key);
-      return { entries: [], exercises: cloneDefaults() };
-    }
-  }
-  return { entries: [], exercises: cloneDefaults() };
-}
-
-function persistData(
-  nextEntries,
-  nextExercises = state.exercises,
-  { allowRecovery = false } = {},
-) {
-  if (state.storageCorrupt && !allowRecovery) {
-    showToast("Speichern pausiert: Die vorhandenen Daten sind beschädigt.");
-    return false;
-  }
-  if (!validateExerciseCatalog(nextExercises).valid) {
-    showToast("Der Übungskatalog konnte nicht gespeichert werden.");
-    return false;
-  }
-  try {
-    const envelope = createDataEnvelope(nextEntries, nextExercises);
-    const serialized = JSON.stringify(envelope);
-    localStorage.setItem(DATA_KEY, serialized);
-    if (localStorage.getItem(DATA_KEY) !== serialized)
-      throw new Error("Storage verification failed");
-    state.entries = envelope.entries;
-    state.exercises = envelope.exercises;
-    state.storageWritable = true;
-    state.storageCorrupt = false;
-    state.corruptStorageValue = null;
-    state.corruptStorageKey = null;
-    updateStorageUi();
-    return true;
-  } catch {
-    state.storageWritable = false;
-    updateStorageUi();
-    showToast("Nicht gespeichert. Bitte prüfe den Browser-Speicher.");
-    return false;
-  }
-}
-
 function showToast(message, action = null) {
   clearTimeout(state.toastTimer);
   elements.toast.replaceChildren();
@@ -307,6 +196,22 @@ function setText(id, value) {
   const node = $(id);
   if (node) node.textContent = value;
 }
+
+const storageController = createStorageController({
+  state,
+  storage: localStorage,
+  cloneDefaults,
+  updateStorageUi,
+  showToast,
+});
+const {
+  backupBeforeImport,
+  backupBeforeReset,
+  loadData,
+  persistData,
+  removeAllStorageKeys,
+  testStorage,
+} = storageController;
 
 function applyTheme() {
   document.documentElement.dataset.theme = state.settings.theme;
@@ -453,6 +358,7 @@ const transferController = createTransferController({
   restoreDraft,
   render,
   reconcileTimer,
+  backupBeforeImport,
 });
 const {
   applyImport,
@@ -470,21 +376,6 @@ const {
   registerServiceWorker,
   updateInstallUi,
 } = pwaController;
-
-function removeAllStorageKeys() {
-  [
-    DATA_KEY,
-    PREVIOUS_DATA_KEY,
-    V3_DATA_KEY,
-    V2_DATA_KEY,
-    STORAGE_KEY,
-    TIMER_KEY,
-    ENTRY_DRAFT_KEY,
-    ...RECOVERY_KEYS,
-  ].forEach(
-    (key) => localStorage.removeItem(key),
-  );
-}
 
 function updateStorageUi() {
   const problem = state.storageCorrupt || !state.storageWritable;
@@ -514,7 +405,8 @@ function discardCorruptData() {
     actionLabel: "Verwerfen",
     callback: () => {
       try {
-        removeAllStorageKeys();
+        if (!backupBeforeReset()) return;
+        removeAllStorageKeys([TIMER_KEY, ENTRY_DRAFT_KEY]);
         clearTimer();
         state.entries = [];
         state.exercises = cloneDefaults();

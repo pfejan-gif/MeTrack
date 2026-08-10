@@ -29,6 +29,7 @@ const appModules = [
   "assets/app/history-controller.js",
   "assets/app/navigation-controller.js",
   "assets/app/pwa-controller.js",
+  "assets/app/storage-controller.js",
   "assets/app/timer-controller.js",
   "assets/app/transfer-controller.js",
 ];
