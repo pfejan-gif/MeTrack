@@ -140,6 +140,25 @@ export function sanitizeExerciseCatalog(exercises) {
 
 export const sanitizeCustomExercises = sanitizeExerciseCatalog;
 
+export function reorderExerciseCatalog(exercises, orderedIds) {
+  if (!Array.isArray(exercises) || !Array.isArray(orderedIds)) return exercises;
+  if (exercises.length !== orderedIds.length) return exercises;
+  const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]));
+  if (byId.size !== exercises.length) return exercises;
+  const seen = new Set();
+  const reordered = [];
+  for (const rawId of orderedIds) {
+    const id = String(rawId);
+    const exercise = byId.get(id);
+    if (!exercise || seen.has(id)) return exercises;
+    seen.add(id);
+    reordered.push(exercise);
+  }
+  if (reordered.every((exercise, index) => exercise === exercises[index]))
+    return exercises;
+  return reordered;
+}
+
 export function validateExerciseCatalog(exercises) {
   if (!Array.isArray(exercises))
     return { valid: false, errors: ["Der Übungskatalog fehlt."] };

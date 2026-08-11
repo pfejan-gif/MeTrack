@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "metrack-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v2.11.4`;
+const CACHE_NAME = `${CACHE_PREFIX}v2.11.5`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -18,6 +18,7 @@ const APP_SHELL = [
   "./assets/app/entry-controller.js",
   "./assets/app/exercise-controller.js",
   "./assets/app/exercise-icon-ui.js",
+  "./assets/app/exercise-reorder-controller.js",
   "./assets/app/history-controller.js",
   "./assets/app/navigation-controller.js",
   "./assets/app/pwa-controller.js",
@@ -55,6 +56,7 @@ const APP_SHELL = [
   "./assets/icons/exercises/stretch.webp",
   "./assets/icons/exercises/hip-stretch.webp",
   "./assets/icons/exercises/hamstring.webp",
+  "./assets/icons/exercises/standing-forward-fold.webp",
   "./assets/icons/exercises/shoulder-stretch.webp",
   "./assets/icons/exercises/neck-stretch.webp",
   "./assets/icons/exercises/side-stretch.webp",

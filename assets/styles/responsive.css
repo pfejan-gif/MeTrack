@@ -408,11 +408,12 @@
   }
 
   .exercise-manager-item {
-    grid-template-columns: 1fr;
+    grid-template-columns: 44px minmax(0, 1fr);
   }
 
   .exercise-manager-actions {
     display: grid;
+    grid-column: 1 / -1;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

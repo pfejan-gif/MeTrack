@@ -26,6 +26,7 @@ const appModules = [
   "assets/app/entry-controller.js",
   "assets/app/exercise-controller.js",
   "assets/app/exercise-icon-ui.js",
+  "assets/app/exercise-reorder-controller.js",
   "assets/app/history-controller.js",
   "assets/app/navigation-controller.js",
   "assets/app/pwa-controller.js",
@@ -69,6 +70,7 @@ const exerciseIconIds = [
   "stretch",
   "hip-stretch",
   "hamstring",
+  "standing-forward-fold",
   "shoulder-stretch",
   "neck-stretch",
   "side-stretch",
@@ -123,6 +125,9 @@ const chartHistoryStyles = read("assets/styles/charts-history.css");
 const responsiveStyles = read("assets/styles/responsive.css");
 const app = appModules.map(read).join("\n");
 const exerciseController = read("assets/app/exercise-controller.js");
+const exerciseReorderController = read(
+  "assets/app/exercise-reorder-controller.js",
+);
 const exerciseIconModule = read("assets/exercise-icons.js");
 const bodyMetricIconModule = read("assets/body-metric-icons.js");
 const core = coreModules.map(read).join("\n");
@@ -167,6 +172,8 @@ assert.match(html, /id="customExerciseFields"/);
 assert.match(html, /id="stretchFields"/);
 assert.match(html, /id="exerciseInstructions"/);
 assert.match(html, /id="exerciseIconPalette"/);
+assert.match(html, /id="exerciseReorderHint"/);
+assert.match(html, /id="exerciseReorderStatus"[^>]*aria-live="polite"/);
 assert.match(html, /id="timerDialog"/);
 assert.match(html, /id="timerStartPauseButton"/);
 assert.match(html, /data-view-link="today"/);
@@ -192,6 +199,20 @@ assert.doesNotMatch(
   /id="appVersion"[^<]*<\/span>\s*·\s*offline-fähig/i,
 );
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
+assert.match(
+  styles,
+  /\.exercise-reorder-handle\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;[^}]*touch-action:\s*none/s,
+  "Der Sortiergriff braucht ein iPhone-sicheres Touchziel ohne natives Scrollen.",
+);
+assert.match(
+  responsiveStyles,
+  /\.exercise-manager-actions\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/s,
+  "Die Verwaltungsaktionen müssen auf schmalen Displays unter dem Sortiergriff liegen.",
+);
+assert.match(exerciseReorderController, /DEFAULT_LONG_PRESS_MS\s*=\s*300/);
+assert.match(exerciseReorderController, /setPointerCapture/);
+assert.match(exerciseReorderController, /ArrowUp/);
+assert.match(exerciseReorderController, /requestAnimationFrame\(autoScroll\)/);
 assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
 assert.match(styles, /\.set-field-header\s*\{/);

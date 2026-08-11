@@ -441,6 +441,13 @@
   font-weight: 700;
 }
 
+.exercise-reorder-hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
 .exercise-manager-empty {
   margin-top: 12px !important;
   padding: 15px;
@@ -458,13 +465,77 @@
 .exercise-manager-item {
   display: grid;
   min-height: 62px;
-  padding: 9px 9px 9px 13px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 9px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--bg-elevated);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.exercise-reorder-handle {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--muted);
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.exercise-reorder-handle svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 3.6;
+}
+
+.exercise-reorder-handle:hover,
+.exercise-reorder-handle:focus-visible,
+.exercise-reorder-handle.is-holding {
+  color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 10%, var(--surface-soft));
+}
+
+.exercise-reorder-handle:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.exercise-manager-list.is-reordering {
+  gap: 10px;
+}
+
+.exercise-manager-item.is-reordering {
+  z-index: 2;
+  border-color: color-mix(in srgb, var(--mint) 58%, var(--line));
+  background: color-mix(in srgb, var(--mint) 8%, var(--bg-elevated));
+  box-shadow: var(--shadow-sm);
+  opacity: 1;
+  transform: scale(1.015);
+}
+
+.exercise-manager-item.is-reordering .exercise-reorder-handle {
+  color: var(--mint);
+  cursor: grabbing;
+}
+
+body.exercise-reordering-active {
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .exercise-manager-actions {
