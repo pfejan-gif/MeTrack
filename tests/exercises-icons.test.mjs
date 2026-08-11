@@ -39,15 +39,16 @@ test("validiert neue Übungen und verhindert doppelte Namen", () => {
 test("bietet getrennte, eindeutige Symbolpaletten für Übungen und Dehnungen", () => {
   const exerciseIcons = iconOptionsForKind("reps");
   const stretchIcons = iconOptionsForKind("stretch");
-  assert.equal(EXERCISE_ICONS.length, 30);
-  assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 30);
+  assert.equal(EXERCISE_ICONS.length, 31);
+  assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 31);
   assert.equal(
     new Set(EXERCISE_ICONS.map((icon) => exerciseIconSource(icon.id))).size,
-    30,
+    31,
   );
-  assert.equal(exerciseIcons.length, 17);
+  assert.equal(exerciseIcons.length, 18);
   assert.equal(stretchIcons.length, 13);
   assert.equal(isExerciseIconAllowed("dumbbell", "seconds"), true);
+  assert.equal(isExerciseIconAllowed("pistol-squat", "reps"), true);
   assert.equal(isExerciseIconAllowed("burpee", "reps"), true);
   assert.equal(isExerciseIconAllowed("wrist-stretch", "stretch"), true);
   assert.equal(isExerciseIconAllowed("hip-stretch", "reps"), false);
@@ -56,17 +57,17 @@ test("bietet getrennte, eindeutige Symbolpaletten für Übungen und Dehnungen", 
 });
 
 test("speichert gewählte Symbole und weist Symbole der falschen Gruppe zurück", () => {
-  const situps = validateExercise({
-    id: "custom-situps",
-    name: "Sit-Ups",
+  const pistolSquats = validateExercise({
+    id: "custom-pistol-squats",
+    name: "Einbeinige Kniebeuge",
     kind: "reps",
-    icon: "sit-up",
+    icon: "pistol-squat",
     active: true,
   });
-  assert.equal(situps.valid, true);
-  assert.equal(situps.exercise.icon, "sit-up");
+  assert.equal(pistolSquats.valid, true);
+  assert.equal(pistolSquats.exercise.icon, "pistol-squat");
   assert.equal(
-    validateExercise({ ...situps.exercise, icon: "hip-stretch" }).valid,
+    validateExercise({ ...pistolSquats.exercise, icon: "hip-stretch" }).valid,
     false,
   );
 });

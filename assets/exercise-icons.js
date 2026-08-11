@@ -13,6 +13,7 @@ export const EXERCISE_ICONS = Object.freeze([
   icon("plank", "Plank", "exercise"),
   icon("push-up", "Liegestütz", "exercise"),
   icon("squat", "Kniebeuge", "exercise"),
+  icon("pistol-squat", "Einbeinige Kniebeuge", "exercise"),
   icon("sit-up", "Sit-up", "exercise"),
   icon("dumbbell", "Hantel", "exercise"),
   icon("kettlebell", "Kettlebell", "exercise"),

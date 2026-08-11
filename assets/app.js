@@ -19,7 +19,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.11.3";
+const APP_VERSION = "2.11.4";
 const THEME_ORDER = ["system", "light", "dark"];
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];

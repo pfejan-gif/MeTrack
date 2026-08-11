@@ -52,6 +52,7 @@ const exerciseIconIds = [
   "plank",
   "push-up",
   "squat",
+  "pistol-squat",
   "sit-up",
   "dumbbell",
   "kettlebell",
