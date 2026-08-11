@@ -228,29 +228,12 @@ export function createExerciseController({
     return button;
   }
 
-  function reorderHandle(exercise) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "exercise-reorder-handle";
-    button.dataset.exerciseReorder = exercise.id;
-    button.disabled = state.exercises.length < 2;
-    button.setAttribute("aria-pressed", "false");
-    button.setAttribute("aria-describedby", "exerciseReorderHint");
-    button.setAttribute(
-      "aria-label",
-      `${exercise.name} verschieben. Gedrückt halten und ziehen oder Pfeiltasten verwenden.`,
-    );
-    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    icon.setAttribute("viewBox", "0 0 24 24");
-    icon.setAttribute("aria-hidden", "true");
-    const dots = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    dots.setAttribute(
-      "d",
-      "M8 6h.01M16 6h.01M8 12h.01M16 12h.01M8 18h.01M16 18h.01",
-    );
-    icon.append(dots);
-    button.append(icon);
-    return button;
+  function reorderState() {
+    const stateLabel = document.createElement("span");
+    stateLabel.className = "exercise-reorder-state";
+    stateLabel.textContent = "Verschieben";
+    stateLabel.setAttribute("aria-hidden", "true");
+    return stateLabel;
   }
   
   function renderExerciseManager() {
@@ -264,6 +247,18 @@ export function createExerciseController({
       item.className = `exercise-manager-item${exercise.active ? "" : " archived"}`;
       item.dataset.exerciseId = exercise.id;
       item.dataset.exerciseName = exercise.name;
+      if (state.exercises.length > 1) {
+        item.dataset.exerciseReorder = "true";
+        item.tabIndex = 0;
+        item.setAttribute("role", "group");
+        item.setAttribute("aria-roledescription", "sortierbarer Eintrag");
+        item.setAttribute("aria-describedby", "exerciseReorderHint");
+        item.setAttribute("aria-keyshortcuts", "ArrowUp ArrowDown Home End");
+        item.setAttribute(
+          "aria-label",
+          `${exercise.name}. Gedrückt halten und verschieben. Mit Pfeiltasten ebenfalls sortierbar.`,
+        );
+      }
       const copy = document.createElement("div");
       copy.className = "exercise-manager-copy";
       const details = document.createElement("div");
@@ -305,7 +300,7 @@ export function createExerciseController({
           `${exercise.name} und alle gespeicherten Werte ganz löschen`,
         ),
       );
-      item.append(reorderHandle(exercise), copy, actions);
+      item.append(copy, reorderState(), actions);
       elements.exerciseManagerList.append(item);
     }
   }

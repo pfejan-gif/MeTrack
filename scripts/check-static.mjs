@@ -16,6 +16,7 @@ const styleModules = [
   "assets/styles/training.css",
   "assets/styles/charts-history.css",
   "assets/styles/dialogs.css",
+  "assets/styles/exercise-reorder.css",
   "assets/styles/responsive.css",
 ];
 const appModules = [
@@ -201,18 +202,26 @@ assert.doesNotMatch(
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
 assert.match(
   styles,
-  /\.exercise-reorder-handle\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;[^}]*touch-action:\s*none/s,
-  "Der Sortiergriff braucht ein iPhone-sicheres Touchziel ohne natives Scrollen.",
+  /\.exercise-manager-item\s*\{[^}]*touch-action:\s*pan-y/s,
+  "Die ganze Karte muss Long-Press erlauben, ohne normales Listenscrollen zu blockieren.",
 );
 assert.match(
-  responsiveStyles,
-  /\.exercise-manager-actions\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/s,
-  "Die Verwaltungsaktionen müssen auf schmalen Displays unter dem Sortiergriff liegen.",
+  styles,
+  /\.exercise-reorder-placeholder\s*\{[^}]*border:[^}]*dashed/s,
+  "Beim Ziehen muss eine sichtbare Einfügelücke stehen bleiben.",
 );
+assert.doesNotMatch(styles, /\.exercise-reorder-handle\s*\{/);
+assert.match(styles, /\.exercise-modal\.exercise-reorder-scroll-lock\s*\{/);
 assert.match(exerciseReorderController, /DEFAULT_LONG_PRESS_MS\s*=\s*300/);
 assert.match(exerciseReorderController, /setPointerCapture/);
 assert.match(exerciseReorderController, /ArrowUp/);
 assert.match(exerciseReorderController, /requestAnimationFrame\(autoScroll\)/);
+assert.match(
+  exerciseReorderController,
+  /addEventListener\("touchmove",\s*preventNativeScroll,\s*\{\s*passive:\s*false/s,
+  "Aktives Ziehen muss das native iPhone-Scrollen mit einem nicht-passiven Touch-Handler sperren.",
+);
+assert.match(exerciseReorderController, /style\.position\s*=\s*"fixed"/);
 assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
 assert.match(styles, /\.set-field-header\s*\{/);

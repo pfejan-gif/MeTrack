@@ -5,7 +5,10 @@ import {
   createDataEnvelope,
   reorderExerciseCatalog,
 } from "../assets/core.js";
-import { moveExerciseId } from "../assets/app/exercise-reorder-controller.js";
+import {
+  insertionIndexForPointer,
+  moveExerciseId,
+} from "../assets/app/exercise-reorder-controller.js";
 import { catalog } from "./helpers/core-fixtures.mjs";
 
 test("sortiert den Katalog ohne Übungsdaten zu verändern", () => {
@@ -56,4 +59,14 @@ test("verschiebt Einträge per Tastatur an begrenzte Zielpositionen", () => {
   assert.deepEqual(moveExerciseId(ids, "missing", 0), ids);
   assert.deepEqual(moveExerciseId(ids, "b", Number.NaN), ids);
   assert.deepEqual(ids, ["a", "b", "c", "d"]);
+});
+
+test("bestimmt die sichtbare Einfügelücke aus der Fingerposition", () => {
+  const midpoints = [120, 220, 320];
+  assert.equal(insertionIndexForPointer(midpoints, 80), 0);
+  assert.equal(insertionIndexForPointer(midpoints, 120), 1);
+  assert.equal(insertionIndexForPointer(midpoints, 219), 1);
+  assert.equal(insertionIndexForPointer(midpoints, 400), 3);
+  assert.equal(insertionIndexForPointer(midpoints, Number.NaN), 3);
+  assert.equal(insertionIndexForPointer(null, 100), 0);
 });

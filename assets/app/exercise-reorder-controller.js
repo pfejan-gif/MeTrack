@@ -3,7 +3,9 @@ const MOVE_TOLERANCE = 10;
 const EDGE_SCROLL_ZONE = 72;
 const MAX_SCROLL_STEP = 12;
 const ITEM_SELECTOR = "[data-exercise-id]";
-const HANDLE_SELECTOR = "[data-exercise-reorder]";
+const REORDERABLE_SELECTOR = '[data-exercise-reorder="true"]';
+const INTERACTIVE_SELECTOR =
+  "button, a, input, select, textarea, label, summary, [contenteditable='true']";
 
 export function moveExerciseId(orderedIds, exerciseId, targetIndex) {
   const ids = [...orderedIds];
@@ -19,6 +21,16 @@ export function moveExerciseId(orderedIds, exerciseId, targetIndex) {
   ids.splice(currentIndex, 1);
   ids.splice(boundedTarget, 0, exerciseId);
   return ids;
+}
+
+export function insertionIndexForPointer(midpoints, clientY) {
+  const numericY = Number(clientY);
+  if (!Array.isArray(midpoints) || !Number.isFinite(numericY))
+    return Array.isArray(midpoints) ? midpoints.length : 0;
+  const index = midpoints.findIndex(
+    (midpoint) => Number.isFinite(midpoint) && numericY < midpoint,
+  );
+  return index < 0 ? midpoints.length : index;
 }
 
 export function createExerciseReorderController({
@@ -52,26 +64,69 @@ export function createExerciseReorderController({
     }
   }
 
-  function placeDraggedItem(clientY) {
+  function createPlaceholder(current) {
+    const bounds = current.item.getBoundingClientRect();
+    const placeholder = documentRef.createElement("div");
+    placeholder.className = "exercise-reorder-placeholder";
+    placeholder.style.height = `${bounds.height}px`;
+    placeholder.setAttribute("aria-hidden", "true");
+    list.insertBefore(placeholder, current.item);
+    current.placeholder = placeholder;
+    current.item.style.position = "fixed";
+    current.item.style.top = `${bounds.top}px`;
+    current.item.style.left = `${bounds.left}px`;
+    current.item.style.width = `${bounds.width}px`;
+    current.item.style.height = `${bounds.height}px`;
+    current.item.style.margin = "0";
+    current.item.style.setProperty("--exercise-reorder-translate-y", "0px");
+  }
+
+  function resetFloatingItem(current) {
+    current.item.style.removeProperty("position");
+    current.item.style.removeProperty("top");
+    current.item.style.removeProperty("left");
+    current.item.style.removeProperty("width");
+    current.item.style.removeProperty("height");
+    current.item.style.removeProperty("margin");
+    current.item.style.removeProperty("--exercise-reorder-translate-y");
+  }
+
+  function updateFloatingItem(clientY) {
     if (!gesture?.active) return;
+    const translateY = clientY - gesture.startY;
+    gesture.item.style.setProperty(
+      "--exercise-reorder-translate-y",
+      `${translateY}px`,
+    );
+  }
+
+  function placePlaceholder(clientY) {
+    if (!gesture?.active || !gesture.placeholder) return;
     const siblings = items().filter((item) => item !== gesture.item);
-    const before = siblings.find((item) => {
+    const midpoints = siblings.map((item) => {
       const bounds = item.getBoundingClientRect();
-      return clientY < bounds.top + bounds.height / 2;
+      return bounds.top + bounds.height / 2;
     });
-    if (before) list.insertBefore(gesture.item, before);
-    else list.append(gesture.item);
+    const targetIndex = insertionIndexForPointer(midpoints, clientY);
+    const before = siblings[targetIndex];
+    if (before) list.insertBefore(gesture.placeholder, before);
+    else list.append(gesture.placeholder);
+  }
+
+  function settleAtPlaceholder(current) {
+    if (!current.placeholder?.parentNode) return;
+    list.insertBefore(current.item, current.placeholder);
+    current.placeholder.remove();
+    current.placeholder = null;
+    resetFloatingItem(current);
   }
 
   function scrollBounds() {
-    if (scrollContainer?.getBoundingClientRect) {
-      const bounds = scrollContainer.getBoundingClientRect();
-      return {
-        top: Math.max(0, bounds.top),
-        bottom: Math.min(windowRef.innerHeight, bounds.bottom),
-      };
-    }
-    return { top: 0, bottom: windowRef.innerHeight };
+    const bounds = scrollContainer.getBoundingClientRect();
+    return {
+      top: Math.max(0, bounds.top),
+      bottom: Math.min(windowRef.innerHeight, bounds.bottom),
+    };
   }
 
   function scrollStep(clientY) {
@@ -91,14 +146,23 @@ export function createExerciseReorderController({
     return 0;
   }
 
+  function keepPageStill() {
+    if (!gesture?.active || !windowRef.scrollTo) return;
+    if (
+      windowRef.scrollX !== gesture.pageScrollX ||
+      windowRef.scrollY !== gesture.pageScrollY
+    ) {
+      windowRef.scrollTo(gesture.pageScrollX, gesture.pageScrollY);
+    }
+  }
+
   function autoScroll() {
     if (!gesture?.active) return;
+    keepPageStill();
     const step = scrollStep(gesture.clientY);
     if (step) {
-      if (scrollContainer?.scrollTop !== undefined)
-        scrollContainer.scrollTop += step;
-      else windowRef.scrollBy(0, step);
-      placeDraggedItem(gesture.clientY);
+      scrollContainer.scrollTop += step;
+      placePlaceholder(gesture.clientY);
     }
     autoScrollFrame = windowRef.requestAnimationFrame(autoScroll);
   }
@@ -106,11 +170,16 @@ export function createExerciseReorderController({
   function activateGesture() {
     if (!gesture) return;
     gesture.active = true;
-    gesture.handle.classList.remove("is-holding");
-    gesture.handle.setAttribute("aria-pressed", "true");
+    gesture.pageScrollX = windowRef.scrollX;
+    gesture.pageScrollY = windowRef.scrollY;
+    gesture.item.classList.remove("is-holding");
+    createPlaceholder(gesture);
     gesture.item.classList.add("is-reordering");
     list.classList.add("is-reordering");
+    scrollContainer.classList.add("exercise-reorder-scroll-lock");
+    documentRef.documentElement.classList.add("exercise-reordering-active");
     documentRef.body.classList.add("exercise-reordering-active");
+    windowRef.getSelection?.()?.removeAllRanges();
     announce(
       `${gesture.name} wird verschoben. Nach oben oder unten ziehen und loslassen.`,
     );
@@ -124,24 +193,35 @@ export function createExerciseReorderController({
     if (autoScrollFrame !== null)
       windowRef.cancelAnimationFrame(autoScrollFrame);
     autoScrollFrame = null;
+    current.placeholder?.remove();
+    current.placeholder = null;
+    if (current.active) resetFloatingItem(current);
     if (restore) restoreOrder(current.originalOrder);
-    current.handle.classList.remove("is-holding");
-    current.handle.setAttribute("aria-pressed", "false");
-    current.item.classList.remove("is-reordering");
+    current.item.classList.remove("is-holding", "is-reordering");
     list.classList.remove("is-reordering");
+    scrollContainer.classList.remove("exercise-reorder-scroll-lock");
+    documentRef.documentElement.classList.remove("exercise-reordering-active");
     documentRef.body.classList.remove("exercise-reordering-active");
-    if (current.handle.hasPointerCapture?.(current.pointerId))
-      current.handle.releasePointerCapture(current.pointerId);
+    if (current.item.hasPointerCapture?.(current.pointerId))
+      current.item.releasePointerCapture(current.pointerId);
     gesture = null;
     return current;
   }
 
-  function focusHandle(exerciseId) {
+  function findItem(exerciseId) {
+    return items().find((item) => item.dataset.exerciseId === exerciseId);
+  }
+
+  function markSettled(exerciseId, focus = false) {
     windowRef.requestAnimationFrame(() => {
-      const handle = items()
-        .find((item) => item.dataset.exerciseId === exerciseId)
-        ?.querySelector(HANDLE_SELECTOR);
-      handle?.focus();
+      const item = findItem(exerciseId);
+      if (!item) return;
+      item.classList.add("is-reorder-settled");
+      if (focus) item.focus();
+      windowRef.setTimeout(
+        () => item.classList.remove("is-reorder-settled"),
+        650,
+      );
     });
   }
 
@@ -151,43 +231,51 @@ export function createExerciseReorderController({
     );
     if (!changed) {
       announce(`${current.name} bleibt an seiner Position.`);
-      focusHandle(current.exerciseId);
+      markSettled(current.exerciseId, current.keyboard);
       return;
     }
     const saved = onReorder(nextOrder);
     if (saved === false) {
       restoreOrder(current.originalOrder);
       announce("Die neue Reihenfolge konnte nicht gespeichert werden.");
+      markSettled(current.exerciseId, current.keyboard);
     } else {
       const position = nextOrder.indexOf(current.exerciseId) + 1;
       announce(
         `${current.name} ist jetzt an Position ${position} von ${nextOrder.length}.`,
       );
+      markSettled(current.exerciseId, current.keyboard);
     }
-    focusHandle(current.exerciseId);
   }
 
   function onPointerDown(event) {
-    const handle = event.target.closest?.(HANDLE_SELECTOR);
-    if (!handle || handle.disabled || event.button !== 0 || gesture) return;
-    const item = handle.closest(ITEM_SELECTOR);
-    if (!item) return;
-    const exerciseId = item.dataset.exerciseId;
+    const item = event.target.closest?.(REORDERABLE_SELECTOR);
+    if (
+      !item ||
+      item.parentElement !== list ||
+      event.target.closest?.(INTERACTIVE_SELECTOR) ||
+      event.button !== 0 ||
+      event.isPrimary === false ||
+      gesture
+    ) {
+      return;
+    }
     gesture = {
       pointerId: event.pointerId,
-      handle,
       item,
-      exerciseId,
+      exerciseId: item.dataset.exerciseId,
       name: item.dataset.exerciseName || "Trainingseintrag",
       startX: event.clientX,
       startY: event.clientY,
       clientY: event.clientY,
       active: false,
+      keyboard: false,
+      placeholder: null,
       originalOrder: orderedIds(),
       longPressTimer: windowRef.setTimeout(activateGesture, longPressMs),
     };
-    handle.classList.add("is-holding");
-    handle.setPointerCapture?.(event.pointerId);
+    item.classList.add("is-holding");
+    item.setPointerCapture?.(event.pointerId);
   }
 
   function onPointerMove(event) {
@@ -201,17 +289,20 @@ export function createExerciseReorderController({
       if (distance > MOVE_TOLERANCE) clearGesture();
       return;
     }
-    event.preventDefault();
-    placeDraggedItem(event.clientY);
+    if (event.cancelable) event.preventDefault();
+    keepPageStill();
+    updateFloatingItem(event.clientY);
+    placePlaceholder(event.clientY);
   }
 
   function onPointerUp(event) {
     if (!gesture || event.pointerId !== gesture.pointerId) return;
     const wasActive = gesture.active;
+    if (wasActive) settleAtPlaceholder(gesture);
     const nextOrder = wasActive ? orderedIds() : null;
     const current = clearGesture();
     if (!wasActive) return;
-    event.preventDefault();
+    if (event.cancelable) event.preventDefault();
     suppressClickUntil = Date.now() + 500;
     commitOrder(nextOrder, current);
   }
@@ -232,9 +323,8 @@ export function createExerciseReorderController({
       announce(`${name} wurde nicht verschoben.`);
       return;
     }
-    const handle = event.target.closest?.(HANDLE_SELECTOR);
-    if (!handle || handle.disabled) return;
-    const item = handle.closest(ITEM_SELECTOR);
+    const item = event.target.closest?.(REORDERABLE_SELECTOR);
+    if (!item || event.target !== item) return;
     const currentOrder = orderedIds();
     const currentIndex = currentOrder.indexOf(item.dataset.exerciseId);
     const destinations = {
@@ -255,7 +345,13 @@ export function createExerciseReorderController({
       exerciseId: item.dataset.exerciseId,
       name: item.dataset.exerciseName || "Trainingseintrag",
       originalOrder: currentOrder,
+      keyboard: true,
     });
+  }
+
+  function preventNativeScroll(event) {
+    if (!gesture?.active || !event.cancelable) return;
+    event.preventDefault();
   }
 
   list.addEventListener("pointerdown", onPointerDown);
@@ -263,8 +359,19 @@ export function createExerciseReorderController({
   list.addEventListener("pointerup", onPointerUp);
   list.addEventListener("pointercancel", onPointerCancel);
   list.addEventListener("keydown", onKeyDown);
+  list.addEventListener("dragstart", (event) => event.preventDefault());
   list.addEventListener("contextmenu", (event) => {
-    if (event.target.closest?.(HANDLE_SELECTOR)) event.preventDefault();
+    const item = event.target.closest?.(REORDERABLE_SELECTOR);
+    if (item && !event.target.closest?.(INTERACTIVE_SELECTOR))
+      event.preventDefault();
+  });
+  documentRef.addEventListener("touchmove", preventNativeScroll, {
+    passive: false,
+    capture: true,
+  });
+  documentRef.addEventListener("wheel", preventNativeScroll, {
+    passive: false,
+    capture: true,
   });
   list.addEventListener(
     "click",

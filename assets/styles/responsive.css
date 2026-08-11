@@ -314,6 +314,19 @@
     border-radius: 24px 24px 0 0;
   }
 
+  .exercise-modal {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 12px);
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .exercise-dialog-content {
+    padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+
   .data-actions-dialog-content {
     padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
   }
@@ -407,13 +420,7 @@
     padding-inline: 13px;
   }
 
-  .exercise-manager-item {
-    grid-template-columns: 44px minmax(0, 1fr);
-  }
-
   .exercise-manager-actions {
-    display: grid;
-    grid-column: 1 / -1;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

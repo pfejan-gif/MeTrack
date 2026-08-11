@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "metrack-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v2.11.5`;
+const CACHE_NAME = `${CACHE_PREFIX}v2.11.6`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const APP_SHELL = [
   "./assets/styles/training.css",
   "./assets/styles/charts-history.css",
   "./assets/styles/dialogs.css",
+  "./assets/styles/exercise-reorder.css",
   "./assets/styles/responsive.css",
   "./assets/app.js",
   "./assets/app/chart-renderer.js",
