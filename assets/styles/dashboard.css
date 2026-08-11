@@ -163,6 +163,11 @@
   --exercise-icon-y: 5.4%;
 }
 
+.exercise-icon-image[data-exercise-icon="pistol-squat"] {
+  --exercise-icon-x: 0;
+  --exercise-icon-y: 0;
+}
+
 .exercise-icon-image[data-exercise-icon="sit-up"] {
   --exercise-icon-x: -1.4%;
   --exercise-icon-y: 7.9%;
