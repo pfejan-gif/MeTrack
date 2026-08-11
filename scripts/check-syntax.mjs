@@ -13,6 +13,7 @@ const moduleFiles = [
   "assets/body-metric-icons.js",
   "assets/exercise-icons.js",
   "service-worker.js",
+  "scripts/check-release-diff.mjs",
   "scripts/check-static.mjs",
   "scripts/preview-server.mjs",
 ];

@@ -4,6 +4,25 @@ Diese Datei ist vor jeder Änderung vollständig zu lesen. Sie dokumentiert bewu
 nicht nur den Veröffentlichungsweg, sondern auch Produktentscheidungen, die nicht
 versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 
+## Verbindlicher Codex-Ablauf
+
+1. Diese Datei vollständig lesen, danach `git status --short --branch` und den
+   relevanten Diff bzw. die betroffenen Quellen prüfen. Bestehende Änderungen
+   anderer Bearbeiter nicht überschreiben.
+2. Vor dem Editieren einordnen, ob Laufzeitdateien betroffen sind. Dazu zählen
+   `index.html`, `manifest.webmanifest`, `service-worker.js` und alles unter
+   `assets/`. Reine Änderungen an Dokumentation, Tests, Skripten oder Workflows
+   sind kein App-Release.
+3. Bei jeder Laufzeitänderung die neue, höhere Semver-Version synchron setzen in
+   `package.json`, `package-lock.json`, `APP_VERSION` in `assets/app.js` und
+   `CACHE_NAME` in `service-worker.js`. Neue Laufzeit-Assets zusätzlich in
+   `APP_SHELL` und `scripts/check-static.mjs` registrieren.
+4. Vor Veröffentlichung `npm ci` und `npm run verify` ausführen. Fehler in
+   Implementierung oder Invarianten beheben, nicht Checks umgehen oder entfernen.
+5. Den tatsächlich zu mergenden PR-Head und dessen Quality-Check prüfen. Nach dem
+   Merge `main` und bei Laufzeitänderungen die ausgelieferte Pages-Version
+   kontrollieren.
+
 ## Produkt und Zielplattform
 
 - MeTrack ist eine lokale, installierbare Trainings-Web-App. Die primäre
@@ -62,8 +81,10 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 ## Architektur und Quellen der Wahrheit
 
 - `index.html`: semantische Grundstruktur, Dialoge, PWA-Metadaten und CSP.
-- `assets/app.js`: schlanker Orchestrator, gemeinsamer UI-Zustand,
-  Storage-Zugriff, zentrale Fehlerbehandlung und Event-Verdrahtung.
+- `assets/app.js`: schlanker Orchestrator, gemeinsamer UI-Zustand, zentrale
+  Fehlerbehandlung und Event-Verdrahtung.
+- `assets/app/storage-controller.js`: Lesen, Validieren, Migrieren, Sichern und
+  Persistieren der lokalen Daten sowie kontrollierte Datenrettung bei Fehlern.
 - `assets/app/`: fachliche UI-Controller für Dashboard/History, Eintragsformular,
   Übungen, Timer, Datentransfer und PWA. Zustand und Seiteneffekte über explizite
   Factory-Parameter übergeben; Module importieren den Orchestrator nicht zurück.
@@ -89,6 +110,10 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 - `scripts/check-static.mjs`: statische Release-Invarianten. Eine bewusst
   geänderte Invariante muss hier zusammen mit der Implementierung aktualisiert
   werden; Checks nicht nur entfernen, um CI grün zu bekommen.
+- `scripts/check-release-diff.mjs`: PR-Diff-Sicherung. Sobald eine Laufzeitdatei
+  geändert wird, muss `package.json` gegenüber dem Basis-Commit eine höhere
+  Semver-Version enthalten; die statischen Checks prüfen anschließend die
+  Synchronität aller vier Versionsstellen.
 - Es gibt keinen Build-Schritt und keine Runtime-Abhängigkeiten. Zusätzliche
   Bibliotheken nur bei klarem Nutzen und als größere Änderung einführen.
 
@@ -258,14 +283,9 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
 - Neue Laufzeitdateien dem `APP_SHELL` im Service Worker und den statischen Checks
   hinzufügen. Der Offline-Start muss nach einem erfolgreichen Online-Aufruf ohne
   Netzwerk funktionieren.
-- Bei jeder Änderung an HTML, CSS, JavaScript, Manifest oder PWA-Assets dieselbe
-  neue Semver-Version an allen Stellen setzen:
-  1. `package.json`
-  2. `package-lock.json`
-  3. `APP_VERSION` in `assets/app.js`
-  4. `CACHE_NAME` in `service-worker.js`
-- Reine Dokumentationsänderungen an `README.md`, `AGENTS.md` oder `docs/` brauchen
-  keinen App-/Cache-Versionssprung, sofern keine Datei der App-Shell verändert wird.
+- Die Versions- und Ausnahmeregeln aus dem verbindlichen Codex-Ablauf gelten auch
+  für kleine Korrekturen. Der PR-Workflow erzwingt den Versionssprung technisch;
+  `scripts/check-static.mjs` erzwingt die vier synchronen Versionsstellen.
 - Updatefluss sowohl mit bereits wartendem Service Worker als auch während
   `updatefound` behandeln. Nach „Aktualisieren“ kontrolliert reloaden, damit keine
   alte HTML-Datei mit neuen Modulen gemischt wird.
