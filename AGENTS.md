@@ -325,11 +325,12 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
   Agent stellt dafür einen funktionierenden HTTPS-Testlink bereit, der exakt auf
   den geprüften PR-Head bzw. dessen Commit-SHA zeigt, und nennt die zu prüfende
   Version. Der Link ist vor der Weitergabe mindestens auf Erreichbarkeit und das
-  Laden der geänderten Laufzeitdateien zu kontrollieren; bei Änderungen an der
-  primären Zielplattform zusätzlich in Safari auf dem iPhone bzw. als PWA. Die
-  Vorschau darf die veröffentlichte App und deren lokale Daten nicht
-  überschreiben. Ohne nutzbaren Testlink weder zur manuellen Abnahme auffordern
-  noch den PR mergen.
+  Laden der geänderten Laufzeitdateien zu kontrollieren. Für Änderungen an der
+  primären Zielplattform sind außerdem konkrete Prüfschritte für Safari auf dem
+  iPhone bzw. die installierte PWA zu nennen; kann der Agent diese Umgebung nicht
+  selbst ausführen, legt er die Einschränkung offen. Die Vorschau darf die
+  veröffentlichte App und deren lokale Daten nicht überschreiben. Ohne nutzbaren
+  Testlink weder zur manuellen Abnahme auffordern noch den PR mergen.
 - Keine unbehandelten Console-Fehler und keine unerwarteten Netzwerkaufrufe.
 - GitHub-Actions-Workflow „Quality“ muss für den tatsächlich zu mergenden Commit
   grün sein.
