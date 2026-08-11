@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -31,6 +33,10 @@ jobs:
 
       - name: Install locked dependencies
         run: npm ci
+
+      - name: Require app version bump for runtime changes
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-release-diff.mjs "${{ github.event.pull_request.base.sha }}"
 
       - name: Validate and test
         run: npm run verify
