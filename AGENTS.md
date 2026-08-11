@@ -320,6 +320,16 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
   Bearbeiten → Löschen/Undo; Übung aktivieren/deaktivieren/löschen; Dehnung samt
   Infotext und Tagesstatus; Timer; JSON-Export → Löschen → Import; beschädigter
   Import; warme Offline-Neuladung; Updatefluss; Direktaufruf unter `/MeTrack/`.
+- Soll oder möchte der Nutzer eine Änderung vor der Veröffentlichung selbst
+  testen, bleibt der PR bis zu seiner ausdrücklichen Freigabe ungemergt. Der
+  Agent stellt dafür einen funktionierenden HTTPS-Testlink bereit, der exakt auf
+  den geprüften PR-Head bzw. dessen Commit-SHA zeigt, und nennt die zu prüfende
+  Version. Der Link ist vor der Weitergabe mindestens auf Erreichbarkeit und das
+  Laden der geänderten Laufzeitdateien zu kontrollieren; bei Änderungen an der
+  primären Zielplattform zusätzlich in Safari auf dem iPhone bzw. als PWA. Die
+  Vorschau darf die veröffentlichte App und deren lokale Daten nicht
+  überschreiben. Ohne nutzbaren Testlink weder zur manuellen Abnahme auffordern
+  noch den PR mergen.
 - Keine unbehandelten Console-Fehler und keine unerwarteten Netzwerkaufrufe.
 - GitHub-Actions-Workflow „Quality“ muss für den tatsächlich zu mergenden Commit
   grün sein.
