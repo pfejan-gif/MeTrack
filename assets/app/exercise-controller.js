@@ -8,6 +8,7 @@ import {
   exerciseMetricKey,
   exerciseUsageCount,
   removeExerciseFromEntries,
+  reorderExerciseCatalog,
   validateExercise,
 } from "../core.js";
 import {
@@ -17,6 +18,7 @@ import {
   isExerciseIconAllowed,
 } from "../exercise-icons.js";
 import { exerciseIconBadge } from "./exercise-icon-ui.js";
+import { createExerciseReorderController } from "./exercise-reorder-controller.js";
 
 export function createExerciseController({
   state,
@@ -38,6 +40,12 @@ export function createExerciseController({
     updateTimerButtons,
   } = timer;
   const { metricFallback, render, renderMetricTabs } = dashboard;
+  const exerciseReorder = createExerciseReorderController({
+    list: elements.exerciseManagerList,
+    scrollContainer: elements.exerciseDialog,
+    statusElement: elements.exerciseReorderStatus,
+    onReorder: reorderExercises,
+  });
 
   function makeExerciseId() {
     return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -219,8 +227,17 @@ export function createExerciseController({
     button.setAttribute("aria-label", ariaLabel);
     return button;
   }
+
+  function reorderState() {
+    const stateLabel = document.createElement("span");
+    stateLabel.className = "exercise-reorder-state";
+    stateLabel.textContent = "Verschieben";
+    stateLabel.setAttribute("aria-hidden", "true");
+    return stateLabel;
+  }
   
   function renderExerciseManager() {
+    exerciseReorder.cancel();
     elements.exerciseManagerList.replaceChildren();
     elements.exerciseManagerEmpty.hidden = state.exercises.length > 0;
     elements.exerciseForm.querySelector('button[type="submit"]').disabled =
@@ -228,6 +245,20 @@ export function createExerciseController({
     for (const exercise of state.exercises) {
       const item = document.createElement("div");
       item.className = `exercise-manager-item${exercise.active ? "" : " archived"}`;
+      item.dataset.exerciseId = exercise.id;
+      item.dataset.exerciseName = exercise.name;
+      if (state.exercises.length > 1) {
+        item.dataset.exerciseReorder = "true";
+        item.tabIndex = 0;
+        item.setAttribute("role", "group");
+        item.setAttribute("aria-roledescription", "sortierbarer Eintrag");
+        item.setAttribute("aria-describedby", "exerciseReorderHint");
+        item.setAttribute("aria-keyshortcuts", "ArrowUp ArrowDown Home End");
+        item.setAttribute(
+          "aria-label",
+          `${exercise.name}. Gedrückt halten und verschieben. Mit Pfeiltasten ebenfalls sortierbar.`,
+        );
+      }
       const copy = document.createElement("div");
       copy.className = "exercise-manager-copy";
       const details = document.createElement("div");
@@ -269,9 +300,24 @@ export function createExerciseController({
           `${exercise.name} und alle gespeicherten Werte ganz löschen`,
         ),
       );
-      item.append(copy, actions);
+      item.append(copy, reorderState(), actions);
       elements.exerciseManagerList.append(item);
     }
+  }
+
+  function reorderExercises(orderedIds) {
+    const nextExercises = reorderExerciseCatalog(state.exercises, orderedIds);
+    if (nextExercises === state.exercises) return true;
+    saveEntryDraft();
+    if (!persistData(state.entries, nextExercises)) {
+      renderExerciseManager();
+      return false;
+    }
+    renderExerciseCatalogUi();
+    restoreEntryDraft();
+    render();
+    showToast("Reihenfolge gespeichert ✓");
+    return true;
   }
   
   function renderExerciseCatalogUi() {

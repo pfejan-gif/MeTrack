@@ -41,6 +41,7 @@ export {
   validateCustomExercise,
   sanitizeExerciseCatalog,
   sanitizeCustomExercises,
+  reorderExerciseCatalog,
   validateExerciseCatalog,
   exerciseDefinition,
   customExerciseDefinition,

@@ -114,6 +114,10 @@
   --exercise-icon-scale: 1.06;
 }
 
+.exercise-icon-image[data-exercise-icon="standing-forward-fold"] {
+  --exercise-icon-scale: 1.04;
+}
+
 .exercise-icon-image:is(
     [data-exercise-icon="hamstring"],
     [data-exercise-icon="shoulder-stretch"],
@@ -246,6 +250,11 @@
 .exercise-icon-image[data-exercise-icon="hamstring"] {
   --exercise-icon-x: -4.7%;
   --exercise-icon-y: 4.4%;
+}
+
+.exercise-icon-image[data-exercise-icon="standing-forward-fold"] {
+  --exercise-icon-x: 0;
+  --exercise-icon-y: 5%;
 }
 
 .exercise-icon-image[data-exercise-icon="shoulder-stretch"] {

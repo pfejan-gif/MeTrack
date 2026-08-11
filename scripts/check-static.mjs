@@ -16,6 +16,7 @@ const styleModules = [
   "assets/styles/training.css",
   "assets/styles/charts-history.css",
   "assets/styles/dialogs.css",
+  "assets/styles/exercise-reorder.css",
   "assets/styles/responsive.css",
 ];
 const appModules = [
@@ -26,6 +27,7 @@ const appModules = [
   "assets/app/entry-controller.js",
   "assets/app/exercise-controller.js",
   "assets/app/exercise-icon-ui.js",
+  "assets/app/exercise-reorder-controller.js",
   "assets/app/history-controller.js",
   "assets/app/navigation-controller.js",
   "assets/app/pwa-controller.js",
@@ -69,6 +71,7 @@ const exerciseIconIds = [
   "stretch",
   "hip-stretch",
   "hamstring",
+  "standing-forward-fold",
   "shoulder-stretch",
   "neck-stretch",
   "side-stretch",
@@ -123,6 +126,9 @@ const chartHistoryStyles = read("assets/styles/charts-history.css");
 const responsiveStyles = read("assets/styles/responsive.css");
 const app = appModules.map(read).join("\n");
 const exerciseController = read("assets/app/exercise-controller.js");
+const exerciseReorderController = read(
+  "assets/app/exercise-reorder-controller.js",
+);
 const exerciseIconModule = read("assets/exercise-icons.js");
 const bodyMetricIconModule = read("assets/body-metric-icons.js");
 const core = coreModules.map(read).join("\n");
@@ -167,6 +173,8 @@ assert.match(html, /id="customExerciseFields"/);
 assert.match(html, /id="stretchFields"/);
 assert.match(html, /id="exerciseInstructions"/);
 assert.match(html, /id="exerciseIconPalette"/);
+assert.match(html, /id="exerciseReorderHint"/);
+assert.match(html, /id="exerciseReorderStatus"[^>]*aria-live="polite"/);
 assert.match(html, /id="timerDialog"/);
 assert.match(html, /id="timerStartPauseButton"/);
 assert.match(html, /data-view-link="today"/);
@@ -192,6 +200,28 @@ assert.doesNotMatch(
   /id="appVersion"[^<]*<\/span>\s*·\s*offline-fähig/i,
 );
 assert.match(styles, /touch-action:\s*pan-x pan-y/);
+assert.match(
+  styles,
+  /\.exercise-manager-item\s*\{[^}]*touch-action:\s*pan-y/s,
+  "Die ganze Karte muss Long-Press erlauben, ohne normales Listenscrollen zu blockieren.",
+);
+assert.match(
+  styles,
+  /\.exercise-reorder-placeholder\s*\{[^}]*border:[^}]*dashed/s,
+  "Beim Ziehen muss eine sichtbare Einfügelücke stehen bleiben.",
+);
+assert.doesNotMatch(styles, /\.exercise-reorder-handle\s*\{/);
+assert.match(styles, /\.exercise-modal\.exercise-reorder-scroll-lock\s*\{/);
+assert.match(exerciseReorderController, /DEFAULT_LONG_PRESS_MS\s*=\s*300/);
+assert.match(exerciseReorderController, /setPointerCapture/);
+assert.match(exerciseReorderController, /ArrowUp/);
+assert.match(exerciseReorderController, /requestAnimationFrame\(autoScroll\)/);
+assert.match(
+  exerciseReorderController,
+  /addEventListener\("touchmove",\s*preventNativeScroll,\s*\{\s*passive:\s*false/s,
+  "Aktives Ziehen muss das native iPhone-Scrollen mit einem nicht-passiven Touch-Handler sperren.",
+);
+assert.match(exerciseReorderController, /style\.position\s*=\s*"fixed"/);
 assert.match(styles, /\.update-banner\s*\{/);
 assert.match(styles, /\.set-timer-button\s*\{/);
 assert.match(styles, /\.set-field-header\s*\{/);

@@ -3,6 +3,7 @@
 @import "./styles/training.css";
 @import "./styles/charts-history.css";
 @import "./styles/dialogs.css";
+@import "./styles/exercise-reorder.css";
 @import "./styles/responsive.css";
 
 html,

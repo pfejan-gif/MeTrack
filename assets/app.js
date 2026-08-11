@@ -19,7 +19,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.11.4";
+const APP_VERSION = "2.11.6";
 const THEME_ORDER = ["system", "light", "dark"];
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -63,6 +63,7 @@ const elements = {
   exerciseCancelEditButton: $("exerciseCancelEditButton"),
   exerciseManagerList: $("exerciseManagerList"),
   exerciseManagerEmpty: $("exerciseManagerEmpty"),
+  exerciseReorderStatus: $("exerciseReorderStatus"),
   closeExerciseDialogButton: $("closeExerciseDialogButton"),
   timerDialog: $("timerDialog"),
   timerTitle: $("timerTitle"),

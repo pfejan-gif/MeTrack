@@ -30,6 +30,7 @@ export const EXERCISE_ICONS = Object.freeze([
   icon("stretch", "Allgemeine Dehnung", "stretch"),
   icon("hip-stretch", "Hüftbeuger", "stretch"),
   icon("hamstring", "Beinrückseite", "stretch"),
+  icon("standing-forward-fold", "Vorbeuge im Stehen", "stretch"),
   icon("shoulder-stretch", "Schulter", "stretch"),
   icon("neck-stretch", "Nacken", "stretch"),
   icon("side-stretch", "Rumpfseite", "stretch"),
