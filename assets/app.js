@@ -19,7 +19,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.12.0";
+const APP_VERSION = "2.12.1";
 const THEME_ORDER = ["system", "light", "dark"];
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -328,8 +328,10 @@ entryController = createEntryController({
 });
 const {
   cancelEditing,
+  handleDateChange,
   handleHistoryAction,
   handleSubmit,
+  refreshTodayEntry,
   resetForm,
   restoreDraft,
   saveDraft,
@@ -372,7 +374,12 @@ const {
   timestampForFilename,
 } = transferController;
 
-const pwaController = createPwaController({ state, elements, $ });
+const pwaController = createPwaController({
+  state,
+  elements,
+  $,
+  refreshTodayEntry,
+});
 const {
   promptInstall,
   refreshTodayUi,
@@ -436,6 +443,7 @@ function bindEvents() {
     elements.updateBanner.hidden = true;
   });
   elements.entryForm.addEventListener("submit", handleSubmit);
+  $("date").addEventListener("change", handleDateChange);
   elements.entryForm.addEventListener("input", saveDraft);
   elements.entryForm.addEventListener("change", saveDraft);
   elements.exerciseFields.addEventListener("click", (event) => {

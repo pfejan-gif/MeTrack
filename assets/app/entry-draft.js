@@ -2,13 +2,17 @@ import {
   BODY_METRIC_KEYS,
   MAX_EXERCISES,
   SET_COUNT,
+  entryExerciseCompletion,
+  entryExerciseValues,
   isCompletionExercise,
   isIsoDate,
+  parseNumber,
 } from "../core.js";
 
 export const ENTRY_DRAFT_KEY = "metrack_entry_draft_v1";
 
-const ENTRY_DRAFT_VERSION = 1;
+const ENTRY_DRAFT_VERSION = 2;
+const LEGACY_ENTRY_DRAFT_VERSION = 1;
 const MAX_DRAFT_LENGTH = 20_000;
 const MAX_FIELD_LENGTH = 32;
 const MAX_EXERCISE_ID_LENGTH = 120;
@@ -48,9 +52,16 @@ function normalizeExerciseId(value) {
 }
 
 function normalizeEntryDraft(value) {
-  assertDraft(isRecord(value) && value.version === ENTRY_DRAFT_VERSION);
+  assertDraft(
+    isRecord(value) &&
+      [LEGACY_ENTRY_DRAFT_VERSION, ENTRY_DRAFT_VERSION].includes(value.version),
+  );
   assertDraft(value.date === "" || isIsoDate(value.date));
   assertDraft(value.editingDate === null || isIsoDate(value.editingDate));
+  const baseEntryDate = value.version === LEGACY_ENTRY_DRAFT_VERSION
+    ? null
+    : value.baseEntryDate;
+  assertDraft(baseEntryDate === null || isIsoDate(baseEntryDate));
   assertDraft(isRecord(value.bodyMetrics));
   assertDraft(isRecord(value.exerciseValues));
   assertDraft(isRecord(value.exerciseChecks));
@@ -84,6 +95,7 @@ function normalizeEntryDraft(value) {
     version: ENTRY_DRAFT_VERSION,
     date: value.date,
     editingDate: value.editingDate,
+    baseEntryDate,
     bodyMetrics,
     exerciseValues,
     exerciseChecks,
@@ -93,6 +105,7 @@ function normalizeEntryDraft(value) {
 export function createEntryDraft({
   date,
   editingDate = null,
+  baseEntryDate = null,
   bodyMetrics,
   exerciseValues,
   exerciseChecks,
@@ -101,6 +114,7 @@ export function createEntryDraft({
     version: ENTRY_DRAFT_VERSION,
     date,
     editingDate,
+    baseEntryDate,
     bodyMetrics,
     exerciseValues,
     exerciseChecks,
@@ -110,6 +124,7 @@ export function createEntryDraft({
 export function entryDraftHasContent(draft, defaultDate) {
   return (
     draft.editingDate !== null ||
+    draft.baseEntryDate !== null ||
     draft.date !== defaultDate ||
     Object.values(draft.bodyMetrics).some((value) => value !== "") ||
     Object.values(draft.exerciseValues).some((values) =>
@@ -117,6 +132,44 @@ export function entryDraftHasContent(draft, defaultDate) {
     ) ||
     Object.values(draft.exerciseChecks).some(Boolean)
   );
+}
+
+export function entryDraftHasInputValues(draft) {
+  return (
+    Object.values(draft.bodyMetrics).some((value) => value !== "") ||
+    Object.values(draft.exerciseValues).some((values) =>
+      values.some((value) => value !== ""),
+    ) ||
+    Object.values(draft.exerciseChecks).some(Boolean)
+  );
+}
+
+function fieldValueMatches(raw, saved) {
+  return parseNumber(raw) === (saved ?? null);
+}
+
+export function entryDraftMatchesEntry(draft, entry, exercises) {
+  if (!entry) return false;
+  if (
+    BODY_METRIC_KEYS.some(
+      (key) => !fieldValueMatches(draft.bodyMetrics[key], entry[key]),
+    )
+  )
+    return false;
+  return exercises
+    .filter((exercise) => exercise.active)
+    .every((exercise) => {
+      if (isCompletionExercise(exercise))
+        return (
+          draft.exerciseChecks[exercise.id] === true
+        ) === (entryExerciseCompletion(entry, exercise.id) === true);
+      const savedValues = entryExerciseValues(entry, exercise.id);
+      const draftValues = draft.exerciseValues[exercise.id] || [];
+      return Array.from({ length: SET_COUNT }, (_, index) => index).every(
+        (index) =>
+          fieldValueMatches(draftValues[index] ?? "", savedValues[index]),
+      );
+    });
 }
 
 export function entryDraftProgress(draft, exercises) {
