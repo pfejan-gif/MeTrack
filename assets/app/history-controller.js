@@ -4,6 +4,7 @@ import {
   exerciseDefinition,
   formatDate,
   formatNumber,
+  isCompletionExercise,
 } from "../core.js";
 import { createBodyMetricIconImage } from "../body-metric-icons.js";
 import { createExerciseIconImage } from "../exercise-icons.js";
@@ -11,9 +12,11 @@ import { createExerciseIconImage } from "../exercise-icons.js";
 export const HISTORY_PAGE_SIZE = 20;
 
 export function exerciseHistoryValue(entry, exercise) {
-  if (exercise.kind === "stretch") {
+  if (isCompletionExercise(exercise)) {
     return entryExerciseCompletion(entry, exercise.id) === true
-      ? "Erledigt ✓"
+      ? exercise.kind === "training"
+        ? "Durchgeführt ✓"
+        : "Erledigt ✓"
       : null;
   }
   const values = entryExerciseValues(entry, exercise.id);
@@ -72,19 +75,29 @@ export function filterHistoryEntries(entries, month = "all") {
 
 export function historyEntrySummary(entry, exercises) {
   let exercisesCompleted = 0;
+  let trainingsCompleted = 0;
   let stretchesCompleted = 0;
   for (const exercise of exercises) {
     if (!exerciseHistoryValue(entry, exercise)) continue;
     if (exercise.kind === "stretch") stretchesCompleted += 1;
+    else if (exercise.kind === "training") trainingsCompleted += 1;
     else exercisesCompleted += 1;
   }
 
   const items = [];
   if (exercisesCompleted) {
     items.push({
-      kind: "training",
+      kind: "exercise",
       label: `${exercisesCompleted} ${
         exercisesCompleted === 1 ? "Übung" : "Übungen"
+      }`,
+    });
+  }
+  if (trainingsCompleted) {
+    items.push({
+      kind: "training",
+      label: `${trainingsCompleted} ${
+        trainingsCompleted === 1 ? "Training" : "Trainings"
       }`,
     });
   }

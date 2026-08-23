@@ -68,6 +68,8 @@ const exerciseIconIds = [
   "burpee",
   "jumping-jack",
   "mountain-climber",
+  "bouldering",
+  "swimming",
   "stretch",
   "hip-stretch",
   "hamstring",
@@ -170,7 +172,9 @@ assert.match(html, /apple-mobile-web-app-capable/);
 assert.match(html, /id="updateBanner"/);
 assert.match(html, /id="exerciseDialog"/);
 assert.match(html, /id="customExerciseFields"/);
+assert.match(html, /id="trainingFields"/);
 assert.match(html, /id="stretchFields"/);
+assert.match(html, /name="exerciseKind" value="training"/);
 assert.match(html, /id="exerciseInstructions"/);
 assert.match(html, /id="exerciseIconPalette"/);
 assert.match(html, /id="exerciseReorderHint"/);
@@ -364,8 +368,8 @@ assert.ok(
   app.includes(`APP_VERSION = "${packageJson.version}"`),
   "App-Anzeige und package.json müssen dieselbe Version verwenden.",
 );
-assert.match(core, /DATA_KEY = "metrack_data_v6"/);
-assert.match(core, /DATA_SCHEMA_VERSION = 6/);
+assert.match(core, /DATA_KEY = "metrack_data_v7"/);
+assert.match(core, /DATA_SCHEMA_VERSION = 7/);
 assert.match(app, /createExerciseIconImage/);
 assert.match(app, /createBodyMetricIconImage/);
 assert.match(exerciseIconModule, /dataset\.exerciseIcon/);
@@ -413,7 +417,7 @@ assert.match(exerciseController, /restoreEntryDraft\(\)/);
 assert.doesNotMatch(exerciseController, /\bresetForm\b/);
 assert.match(app, /updateViaCache:\s*"none"/);
 assert.match(app, /registration\s*\.update\(\)/);
-assert.match(html, />Übungen &amp; Dehnungen<\/h3>/);
+assert.match(html, />Übungen, Dehnungen &amp; Training<\/h3>/);
 assert.doesNotMatch(html, />Eigene Übungen</);
 assert.doesNotMatch(
   app,

@@ -15,6 +15,7 @@ export const day = (date, values = {}) => ({
     values.pushups && { exerciseId: pushups.id, values: values.pushups },
     values.squats && { exerciseId: squats.id, values: values.squats },
   ].filter(Boolean),
+  exerciseChecks: [],
   weight: values.weight ?? null,
   waist: values.waist ?? null,
 });

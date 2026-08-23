@@ -25,19 +25,30 @@ test("erstellt Excel-freundliches CSV für alle Übungen", () => {
     active: true,
     instructions: "30 Sekunden halten.",
   };
+  const training = {
+    id: "custom-bouldering",
+    name: "Bouldern",
+    kind: "training",
+    icon: "bouldering",
+    active: true,
+  };
   const csv = entriesToCsv([{
     ...day("2026-08-05", { plank: [40, 45, 43], weight: 82.4 }),
-    exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
-  }], [...catalog, stretch]);
+    exerciseChecks: [
+      { exerciseId: stretch.id, completed: true },
+      { exerciseId: training.id, completed: true },
+    ],
+  }], [...catalog, stretch, training]);
   assert.equal(csv.startsWith("\ufeff"), true);
   assert.match(csv, /Plank Sekunden Satz 1/);
   assert.match(csv, /Liegestütze Wiederholungen Satz 3/);
   assert.match(csv, /Hüftbeuger durchgeführt/);
+  assert.match(csv, /Bouldern durchgeführt/);
   assert.match(csv, /;Ja;/);
   assert.match(csv, /82,4/);
 });
 
-test("exportiert und importiert eine v6-Sicherung verlustfrei", () => {
+test("exportiert und importiert eine v7-Sicherung verlustfrei", () => {
   const burpees = {
     id: "custom-burpees",
     name: "Burpees",
@@ -53,11 +64,21 @@ test("exportiert und importiert eine v6-Sicherung verlustfrei", () => {
     active: true,
     instructions: "30 Sekunden pro Seite halten.",
   };
-  const exercises = [...catalog, burpees, stretch];
+  const training = {
+    id: "custom-swimming",
+    name: "Schwimmen",
+    kind: "training",
+    icon: "swimming",
+    active: true,
+  };
+  const exercises = [...catalog, burpees, stretch, training];
   const entries = [{
     date: "2026-08-05",
     exerciseSets: [{ exerciseId: burpees.id, values: [20, 24, 22] }],
-    exerciseChecks: [{ exerciseId: stretch.id, completed: false }],
+    exerciseChecks: [
+      { exerciseId: stretch.id, completed: false },
+      { exerciseId: training.id, completed: true },
+    ],
     weight: null,
     waist: null,
   }];
@@ -71,7 +92,23 @@ test("exportiert und importiert eine v6-Sicherung verlustfrei", () => {
     [20, 24, 22],
   );
   assert.equal(entryExerciseCompletion(restored.entries[0], stretch.id), false);
+  assert.equal(entryExerciseCompletion(restored.entries[0], training.id), true);
   assert.equal(restored.settings.theme, "dark");
+});
+
+test("importiert eine v6-Sicherung über die v7-Migration", () => {
+  const restored = parseBackup(JSON.stringify({
+    app: "MeTrack",
+    version: 6,
+    schemaVersion: 6,
+    exercises: catalog,
+    entries: [day("2026-08-06", { plank: [46, null, null] })],
+  }));
+  assert.deepEqual(restored.exercises, catalog);
+  assert.deepEqual(
+    entryExerciseValues(restored.entries[0], plank.id),
+    [46, null, null],
+  );
 });
 
 test("migriert alte Sicherungen beim Import", () => {

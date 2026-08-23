@@ -28,7 +28,7 @@ test("migriert v1-Einzelwerte verlustfrei in den allgemeinen Katalog", () => {
       waist: 95.1,
     },
   ]);
-  assert.equal(migrated.schemaVersion, 6);
+  assert.equal(migrated.schemaVersion, 7);
   assert.deepEqual(migrated.exercises, catalog);
   assert.deepEqual(entryExerciseValues(migrated.entries[0], plank.id), [40, null, null]);
   assert.deepEqual(entryExerciseValues(migrated.entries[0], pushups.id), [10, null, null]);
@@ -92,13 +92,13 @@ test("erhält den maximalen v3-Katalog plus Standardübungen", () => {
   assert.equal(validateExerciseCatalog(migrated.exercises).valid, true);
 });
 
-test("migriert v4-Einträge ohne erfundene Dehnungsstatus nach v6", () => {
+test("migriert v4-Einträge ohne erfundene Dehnungsstatus nach v7", () => {
   const migrated = migrateDataEnvelope({
     schemaVersion: 4,
     exercises: catalog,
     entries: [day("2026-08-04", { plank: [45, null, null] })],
   });
-  assert.equal(migrated.schemaVersion, 6);
+  assert.equal(migrated.schemaVersion, 7);
   assert.deepEqual(migrated.entries[0].exerciseChecks, []);
   assert.equal(entryMetricValue(migrated.entries[0], plankMetric, catalog), 45);
 });
@@ -122,7 +122,7 @@ test("ergänzt bei der v5-Migration verlustfrei Standardsymbole", () => {
       waist: null,
     }],
   });
-  assert.equal(migrated.schemaVersion, 6);
+  assert.equal(migrated.schemaVersion, 7);
   assert.equal(migrated.exercises[0].icon, "plank");
   assert.equal(migrated.exercises[3].icon, "stretch");
   assert.equal(entryExerciseCompletion(migrated.entries[0], stretch.id), true);
@@ -139,3 +139,43 @@ test("verlangt im v6-Dokument kanonische Symbole", () => {
   );
 });
 
+test("migriert den kanonischen v6-Katalog verlustfrei nach v7", () => {
+  const migrated = migrateDataEnvelope({
+    schemaVersion: 6,
+    exercises: catalog,
+    entries: [day("2026-08-09", { plank: [55, null, null] })],
+  });
+  assert.equal(migrated.schemaVersion, 7);
+  assert.deepEqual(migrated.exercises, catalog);
+  assert.deepEqual(
+    entryExerciseValues(migrated.entries[0], plank.id),
+    [55, null, null],
+  );
+});
+
+test("validiert Training im v7-Dokument mit täglichem Durchführungsstatus", () => {
+  const training = {
+    id: "custom-bouldering",
+    name: "Bouldern",
+    kind: "training",
+    icon: "bouldering",
+    active: true,
+  };
+  const migrated = migrateDataEnvelope({
+    schemaVersion: 7,
+    exercises: [...catalog, training],
+    entries: [{
+      date: "2026-08-10",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: training.id, completed: true }],
+      weight: null,
+      waist: null,
+    }],
+  });
+  assert.equal(migrated.schemaVersion, 7);
+  assert.equal(migrated.exercises.at(-1).kind, "training");
+  assert.equal(
+    entryExerciseCompletion(migrated.entries[0], training.id),
+    true,
+  );
+});

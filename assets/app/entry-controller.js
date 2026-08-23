@@ -6,6 +6,7 @@ import {
   exerciseCheckFieldName,
   exerciseFieldName,
   formatDate,
+  isCompletionExercise,
   removeEntry,
   todayLocal,
   upsertEntry,
@@ -62,7 +63,7 @@ export function createEntryController({
       ),
     );
     for (const exercise of state.exercises) {
-      if (exercise.kind === "stretch") {
+      if (isCompletionExercise(exercise)) {
         const input = $(exerciseCheckFieldName(exercise.id));
         if (input) exerciseChecks[exercise.id] = input.checked === true;
         continue;
@@ -149,7 +150,7 @@ export function createEntryController({
     $("date").value = draft.date;
     for (const key of BODY_METRIC_KEYS) $(key).value = draft.bodyMetrics[key];
     for (const exercise of state.exercises.filter((item) => item.active)) {
-      if (exercise.kind === "stretch") {
+      if (isCompletionExercise(exercise)) {
         const input = $(exerciseCheckFieldName(exercise.id));
         if (input && exercise.id in draft.exerciseChecks)
           input.checked = draft.exerciseChecks[exercise.id];
@@ -175,7 +176,7 @@ export function createEntryController({
       ...BODY_METRIC_KEYS,
       ...state.exercises
         .filter((exercise) => exercise.active)
-        .flatMap((exercise) => exercise.kind === "stretch"
+        .flatMap((exercise) => isCompletionExercise(exercise)
           ? [exerciseCheckFieldName(exercise.id)]
           : Array.from({ length: SET_COUNT }, (_, index) =>
               exerciseFieldName(exercise.id, index),
@@ -234,7 +235,7 @@ export function createEntryController({
     $("date").value = entry.date;
     for (const key of BODY_METRIC_KEYS) $(key).value = entry[key] ?? "";
     for (const exercise of state.exercises.filter((item) => item.active)) {
-      if (exercise.kind === "stretch") {
+      if (isCompletionExercise(exercise)) {
         $(exerciseCheckFieldName(exercise.id)).checked =
           entryExerciseCompletion(entry, exercise.id) === true;
         continue;
@@ -259,7 +260,7 @@ export function createEntryController({
     const editing = Boolean(state.editingDate);
     const candidate = { date, exerciseSets: [], exerciseChecks: [] };
     for (const exercise of state.exercises) {
-      if (exercise.kind === "stretch") {
+      if (isCompletionExercise(exercise)) {
         const oldCompletion = source
           ? entryExerciseCompletion(source, exercise.id)
           : null;

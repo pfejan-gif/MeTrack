@@ -1,29 +1,30 @@
 const ICON_BASE_PATH = "./assets/icons/exercises";
 
-const icon = (id, label, group) =>
+const icon = (id, label, ...groups) =>
   Object.freeze({
     id,
     label,
-    group,
+    group: groups[0],
+    groups: Object.freeze(groups),
     src: `${ICON_BASE_PATH}/${id}.webp`,
   });
 
 export const EXERCISE_ICONS = Object.freeze([
-  icon("activity", "Allgemeines Training", "exercise"),
+  icon("activity", "Allgemeines Training", "exercise", "training"),
   icon("plank", "Plank", "exercise"),
   icon("push-up", "Liegestütz", "exercise"),
   icon("squat", "Kniebeuge", "exercise"),
   icon("pistol-squat", "Einbeinige Kniebeuge", "exercise"),
   icon("sit-up", "Sit-up", "exercise"),
-  icon("dumbbell", "Hantel", "exercise"),
-  icon("kettlebell", "Kettlebell", "exercise"),
-  icon("running", "Laufen", "exercise"),
-  icon("cycling", "Radfahren", "exercise"),
+  icon("dumbbell", "Hantel", "exercise", "training"),
+  icon("kettlebell", "Kettlebell", "exercise", "training"),
+  icon("running", "Laufen", "exercise", "training"),
+  icon("cycling", "Radfahren", "exercise", "training"),
   icon("pull-up", "Klimmzug", "exercise"),
   icon("lunge", "Ausfallschritt", "exercise"),
-  icon("jump-rope", "Seilspringen", "exercise"),
-  icon("rowing", "Rudern", "exercise"),
-  icon("target", "Freies Training", "exercise"),
+  icon("jump-rope", "Seilspringen", "exercise", "training"),
+  icon("rowing", "Rudern", "exercise", "training"),
+  icon("target", "Freies Training", "exercise", "training"),
   icon("burpee", "Burpee", "exercise"),
   icon("jumping-jack", "Hampelmann", "exercise"),
   icon("mountain-climber", "Mountain-Climber", "exercise"),
@@ -37,17 +38,28 @@ export const EXERCISE_ICONS = Object.freeze([
   icon("butterfly", "Schmetterling", "stretch"),
   icon("calf-stretch", "Wade", "stretch"),
   icon("back-stretch", "Rücken", "stretch"),
-  icon("yoga", "Yoga", "stretch"),
+  icon("yoga", "Yoga", "stretch", "training"),
   icon("quadriceps-stretch", "Oberschenkelvorderseite", "stretch"),
   icon("chest-stretch", "Brust", "stretch"),
   icon("wrist-stretch", "Handgelenk & Unterarm", "stretch"),
+  icon("bouldering", "Bouldern", "training"),
+  icon("swimming", "Schwimmen", "training"),
 ]);
 
 const ICON_BY_ID = new Map(EXERCISE_ICONS.map((definition) => [definition.id, definition]));
 
+function iconGroupForKind(kind) {
+  if (kind === "stretch") return "stretch";
+  if (kind === "training") return "training";
+  if (kind === "reps" || kind === "seconds") return "exercise";
+  return null;
+}
+
 export function iconOptionsForKind(kind) {
-  const group = kind === "stretch" ? "stretch" : "exercise";
-  return EXERCISE_ICONS.filter((definition) => definition.group === group);
+  const group = iconGroupForKind(kind);
+  return group
+    ? EXERCISE_ICONS.filter((definition) => definition.groups.includes(group))
+    : [];
 }
 
 export function defaultExerciseIcon(kind, exerciseId = "") {
@@ -61,9 +73,8 @@ export function defaultExerciseIcon(kind, exerciseId = "") {
 
 export function isExerciseIconAllowed(iconId, kind) {
   const definition = ICON_BY_ID.get(String(iconId || ""));
-  return Boolean(
-    definition && definition.group === (kind === "stretch" ? "stretch" : "exercise"),
-  );
+  const group = iconGroupForKind(kind);
+  return Boolean(definition && group && definition.groups.includes(group));
 }
 
 export function exerciseIconDefinition(iconId) {

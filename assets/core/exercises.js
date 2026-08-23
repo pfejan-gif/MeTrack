@@ -45,6 +45,10 @@ export function exerciseCheckFieldName(exerciseId) {
 
 export const customFieldName = exerciseFieldName;
 
+export function isCompletionExercise(exercise) {
+  return EXERCISE_TYPES[exercise?.kind]?.completion === true;
+}
+
 function normalizedExerciseName(value) {
   return String(value ?? "")
     .normalize("NFC")
@@ -100,7 +104,7 @@ export function validateExercise(raw) {
   else if (/[\u0000-\u001f\u007f]/.test(name))
     errors.name = "Der Name enthält ungültige Zeichen.";
   if (!EXERCISE_TYPES[raw?.kind])
-    errors.kind = "Bitte wähle Wiederholungen, Zeit oder Dehnung.";
+    errors.kind = "Bitte wähle Wiederholungen, Zeit, Dehnung oder Training.";
   const icon = String(raw?.icon ?? "").trim();
   if (icon && !isExerciseIconAllowed(icon, raw?.kind))
     errors.icon = "Bitte wähle ein passendes Symbol.";

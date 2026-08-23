@@ -2,11 +2,12 @@ export const STORAGE_KEY = "metrack_entries_v1";
 export const V2_DATA_KEY = "metrack_data_v2";
 export const V3_DATA_KEY = "metrack_data_v3";
 export const V4_DATA_KEY = "metrack_data_v4";
-export const PREVIOUS_DATA_KEY = "metrack_data_v5";
-export const DATA_KEY = "metrack_data_v6";
-export const DATA_SCHEMA_VERSION = 6;
+export const V5_DATA_KEY = "metrack_data_v5";
+export const PREVIOUS_DATA_KEY = "metrack_data_v6";
+export const DATA_KEY = "metrack_data_v7";
+export const DATA_SCHEMA_VERSION = 7;
 export const SETTINGS_KEY = "metrack_settings_v1";
-export const BACKUP_VERSION = 6;
+export const BACKUP_VERSION = 7;
 export const SET_COUNT = 3;
 export const TIMER_MAX_MS = 86_400_000;
 export const MAX_BACKUP_ENTRIES = 5000;
@@ -35,6 +36,12 @@ export const EXERCISE_TYPES = Object.freeze({
   },
   stretch: {
     label: "Dehnung",
+    shortUnit: "",
+    csvUnit: "durchgeführt",
+    completion: true,
+  },
+  training: {
+    label: "Training",
     shortUnit: "",
     csvUnit: "durchgeführt",
     completion: true,

@@ -11,14 +11,15 @@ Ein fokussierter, iPhone-optimierter Fitness-Tracker für den täglichen Fortsch
 - je drei Sätze bzw. Versuche für Plank, Liegestütze und Kniebeugen erfassen
 - Übungen wie Sit-Ups anlegen und wahlweise in Wiederholungen oder Sekunden messen
 - Dehnungen mit optionaler Anleitung anlegen und pro Tag als durchgeführt abhaken
-- aus einer klaren Symbolpalette ein passendes Icon für jede Übung und Dehnung wählen
+- Training wie Bouldern oder Schwimmen ohne Messwert anlegen und pro Tag abhaken
+- aus getrennten Symbolpaletten ein passendes Icon für Übungen, Dehnungen und Training wählen
 - zeitbasierte Übungen mit einer Stoppuhr pro Satz messen, pausieren und direkt übernehmen
 - jede Übung – auch Plank, Liegestütze und Kniebeugen – deaktivieren, ohne frühere Trainingswerte zu löschen
 - Übungen nach einer deutlichen Warnung mitsamt allen historischen Werten ganz löschen
 - Gewicht und Bauchumfang dokumentieren
 - persönliche Bestwerte, Veränderungen sowie Trainingsserien sehen
 - Verlauf nach Messwert und Zeitraum auswerten
-- Dehnungen ausschließlich nach der Anzahl ihrer Durchführungen auswerten
+- Dehnungen und Training ausschließlich nach der Anzahl ihrer Durchführungen auswerten
 - Einträge mobil und am Desktop bearbeiten oder mit Rückgängig löschen
 - Excel-kompatibles CSV exportieren
 - versionierte JSON-Sicherungen exportieren, prüfen und wiederherstellen
@@ -46,7 +47,7 @@ MeTrack besitzt kein Backend und lädt keine Drittanbieter-Ressourcen. Trainings
 - Safari-Daten löschen entfernt auch MeTrack-Einträge.
 - Bei einem Gerätewechsel müssen die Daten über **Sichern** exportiert und auf dem neuen Gerät über **Import** wiederhergestellt werden.
 
-Bereits vorhandene Einträge aus `metrack_entries_v1` sowie `metrack_data_v2` bis `metrack_data_v5` werden validiert und sicher nach `metrack_data_v6` übernommen. Die ältere Ablage bleibt als Rückfallkopie erhalten. Ein bisheriger Einzelwert wird automatisch zu Satz 1; Dashboard und Diagramme verwenden den besten Tageswert aus den drei Sätzen. Übungen und Dehnungen liegen mit Typ, Symbol, Aktivstatus und optionaler Anleitung gemeinsam mit den Einträgen im versionierten v6-Dokument und werden in JSON-Sicherungen vollständig mitgeführt. Frühere Tage erhalten bei der Migration keinen erfundenen Dehnungsstatus; vorhandene Übungen bekommen automatisch ein passendes Standardsymbol.
+Bereits vorhandene Einträge aus `metrack_entries_v1` sowie `metrack_data_v2` bis `metrack_data_v6` werden validiert und sicher nach `metrack_data_v7` übernommen. Die ältere Ablage bleibt als Rückfallkopie erhalten. Ein bisheriger Einzelwert wird automatisch zu Satz 1; Dashboard und Diagramme verwenden den besten Tageswert aus den drei Sätzen. Übungen, Dehnungen und Training liegen mit Typ, Symbol, Aktivstatus und optionaler Dehnungsanleitung gemeinsam mit den Einträgen im versionierten v7-Dokument und werden in JSON-Sicherungen vollständig mitgeführt. Frühere Tage erhalten bei der Migration keinen erfundenen Durchführungsstatus; vorhandene Übungen bekommen automatisch ein passendes Standardsymbol.
 
 > Technischer Hinweis: GitHub Pages trennt Browser-Speicher nach Domain, nicht nach Repository-Pfad. Andere Webprojekte unter derselben `pfejan-gif.github.io`-Domain könnten daher technisch auf dieselbe Ablage zugreifen. Für eine vollständig isolierte Browser-Origin ist eine eigene Domain für MeTrack erforderlich.
 

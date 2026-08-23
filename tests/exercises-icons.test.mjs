@@ -36,17 +36,19 @@ test("validiert neue Übungen und verhindert doppelte Namen", () => {
   assert.equal(validateExerciseCatalog([situps.exercise, { ...situps.exercise, id: "custom-situps-2", name: "sit-ups" }]).valid, false);
 });
 
-test("bietet getrennte, eindeutige Symbolpaletten für Übungen und Dehnungen", () => {
+test("bietet getrennte, eindeutige Symbolpaletten für Übungen, Dehnungen und Training", () => {
   const exerciseIcons = iconOptionsForKind("reps");
   const stretchIcons = iconOptionsForKind("stretch");
-  assert.equal(EXERCISE_ICONS.length, 32);
-  assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 32);
+  const trainingIcons = iconOptionsForKind("training");
+  assert.equal(EXERCISE_ICONS.length, 34);
+  assert.equal(new Set(EXERCISE_ICONS.map((icon) => icon.id)).size, 34);
   assert.equal(
     new Set(EXERCISE_ICONS.map((icon) => exerciseIconSource(icon.id))).size,
-    32,
+    34,
   );
   assert.equal(exerciseIcons.length, 18);
   assert.equal(stretchIcons.length, 14);
+  assert.equal(trainingIcons.length, 11);
   assert.equal(isExerciseIconAllowed("dumbbell", "seconds"), true);
   assert.equal(isExerciseIconAllowed("pistol-squat", "reps"), true);
   assert.equal(isExerciseIconAllowed("burpee", "reps"), true);
@@ -58,7 +60,12 @@ test("bietet getrennte, eindeutige Symbolpaletten für Übungen und Dehnungen", 
   assert.equal(isExerciseIconAllowed("standing-forward-fold", "reps"), false);
   assert.equal(isExerciseIconAllowed("hip-stretch", "reps"), false);
   assert.equal(isExerciseIconAllowed("burpee", "stretch"), false);
+  assert.equal(isExerciseIconAllowed("bouldering", "training"), true);
+  assert.equal(isExerciseIconAllowed("swimming", "training"), true);
+  assert.equal(isExerciseIconAllowed("bouldering", "reps"), false);
+  assert.equal(isExerciseIconAllowed("hip-stretch", "training"), false);
   assert.equal(defaultExerciseIcon("reps", plank.id), "plank");
+  assert.equal(defaultExerciseIcon("training"), "activity");
 });
 
 test("speichert gewählte Symbole und weist Symbole der falschen Gruppe zurück", () => {
@@ -91,6 +98,25 @@ test("validiert Dehnungen mit optionaler Anleitung", () => {
     validateExercise({ ...stretch.exercise, instructions: "x".repeat(601) }).valid,
     false,
   );
+});
+
+test("validiert Training als reinen Durchführungsstatus", () => {
+  const training = validateExercise({
+    id: "custom-bouldering",
+    name: "Bouldern",
+    kind: "training",
+    icon: "bouldering",
+    active: true,
+    instructions: "Wird für Training nicht gespeichert.",
+  });
+  assert.equal(training.valid, true);
+  assert.deepEqual(training.exercise, {
+    id: "custom-bouldering",
+    name: "Bouldern",
+    kind: "training",
+    icon: "bouldering",
+    active: true,
+  });
 });
 
 test("führt Übungskataloge sicher zusammen und erkennt Typkonflikte", () => {

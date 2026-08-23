@@ -11,6 +11,7 @@ import {
 import {
   exerciseDefinition,
   exerciseMetricKey,
+  isCompletionExercise,
   sanitizeExerciseCatalog,
   validateExerciseCatalog,
 } from "./exercises.js";
@@ -58,7 +59,7 @@ export function entriesToCsv(entries, exercises = DEFAULT_EXERCISES) {
   const lines = normalizeEntries(entries, catalog).map((entry) => [
     entry.date,
     ...catalog.flatMap((exercise) => {
-      if (exercise.kind === "stretch") {
+      if (isCompletionExercise(exercise)) {
         const completed = entryExerciseCompletion(entry, exercise.id);
         return [completed === null ? "" : completed ? "Ja" : "Nein"];
       }
@@ -115,7 +116,13 @@ export function parseBackup(text) {
     throw new Error("Diese Sicherung wurde mit einer neueren MeTrack-Version erstellt.");
 
   let migrated;
-  if (parsed.version >= 6) {
+  if (parsed.version >= 7) {
+    migrated = migrateDataEnvelope({
+      schemaVersion: 7,
+      exercises: parsed.exercises,
+      entries: parsed.entries,
+    });
+  } else if (parsed.version === 6) {
     migrated = migrateDataEnvelope({
       schemaVersion: 6,
       exercises: parsed.exercises,

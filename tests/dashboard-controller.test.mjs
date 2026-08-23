@@ -4,7 +4,7 @@ import test from "node:test";
 import { chartableExercises } from "../assets/app/dashboard-controller.js";
 import { catalog } from "./helpers/core-fixtures.mjs";
 
-test("blendet Dehnungen aus der Messwertauswahl des Verlaufs aus", () => {
+test("blendet Dehnungen und Training aus der Messwertauswahl des Verlaufs aus", () => {
   const stretch = {
     id: "stretch-hips",
     name: "Hüftbeuger",
@@ -12,9 +12,16 @@ test("blendet Dehnungen aus der Messwertauswahl des Verlaufs aus", () => {
     icon: "hip-stretch",
     active: true,
   };
+  const training = {
+    id: "training-bouldering",
+    name: "Bouldern",
+    kind: "training",
+    icon: "bouldering",
+    active: true,
+  };
 
   assert.deepEqual(
-    chartableExercises([...catalog, stretch]).map(({ id }) => id),
+    chartableExercises([...catalog, stretch, training]).map(({ id }) => id),
     catalog.map(({ id }) => id),
   );
 });

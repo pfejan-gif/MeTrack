@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   DATA_KEY,
+  PREVIOUS_DATA_KEY,
   V4_DATA_KEY,
   parseBackup,
 } from "../assets/core.js";
@@ -70,8 +71,23 @@ test("migriert eine v4-Ablage weiterhin in den aktuellen Datenspeicher", () => {
   const loaded = setupResult.controller.loadData();
 
   assert.equal(loaded.entries.length, 1);
-  assert.equal(JSON.parse(setupResult.storage.getItem(DATA_KEY)).schemaVersion, 6);
+  assert.equal(JSON.parse(setupResult.storage.getItem(DATA_KEY)).schemaVersion, 7);
   assert.equal(setupResult.storage.getItem(V4_DATA_KEY), raw);
+});
+
+test("migriert die direkte v6-Vorgängerversion und behält sie als Rückfallkopie", () => {
+  const raw = JSON.stringify({
+    schemaVersion: 6,
+    exercises: catalog,
+    entries: [day("2026-08-06", { plank: [50, null, null] })],
+  });
+  const setupResult = setup(memoryStorage({ [PREVIOUS_DATA_KEY]: raw }));
+
+  const loaded = setupResult.controller.loadData();
+
+  assert.equal(loaded.entries.length, 1);
+  assert.equal(JSON.parse(setupResult.storage.getItem(DATA_KEY)).schemaVersion, 7);
+  assert.equal(setupResult.storage.getItem(PREVIOUS_DATA_KEY), raw);
 });
 
 test("sichert den aktuellen Stand vor einem Import als gültiges Backup", () => {

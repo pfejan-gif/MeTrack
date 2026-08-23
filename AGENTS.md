@@ -33,7 +33,7 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 - Der vorhandene Trackingumfang soll erhalten bleiben. Neue Metriken oder große
   Produktänderungen nur auf ausdrücklichen Wunsch ergänzen.
 - Die Oberfläche ist deutsch. In der UI heißen die Inhalte „Übungen“ bzw.
-  „Übungen & Dehnungen“, niemals „Eigene Übungen“.
+  „Übungen, Dehnungen & Training“, niemals „Eigene Übungen“.
 - Die vom Nutzer ausdrücklich gewünschte Viewport-Konfiguration verhindert das
   Zoomen auf dem Handy (`maximum-scale=1`, `user-scalable=no`). Nicht ohne
   Rücksprache ändern.
@@ -48,14 +48,16 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 - Übungstyp `stretch`: ein expliziter täglicher Erledigt-Status; Wiederholungen
   und Zeit sind hierfür irrelevant. Eine Dehnung darf einen optionalen Infotext
   zur Durchführung besitzen.
+- Übungstyp `training`: ein expliziter täglicher Durchführungsstatus ohne
+  Wiederholungen, Zeit oder Infotext. Er wird wie eine Dehnung nur gezählt.
 - `0` ist ein gültiger Messwert. `null` bedeutet „nicht eingetragen“.
 - Plank, Liegestütze und Kniebeugen gehören zum selben Übungskatalog wie später
   hinzugefügte Übungen; sie sind kein separates, fest verdrahtetes UI-System.
-- Übungen und Dehnungen lassen sich aktivieren und deaktivieren. Vollständiges
+- Übungen, Dehnungen und Training lassen sich aktivieren und deaktivieren. Vollständiges
   Löschen ist möglich, muss aber klar vor dem Verlust historischer Werte warnen.
 - Für gemessene Übungen verwendet das Dashboard als Tageswert den besten der
-  drei Sätze. Dehnungen werden ausschließlich nach der Anzahl ihrer
-  Durchführungen ausgewertet. Nicht erledigte Dehnungen bleiben für die
+  drei Sätze. Dehnungen und Training werden ausschließlich nach der Anzahl ihrer
+  Durchführungen ausgewertet. Nicht erledigte Status-Einträge bleiben für die
   Tagesbearbeitung gespeichert, werden aber weder im Verlauf angezeigt noch als
   Auswertungswert berücksichtigt.
 - Körperwerte Gewicht und Bauchumfang bleiben optional und tagesbezogen.
@@ -94,7 +96,7 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
   Migrationen, Import/Export und Basisfunktionen. Abhängigkeiten verlaufen von
   Konstanten über Modell/Einträge zu Statistik, Migration und Transfer – niemals
   zurück über `assets/core.js`.
-- `assets/exercise-icons.js`: erlaubte persistente Übungs-/Dehnungs-Icon-IDs
+- `assets/exercise-icons.js`: erlaubte persistente Übungs-/Dehnungs-/Training-Icon-IDs
   und lokaler WebP-Bild-Renderer.
 - `assets/body-metric-icons.js`: Zuordnung der nicht persistenten Körperwert-
   IDs zu ihren lokalen WebP-Assets.
@@ -138,21 +140,28 @@ versehentlich „vereinfacht“ oder zurückgebaut werden dürfen.
 
 ## Kanonisches Datenmodell
 
-Das aktuelle Schema ist v6. Die Konstanten in `assets/core/constants.js` sind
+Das aktuelle Schema ist v7. Die Konstanten in `assets/core/constants.js` sind
 maßgeblich und werden öffentlich über `assets/core.js` re-exportiert.
 Vereinfacht sieht ein gespeichertes Dokument so aus:
 
 ```js
 {
-  schemaVersion: 6,
+  schemaVersion: 7,
   exercises: [
     {
       id: "exercise-plank",
       name: "Plank",
-      kind: "seconds", // "reps" | "seconds" | "stretch"
+      kind: "seconds", // "reps" | "seconds" | "stretch" | "training"
       icon: "plank",
       active: true,
       instructions: "..." // nur optional bei stretch
+    },
+    {
+      id: "custom-bouldering",
+      name: "Bouldern",
+      kind: "training",
+      icon: "bouldering",
+      active: true
     }
   ],
   entries: [
@@ -162,7 +171,8 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
         { exerciseId: "exercise-plank", values: [60, 55, null] }
       ],
       exerciseChecks: [
-        { exerciseId: "stretch-hamstrings", completed: true }
+        { exerciseId: "stretch-hamstrings", completed: true },
+        { exerciseId: "custom-bouldering", completed: true }
       ],
       weight: 80.4,
       waist: null
@@ -183,7 +193,7 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
 
 ## Speicherung, Migration und Sicherungen
 
-- Aktueller Schlüssel: `metrack_data_v6`. Historische Schlüssel in
+- Aktueller Schlüssel: `metrack_data_v7`. Historische Schlüssel in
   `assets/core/constants.js` bleiben für Migration und Datenrettung lesbar.
 - Schema-Version und App-/Cache-Version sind voneinander unabhängig.
 - Migrationen schrittweise, deterministisch und idempotent implementieren.
@@ -234,7 +244,7 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
   das freigestellte Motiv auf 256×256 normalisieren, als WebP optimieren und auf
   hellem sowie dunklem Untergrund kontrollieren. Keine externen Bild-URLs oder
   zur Laufzeit erzeugten Varianten einführen.
-- Persistente Übungs-/Dehnungs-IDs stehen in `assets/exercise-icons.js` und
+- Persistente Übungs-/Dehnungs-/Training-IDs stehen in `assets/exercise-icons.js` und
   dürfen ohne getestete Migration nicht umbenannt oder neu belegt werden.
   Körperwert-Icons stehen in `assets/body-metric-icons.js`; ihre IDs müssen den
   kanonischen `BODY_METRIC_KEYS` entsprechen. Neue Icons nach Typ filtern und mit
@@ -245,7 +255,7 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
 - Neue Icons in der Auswahlpalette, im Tagesformular, in Übersicht/Auswertung
   und Historie dort prüfen, wo ihr Typ vorkommt: mindestens bei 320 px und 375 px,
   in Hell-/Dunkelmodus sowie nach warmer Offline-Neuladung. Persistente
-  Übungs-/Dehnungs-Icons zusätzlich in Daten-, Backup- und Import-Roundtrips
+  Übungs-/Dehnungs-/Training-Icons zusätzlich in Daten-, Backup- und Import-Roundtrips
   testen.
 - App-Icon und Wortmarke nur als zusammengehöriges Set ändern. Apple-Touch- und
   Manifest-PNGs müssen vollflächig, opak und in den geprüften Größen bleiben.
@@ -318,7 +328,8 @@ Vereinfacht sieht ein gespeichertes Dokument so aus:
   erhält Tests; Migrationen brauchen je historische Version eine Fixture.
 - Relevante Regressionen manuell bzw. per Browser prüfen: Anlegen → Reload →
   Bearbeiten → Löschen/Undo; Übung aktivieren/deaktivieren/löschen; Dehnung samt
-  Infotext und Tagesstatus; Timer; JSON-Export → Löschen → Import; beschädigter
+  Infotext und Tagesstatus; Training mit Tagesstatus; Timer; JSON-Export → Löschen
+  → Import; beschädigter
   Import; warme Offline-Neuladung; Updatefluss; Direktaufruf unter `/MeTrack/`.
 - Soll oder möchte der Nutzer eine Änderung vor der Veröffentlichung selbst
   testen, bleibt der PR bis zu seiner ausdrücklichen Freigabe ungemergt. Der

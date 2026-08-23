@@ -166,6 +166,51 @@ test("speichert Dehnungsstatus und zählt ausschließlich Durchführungen", () =
   );
 });
 
+test("speichert Training ohne Messwert und zählt nur Durchführungen", () => {
+  const training = {
+    id: "custom-bouldering",
+    name: "Bouldern",
+    kind: "training",
+    icon: "bouldering",
+    active: true,
+  };
+  const exercises = [...catalog, training];
+  const entries = [
+    {
+      date: "2026-08-11",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: training.id, completed: true }],
+      weight: null,
+      waist: null,
+    },
+    {
+      ...day("2026-08-12", { pushups: [12, null, null] }),
+      exerciseChecks: [{ exerciseId: training.id, completed: false }],
+    },
+    {
+      date: "2026-08-13",
+      exerciseSets: [],
+      exerciseChecks: [{ exerciseId: training.id, completed: true }],
+      weight: null,
+      waist: null,
+    },
+  ];
+  const normalized = normalizeEntries(entries, exercises);
+  assert.equal(entryExerciseCompletion(normalized[1], training.id), false);
+  assert.equal(
+    entryMetricValue(normalized[1], exerciseMetricKey(training.id), exercises),
+    null,
+  );
+  assert.deepEqual(
+    exerciseCompletionSummary(normalized, training.id, exercises),
+    { completed: 2 },
+  );
+  assert.equal(
+    validateEntry(entries[0], exercises).valid,
+    true,
+  );
+});
+
 test("weist Werte unbekannter Übungen zurück", () => {
   const validation = validateEntry({
     date: "2026-08-05",

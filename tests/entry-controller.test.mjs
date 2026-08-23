@@ -39,6 +39,7 @@ function controllerFixture(storage) {
   for (let index = 0; index < 3; index += 1)
     fields[exerciseFieldName("exercise-plank", index)] = input();
   fields[exerciseCheckFieldName("stretch-hips")] = input();
+  fields[exerciseCheckFieldName("training-swimming")] = input();
   const elements = {
     entryForm: {
       reset() {
@@ -77,6 +78,12 @@ function controllerFixture(storage) {
         kind: "stretch",
         active: true,
       },
+      {
+        id: "training-swimming",
+        name: "Schwimmen",
+        kind: "training",
+        active: true,
+      },
     ],
     editingDate: null,
   };
@@ -105,7 +112,7 @@ test("stellt ungespeicherte Formularwerte nach einem Neustart wieder her", (t) =
   first.fields[exerciseFieldName("exercise-plank", 0)].value = "60";
 
   assert.equal(first.controller.saveDraft(), true);
-  assert.equal(first.elements.entryProgressLabel.textContent, "1 von 2 erfasst");
+  assert.equal(first.elements.entryProgressLabel.textContent, "1 von 3 erfasst");
   assert.equal(first.elements.draftStatus.textContent, "Entwurf gespeichert");
   assert.notEqual(storage.getItem(ENTRY_DRAFT_KEY), null);
 
@@ -125,7 +132,7 @@ test("stellt ungespeicherte Formularwerte nach einem Neustart wieder her", (t) =
   assert.equal(storage.getItem(ENTRY_DRAFT_KEY), null);
 });
 
-test("zeigt einen geprüften Fortschritt inklusive erledigter Dehnung", (t) => {
+test("zeigt einen geprüften Fortschritt inklusive Dehnung und Training", (t) => {
   const originalLocalStorage = globalThis.localStorage;
   t.after(() => {
     if (originalLocalStorage === undefined) delete globalThis.localStorage;
@@ -135,10 +142,11 @@ test("zeigt einen geprüften Fortschritt inklusive erledigter Dehnung", (t) => {
   const setup = controllerFixture(globalThis.localStorage);
   setup.fields[exerciseFieldName("exercise-plank", 0)].value = "0";
   setup.fields[exerciseCheckFieldName("stretch-hips")].checked = true;
+  setup.fields[exerciseCheckFieldName("training-swimming")].checked = true;
 
   assert.equal(setup.controller.saveDraft(), true);
-  assert.equal(setup.elements.entryProgressLabel.textContent, "2 von 2 erfasst");
-  assert.equal(setup.elements.entryProgress.value, 2);
+  assert.equal(setup.elements.entryProgressLabel.textContent, "3 von 3 erfasst");
+  assert.equal(setup.elements.entryProgress.value, 3);
   assert.equal(setup.elements.draftStatus.dataset.state, "saved");
 });
 

@@ -190,6 +190,10 @@
   background: color-mix(in srgb, var(--bg-elevated) 76%, transparent);
 }
 
+.training-completion-section .stretch-card {
+  border-color: color-mix(in srgb, var(--violet) 28%, var(--line));
+}
+
 .stretch-card-title {
   color: var(--text);
   font-size: 0.84rem;
@@ -270,6 +274,15 @@
   box-shadow: 0 6px 16px color-mix(in srgb, var(--mint) 22%, transparent);
 }
 
+.training-completion-section
+  .stretch-check
+  input:checked
+  + .stretch-check-mark {
+  border-color: var(--violet);
+  background: var(--violet);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--violet) 22%, transparent);
+}
+
 .stretch-check input:focus-visible + .stretch-check-mark {
   outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
   outline-offset: 3px;
@@ -278,6 +291,11 @@
 .stretch-check:has(input:checked) {
   border-color: color-mix(in srgb, var(--mint) 40%, var(--line));
   background: color-mix(in srgb, var(--mint) 8%, var(--surface-soft));
+}
+
+.training-completion-section .stretch-check:has(input:checked) {
+  border-color: color-mix(in srgb, var(--violet) 40%, var(--line));
+  background: color-mix(in srgb, var(--violet) 8%, var(--surface-soft));
 }
 
 .stretch-check:has(input:focus-visible) {
@@ -549,4 +567,3 @@
 .save-button {
   min-width: 210px;
 }
-

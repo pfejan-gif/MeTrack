@@ -7,6 +7,7 @@ import {
   exerciseDefinition,
   exerciseMetricKey,
   formatNumber,
+  isCompletionExercise,
   metricDefinition,
   todayLocal,
 } from "../core.js";
@@ -20,7 +21,7 @@ import { exerciseIconBadge } from "./exercise-icon-ui.js";
 import { createHistoryController } from "./history-controller.js";
 
 export function chartableExercises(exercises = []) {
-  return exercises.filter((exercise) => exercise.kind !== "stretch");
+  return exercises.filter((exercise) => !isCompletionExercise(exercise));
 }
 
 export function createDashboardController({ state, elements, setText }) {

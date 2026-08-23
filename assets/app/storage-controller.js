@@ -5,6 +5,7 @@ import {
   V2_DATA_KEY,
   V3_DATA_KEY,
   V4_DATA_KEY,
+  V5_DATA_KEY,
   createBackup,
   createDataEnvelope,
   migrateDataEnvelope,
@@ -20,6 +21,7 @@ export const CORRUPT_PAYLOAD_BACKUP_KEY =
 export const DATA_STORAGE_KEYS = Object.freeze([
   DATA_KEY,
   PREVIOUS_DATA_KEY,
+  V5_DATA_KEY,
   V4_DATA_KEY,
   V3_DATA_KEY,
   V2_DATA_KEY,

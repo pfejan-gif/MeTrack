@@ -146,6 +146,13 @@
   --exercise-icon-scale: 0.75;
 }
 
+.exercise-icon-image:is(
+    [data-exercise-icon="bouldering"],
+    [data-exercise-icon="swimming"]
+  ) {
+  --exercise-icon-scale: 1.08;
+}
+
 /* Alpha-weighted optical centers for the asymmetric illustrations. */
 .exercise-icon-image[data-exercise-icon="activity"] {
   --exercise-icon-x: -9%;
@@ -235,6 +242,16 @@
 .exercise-icon-image[data-exercise-icon="mountain-climber"] {
   --exercise-icon-x: -9.2%;
   --exercise-icon-y: 11.9%;
+}
+
+.exercise-icon-image[data-exercise-icon="bouldering"] {
+  --exercise-icon-x: 0%;
+  --exercise-icon-y: 0%;
+}
+
+.exercise-icon-image[data-exercise-icon="swimming"] {
+  --exercise-icon-x: 0%;
+  --exercise-icon-y: 0%;
 }
 
 .exercise-icon-image[data-exercise-icon="stretch"] {
