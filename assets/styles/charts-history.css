@@ -470,10 +470,16 @@ tbody tr:hover td {
   line-height: 1.1;
 }
 
-.history-summary-chip.training {
+.history-summary-chip.exercise {
   border-color: color-mix(in srgb, var(--blue) 24%, var(--line));
   color: var(--blue);
   background: color-mix(in srgb, var(--blue) 8%, var(--surface-soft));
+}
+
+.history-summary-chip.training {
+  border-color: color-mix(in srgb, var(--violet) 25%, var(--line));
+  color: var(--violet);
+  background: color-mix(in srgb, var(--violet) 8%, var(--surface-soft));
 }
 
 .history-summary-chip.stretch {

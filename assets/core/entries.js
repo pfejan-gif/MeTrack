@@ -8,6 +8,7 @@ import {
 import {
   exerciseDefinition,
   exerciseFieldName,
+  isCompletionExercise,
   sanitizeExerciseCatalog,
   setFieldName,
   setsKey,
@@ -98,7 +99,7 @@ export function sanitizeEntry(raw, exercises = DEFAULT_EXERCISES) {
   const catalog = sanitizeExerciseCatalog(exercises);
   const entry = { date: raw.date, exerciseSets: [], exerciseChecks: [] };
   for (const exercise of catalog) {
-    if (exercise.kind === "stretch") {
+    if (isCompletionExercise(exercise)) {
       const completed = entryExerciseCompletion(raw, exercise.id);
       if (completed !== null)
         entry.exerciseChecks.push({ exerciseId: exercise.id, completed });
@@ -211,16 +212,16 @@ export function validateEntry(raw, exercises = DEFAULT_EXERCISES) {
   }
   const seenChecks = new Set();
   if (raw?.exerciseChecks !== undefined && !Array.isArray(raw.exerciseChecks))
-    errors.exerciseChecks = "Dehnungsstatus ist ungültig.";
+    errors.exerciseChecks = "Durchführungsstatus ist ungültig.";
   for (const item of Array.isArray(raw?.exerciseChecks) ? raw.exerciseChecks : []) {
     const exercise = exerciseById.get(item?.exerciseId);
     if (
       !item ||
-      exercise?.kind !== "stretch" ||
+      !isCompletionExercise(exercise) ||
       typeof item.completed !== "boolean" ||
       seenChecks.has(item.exerciseId)
     ) {
-      errors.exerciseChecks = "Dehnungsstatus passt nicht zum Übungskatalog.";
+      errors.exerciseChecks = "Durchführungsstatus passt nicht zum Übungskatalog.";
       continue;
     }
     seenChecks.add(item.exerciseId);
@@ -262,7 +263,8 @@ export function validateEntry(raw, exercises = DEFAULT_EXERCISES) {
   }
   const sanitized = sanitizeEntry(raw, catalog);
   if (sanitized && !hasMeasurement(sanitized))
-    errors.form = "Trage mindestens einen Messwert ein oder hake eine Dehnung ab.";
+    errors.form =
+      "Trage mindestens einen Messwert ein oder hake Training bzw. eine Dehnung ab.";
   return { valid: Object.keys(errors).length === 0, errors, entry: sanitized };
 }
 
@@ -302,7 +304,7 @@ export function mergeDayEntries(
     exerciseChecks: [],
   };
   for (const exercise of catalog) {
-    if (exercise.kind === "stretch") {
+    if (isCompletionExercise(exercise)) {
       const currentCompletion = entryExerciseCompletion(current, exercise.id);
       const incomingCompletion = entryExerciseCompletion(incoming, exercise.id);
       const completed = incomingCompletion ?? currentCompletion;
@@ -383,4 +385,3 @@ export function exerciseUsageCount(entries, exerciseId) {
     );
   }).length;
 }
-

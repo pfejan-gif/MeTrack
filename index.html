@@ -490,7 +490,7 @@
               <div class="custom-exercises-heading">
                 <div>
                   <p class="eyebrow">Dein Training</p>
-                  <h3 id="exercisesTitle">Übungen &amp; Dehnungen</h3>
+                  <h3 id="exercisesTitle">Übungen, Dehnungen &amp; Training</h3>
                   <p>Stelle zusammen, was du täglich erfassen möchtest.</p>
                 </div>
                 <button
@@ -507,18 +507,29 @@
               <div class="entry-progress" id="entryProgressWrap">
                 <div>
                   <strong id="entryProgressLabel">0 von 0 erfasst</strong>
-                  <span>Nur Training und erledigte Dehnungen</span>
+                  <span>Nur erfasste Übungen und durchgeführte Einträge</span>
                 </div>
                 <progress id="entryProgress" max="1" value="0">0 von 0</progress>
               </div>
               <div class="custom-exercise-empty" id="customExerciseEmpty">
                 Kein aktiver Trainingseintrag. Tippe auf „Verwalten“, um
-                Übungen oder Dehnungen zu aktivieren und hinzuzufügen.
+                Übungen, Dehnungen oder Training zu aktivieren und hinzuzufügen.
               </div>
               <div
                 class="set-groups custom-set-groups"
                 id="customExerciseFields"
               ></div>
+              <section
+                class="stretch-section training-completion-section"
+                id="trainingSection"
+                hidden
+              >
+                <div class="training-subheading">
+                  <h4>Training</h4>
+                  <p>Hake ab, was du an diesem Tag durchgeführt hast.</p>
+                </div>
+                <div class="stretch-groups" id="trainingFields"></div>
+              </section>
               <section class="stretch-section" id="stretchSection" hidden>
                 <div class="training-subheading">
                   <h4>Dehnungen</h4>
@@ -786,8 +797,8 @@
         <div class="exercise-dialog-heading">
           <div>
             <p class="eyebrow">Training anpassen</p>
-            <h2 id="exerciseDialogTitle">Übungen &amp; Dehnungen</h2>
-            <p>Übungen haben drei Sätze, Dehnungen einen Tagesstatus.</p>
+            <h2 id="exerciseDialogTitle">Übungen, Dehnungen &amp; Training</h2>
+            <p>Übungen haben drei Sätze; Dehnungen und Training einen Tagesstatus.</p>
           </div>
           <button
             class="icon-button compact"
@@ -837,6 +848,13 @@
               <span>
                 <strong>Dehnung</strong>
                 <small>täglich erledigt oder nicht</small>
+              </span>
+            </label>
+            <label>
+              <input type="radio" name="exerciseKind" value="training" />
+              <span>
+                <strong>Training</strong>
+                <small>nur Durchführung zählen</small>
               </span>
             </label>
           </fieldset>
@@ -894,7 +912,7 @@
           </p>
           <p class="sr-only" id="exerciseReorderStatus" aria-live="polite"></p>
           <p class="exercise-manager-empty" id="exerciseManagerEmpty">
-            Noch keine Übungen oder Dehnungen angelegt.
+            Noch keine Übungen, Dehnungen oder Trainings angelegt.
           </p>
           <div class="exercise-manager-list" id="exerciseManagerList"></div>
         </div>

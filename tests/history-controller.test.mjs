@@ -20,6 +20,14 @@ const stretch = {
   active: true,
 };
 
+const training = {
+  id: "custom-swimming",
+  name: "Schwimmen",
+  kind: "training",
+  icon: "swimming",
+  active: true,
+};
+
 function entry(completed) {
   return {
     date: "2026-08-09",
@@ -35,6 +43,19 @@ test("zeigt im Verlauf nur tatsächlich erledigte Dehnungen", () => {
   assert.equal(exerciseHistoryValue(entry(true), stretch), "Erledigt ✓");
   assert.equal(exerciseHistoryValue(entry(false), stretch), null);
   assert.equal(exerciseHistoryValue(entry(null), stretch), null);
+});
+
+test("zeigt durchgeführtes Training ohne Messwert im Verlauf", () => {
+  const trainingEntry = {
+    ...entry(null),
+    exerciseChecks: [{ exerciseId: training.id, completed: true }],
+  };
+  assert.equal(
+    exerciseHistoryValue(trainingEntry, training),
+    "Durchgeführt ✓",
+  );
+  trainingEntry.exerciseChecks[0].completed = false;
+  assert.equal(exerciseHistoryValue(trainingEntry, training), null);
 });
 
 test("gruppiert die kompakte Historie nach Monaten", () => {
@@ -88,13 +109,17 @@ test("fasst sichtbare Tageswerte für die geschlossene Karte zusammen", () => {
     exerciseSets: [
       { exerciseId: plank.id, values: [80, 0, null] },
     ],
-    exerciseChecks: [{ exerciseId: stretch.id, completed: true }],
+    exerciseChecks: [
+      { exerciseId: training.id, completed: true },
+      { exerciseId: stretch.id, completed: true },
+    ],
     weight: 79.9,
     waist: 95,
   };
 
-  assert.deepEqual(historyEntrySummary(dailyEntry, [plank, stretch]), [
-    { kind: "training", label: "1 Übung" },
+  assert.deepEqual(historyEntrySummary(dailyEntry, [plank, training, stretch]), [
+    { kind: "exercise", label: "1 Übung" },
+    { kind: "training", label: "1 Training" },
     { kind: "stretch", label: "1 Dehnung" },
     { kind: "body", label: "79,9 kg" },
     { kind: "body", label: "95,0 cm" },

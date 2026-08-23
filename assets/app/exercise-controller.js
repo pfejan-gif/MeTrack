@@ -7,6 +7,7 @@ import {
   exerciseFieldName,
   exerciseMetricKey,
   exerciseUsageCount,
+  isCompletionExercise,
   removeExerciseFromEntries,
   reorderExerciseCatalog,
   validateExercise,
@@ -82,7 +83,7 @@ export function createExerciseController({
     }
   }
   
-  function createStretchCard(exercise, checked = false) {
+  function createCompletionCard(exercise, checked = false) {
     const id = exerciseCheckFieldName(exercise.id);
     const card = document.createElement("article");
     card.className = "stretch-card";
@@ -142,17 +143,21 @@ export function createExerciseController({
       ),
     );
     const checks = new Map(
-      $$('input[data-exercise-check="true"]', elements.stretchFields).map(
-        (input) => [input.id, input.checked],
-      ),
+      [
+        ...$$('input[data-exercise-check="true"]', elements.trainingFields),
+        ...$$('input[data-exercise-check="true"]', elements.stretchFields),
+      ].map((input) => [input.id, input.checked]),
     );
     elements.exerciseFields.replaceChildren();
+    elements.trainingFields.replaceChildren();
     elements.stretchFields.replaceChildren();
     const active = state.exercises.filter((exercise) => exercise.active);
-    const measured = active.filter((exercise) => exercise.kind !== "stretch");
+    const measured = active.filter((exercise) => !isCompletionExercise(exercise));
+    const trainings = active.filter((exercise) => exercise.kind === "training");
     const stretches = active.filter((exercise) => exercise.kind === "stretch");
     elements.exerciseEmpty.hidden = active.length > 0;
     elements.exerciseFields.hidden = measured.length === 0;
+    elements.trainingSection.hidden = trainings.length === 0;
     elements.stretchSection.hidden = stretches.length === 0;
     for (const exercise of measured) {
       const definition = exerciseDefinition(exercise);
@@ -209,10 +214,16 @@ export function createExerciseController({
       fieldset.append(legend, inputs);
       elements.exerciseFields.append(fieldset);
     }
+    for (const exercise of trainings) {
+      const id = exerciseCheckFieldName(exercise.id);
+      elements.trainingFields.append(
+        createCompletionCard(exercise, checks.get(id) ?? false),
+      );
+    }
     for (const exercise of stretches) {
       const id = exerciseCheckFieldName(exercise.id);
       elements.stretchFields.append(
-        createStretchCard(exercise, checks.get(id) ?? false),
+        createCompletionCard(exercise, checks.get(id) ?? false),
       );
     }
     updateTimerButtons();
@@ -361,15 +372,17 @@ export function createExerciseController({
     const name = window.prompt("Wie heißt der neue Trainingseintrag?", "Sit-Ups");
     if (!name) return;
     const kindInput = window.prompt(
-      "Typ eingeben: Wiederholungen, Zeit oder Dehnung",
+      "Typ eingeben: Wiederholungen, Zeit, Dehnung oder Training",
       "Wiederholungen",
     );
     const normalizedKind = String(kindInput || "").trim().toLocaleLowerCase("de-DE");
-    const kind = normalizedKind.startsWith("d")
-      ? "stretch"
-      : normalizedKind.startsWith("z")
-        ? "seconds"
-        : "reps";
+    const kind = normalizedKind.startsWith("t")
+      ? "training"
+      : normalizedKind.startsWith("d")
+        ? "stretch"
+        : normalizedKind.startsWith("z")
+          ? "seconds"
+          : "reps";
     const instructions = kind === "stretch"
       ? window.prompt("Optionale Anleitung zur Dehnung:", "") || ""
       : "";
@@ -451,7 +464,7 @@ export function createExerciseController({
     render();
     if (!edited && elements.exerciseDialog.open) elements.exerciseDialog.close();
     if (!edited) {
-      const fieldId = validation.exercise.kind === "stretch"
+      const fieldId = isCompletionExercise(validation.exercise)
         ? exerciseCheckFieldName(validation.exercise.id)
         : exerciseFieldName(validation.exercise.id, 0);
       setTimeout(() => $(fieldId)?.focus(), 100);

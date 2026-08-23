@@ -6,6 +6,7 @@ import {
 } from "./constants.js";
 import {
   exerciseIdFromMetric,
+  isCompletionExercise,
   sanitizeExerciseCatalog,
 } from "./exercises.js";
 import {
@@ -36,7 +37,7 @@ export function entryMetricValue(
     (item) => item.id === exerciseId,
   );
   if (!exerciseId || !exercise) return null;
-  if (exercise.kind === "stretch") {
+  if (isCompletionExercise(exercise)) {
     const completed = entryExerciseCompletion(entry, exerciseId);
     return completed === true ? 1 : null;
   }
@@ -134,7 +135,7 @@ export function exerciseCompletionSummary(
   exercises = DEFAULT_EXERCISES,
 ) {
   const exercise = sanitizeExerciseCatalog(exercises).find(
-    (item) => item.id === exerciseId && item.kind === "stretch",
+    (item) => item.id === exerciseId && isCompletionExercise(item),
   );
   if (!exercise) return { completed: 0 };
   const completed = normalizeEntries(entries, exercises).filter(

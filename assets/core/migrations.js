@@ -56,6 +56,30 @@ export function migrateDataEnvelope(parsed) {
     throw new Error("Die gespeicherten MeTrack-Daten haben keine Version.");
   if (parsed.schemaVersion > DATA_SCHEMA_VERSION)
     throw new Error("Die Daten wurden mit einer neueren MeTrack-Version erstellt.");
+  if (
+    parsed.schemaVersion < 7 &&
+    Array.isArray(parsed.exercises) &&
+    parsed.exercises.some((exercise) => exercise?.kind === "training")
+  )
+    throw new Error("Der bisherige Übungskatalog ist ungültig.");
+  if (parsed.schemaVersion === 7) {
+    const hasCanonicalIcons =
+      Array.isArray(parsed.exercises) &&
+      parsed.exercises.every((exercise) =>
+        isExerciseIconAllowed(exercise?.icon, exercise?.kind),
+      );
+    if (!hasCanonicalIcons || !validateExerciseCatalog(parsed.exercises).valid)
+      throw new Error("Der Übungskatalog ist ungültig.");
+    const exercises = sanitizeExerciseCatalog(parsed.exercises);
+    return {
+      schemaVersion: DATA_SCHEMA_VERSION,
+      exercises,
+      entries: validateStoredEntries(parsed.entries, exercises, {
+        canonical: true,
+        requireChecks: true,
+      }),
+    };
+  }
   if (parsed.schemaVersion === 6) {
     const hasCanonicalIcons =
       Array.isArray(parsed.exercises) &&

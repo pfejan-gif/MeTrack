@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "metrack-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v2.11.6`;
+const CACHE_NAME = `${CACHE_PREFIX}v2.12.0`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -54,6 +54,8 @@ const APP_SHELL = [
   "./assets/icons/exercises/burpee.webp",
   "./assets/icons/exercises/jumping-jack.webp",
   "./assets/icons/exercises/mountain-climber.webp",
+  "./assets/icons/exercises/bouldering.webp",
+  "./assets/icons/exercises/swimming.webp",
   "./assets/icons/exercises/stretch.webp",
   "./assets/icons/exercises/hip-stretch.webp",
   "./assets/icons/exercises/hamstring.webp",

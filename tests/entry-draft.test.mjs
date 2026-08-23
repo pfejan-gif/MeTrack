@@ -31,6 +31,7 @@ function draft(overrides = {}) {
     },
     exerciseChecks: {
       "stretch-hamstrings": false,
+      "training-bouldering": false,
     },
     ...overrides,
   });
@@ -52,7 +53,10 @@ test("erkennt leere und tatsächlich begonnene Entwürfe", () => {
   const empty = draft({
     bodyMetrics: { weight: "", waist: "" },
     exerciseValues: { "exercise-plank": ["", "", ""] },
-    exerciseChecks: { "stretch-hamstrings": false },
+    exerciseChecks: {
+      "stretch-hamstrings": false,
+      "training-bouldering": false,
+    },
   });
 
   assert.equal(entryDraftHasContent(empty, "2026-08-09"), false);
@@ -75,23 +79,30 @@ test("erkennt leere und tatsächlich begonnene Entwürfe", () => {
   );
 });
 
-test("zählt nur ausgefüllte Übungen und erledigte Dehnungen", () => {
+test("zählt nur ausgefüllte Übungen und durchgeführte Status-Einträge", () => {
   const progress = entryDraftProgress(draft(), [
     { id: "exercise-plank", kind: "seconds", active: true },
     { id: "stretch-hamstrings", kind: "stretch", active: true },
+    { id: "training-bouldering", kind: "training", active: true },
     { id: "inactive", kind: "reps", active: false },
   ]);
 
-  assert.deepEqual(progress, { completed: 1, total: 2 });
+  assert.deepEqual(progress, { completed: 1, total: 3 });
   assert.deepEqual(
     entryDraftProgress(
-      draft({ exerciseChecks: { "stretch-hamstrings": true } }),
+      draft({
+        exerciseChecks: {
+          "stretch-hamstrings": true,
+          "training-bouldering": true,
+        },
+      }),
       [
         { id: "exercise-plank", kind: "seconds", active: true },
         { id: "stretch-hamstrings", kind: "stretch", active: true },
+        { id: "training-bouldering", kind: "training", active: true },
       ],
     ),
-    { completed: 2, total: 2 },
+    { completed: 3, total: 3 },
   );
 });
 

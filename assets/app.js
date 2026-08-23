@@ -19,7 +19,7 @@ import {
 } from "./app/timer-controller.js";
 import { createTransferController } from "./app/transfer-controller.js";
 
-const APP_VERSION = "2.11.6";
+const APP_VERSION = "2.12.0";
 const THEME_ORDER = ["system", "light", "dark"];
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -44,6 +44,8 @@ const elements = {
   networkBanner: $("networkBanner"),
   entryForm: $("entryForm"),
   exerciseFields: $("customExerciseFields"),
+  trainingSection: $("trainingSection"),
+  trainingFields: $("trainingFields"),
   stretchSection: $("stretchSection"),
   stretchFields: $("stretchFields"),
   exerciseEmpty: $("customExerciseEmpty"),
