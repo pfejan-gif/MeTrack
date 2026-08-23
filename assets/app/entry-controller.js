@@ -16,6 +16,8 @@ import {
   InvalidEntryDraftError,
   createEntryDraft,
   entryDraftHasContent,
+  entryDraftHasInputValues,
+  entryDraftMatchesEntry,
   entryDraftProgress,
   readEntryDraft,
   removeEntryDraft,
@@ -33,15 +35,19 @@ export function createEntryController({
   onEditingFinished,
 }) {
   let currentDraft = null;
+  let displayedEntryDate = null;
+  let knownToday = todayLocal();
 
-  function setFormMode(editing) {
-    elements.formMode.textContent = editing
-      ? "Eintrag bearbeiten"
-      : "Neuer Eintrag";
-    elements.saveButtonLabel.textContent = editing
-      ? "Änderungen speichern"
-      : "Eintrag speichern";
-    elements.cancelEditButton.hidden = !editing;
+  function setFormMode(mode = "new") {
+    const labels = {
+      new: ["Neuer Eintrag", "Eintrag speichern"],
+      current: ["Aktueller Tagesstand", "Tagesstand aktualisieren"],
+      editing: ["Eintrag bearbeiten", "Änderungen speichern"],
+    };
+    const [status, action] = labels[mode] || labels.new;
+    elements.formMode.textContent = status;
+    elements.saveButtonLabel.textContent = action;
+    elements.cancelEditButton.hidden = mode !== "editing";
   }
 
   function setDraftStatus(message = "", status = "") {
@@ -77,6 +83,7 @@ export function createEntryController({
     return createEntryDraft({
       date: $("date").value,
       editingDate: state.editingDate,
+      baseEntryDate: state.editingDate ? null : displayedEntryDate,
       bodyMetrics: Object.fromEntries(
         BODY_METRIC_KEYS.map((key) => [key, $(key).value]),
       ),
@@ -92,6 +99,63 @@ export function createEntryController({
     } catch {
       // Der Entwurf ist optional; der allgemeine Speicherhinweis bleibt maßgeblich.
     }
+  }
+
+  function clearEntryValues() {
+    for (const key of BODY_METRIC_KEYS) $(key).value = "";
+    for (const exercise of state.exercises.filter((item) => item.active)) {
+      if (isCompletionExercise(exercise)) {
+        const input = $(exerciseCheckFieldName(exercise.id));
+        if (input) input.checked = false;
+        continue;
+      }
+      for (let index = 0; index < SET_COUNT; index += 1) {
+        const input = $(exerciseFieldName(exercise.id, index));
+        if (input) input.value = "";
+      }
+    }
+  }
+
+  function fillEntryValues(entry) {
+    for (const key of BODY_METRIC_KEYS) $(key).value = entry[key] ?? "";
+    for (const exercise of state.exercises.filter((item) => item.active)) {
+      if (isCompletionExercise(exercise)) {
+        const input = $(exerciseCheckFieldName(exercise.id));
+        if (input)
+          input.checked = entryExerciseCompletion(entry, exercise.id) === true;
+        continue;
+      }
+      entryExerciseValues(entry, exercise.id).forEach((value, index) => {
+        const input = $(exerciseFieldName(exercise.id, index));
+        if (input) input.value = value ?? "";
+      });
+    }
+  }
+
+  function draftMatchesDisplayedEntry(draft) {
+    if (
+      !draft.baseEntryDate ||
+      draft.date !== draft.baseEntryDate ||
+      state.editingDate
+    )
+      return false;
+    const entry = state.entries.find(
+      (item) => item.date === draft.baseEntryDate,
+    );
+    return entryDraftMatchesEntry(draft, entry, state.exercises);
+  }
+
+  function loadEntryForDate(date) {
+    clearEntryValues();
+    currentDraft = null;
+    const entry = state.entries.find((item) => item.date === date) || null;
+    displayedEntryDate = entry?.date ?? null;
+    if (entry) fillEntryValues(entry);
+    setFormMode(entry ? "current" : "new");
+    clearErrors();
+    renderEntryProgress();
+    setDraftStatus();
+    return entry;
   }
 
   function renderEntryProgress(draft = null) {
@@ -112,6 +176,11 @@ export function createEntryController({
     try {
       const draft = draftFromForm();
       renderEntryProgress(draft);
+      if (draftMatchesDisplayedEntry(draft)) {
+        clearDraft();
+        setDraftStatus();
+        return true;
+      }
       if (!entryDraftHasContent(draft, todayLocal())) {
         clearDraft();
         setDraftStatus();
@@ -137,6 +206,14 @@ export function createEntryController({
       return false;
     }
     if (!draft) {
+      if (
+        !state.editingDate &&
+        displayedEntryDate &&
+        displayedEntryDate === $("date").value
+      ) {
+        loadEntryForDate(displayedEntryDate);
+        return false;
+      }
       renderEntryProgress();
       setDraftStatus();
       return false;
@@ -147,6 +224,13 @@ export function createEntryController({
       state.entries.some((entry) => entry.date === draft.editingDate)
         ? draft.editingDate
         : null;
+    displayedEntryDate =
+      !state.editingDate &&
+      draft.baseEntryDate === draft.date &&
+      state.entries.some((entry) => entry.date === draft.baseEntryDate)
+        ? draft.baseEntryDate
+        : null;
+    clearEntryValues();
     $("date").value = draft.date;
     for (const key of BODY_METRIC_KEYS) $(key).value = draft.bodyMetrics[key];
     for (const exercise of state.exercises.filter((item) => item.active)) {
@@ -164,7 +248,13 @@ export function createEntryController({
       });
     }
     clearErrors();
-    setFormMode(Boolean(state.editingDate));
+    setFormMode(
+      state.editingDate
+        ? "editing"
+        : displayedEntryDate
+          ? "current"
+          : "new",
+    );
     renderEntryProgress(draft);
     setDraftStatus("Entwurf wiederhergestellt", "restored");
     return true;
@@ -210,13 +300,12 @@ export function createEntryController({
   
   function resetForm({ clearStoredDraft = true } = {}) {
     state.editingDate = null;
+    displayedEntryDate = null;
     elements.entryForm.reset();
-    clearErrors();
-    $("date").value = todayLocal();
-    $("date").max = todayLocal();
-    setFormMode(false);
-    renderEntryProgress();
-    setDraftStatus();
+    knownToday = todayLocal();
+    $("date").value = knownToday;
+    $("date").max = knownToday;
+    loadEntryForDate(knownToday);
     if (clearStoredDraft) clearDraft();
   }
 
@@ -225,27 +314,66 @@ export function createEntryController({
     resetForm();
     if (wasEditing) onEditingFinished?.();
   }
+
+  function handleDateChange() {
+    if (state.editingDate) return;
+    const draft = draftFromForm();
+    const displayed = state.entries.find(
+      (entry) => entry.date === displayedEntryDate,
+    );
+    const pristine = displayed
+      ? entryDraftMatchesEntry(draft, displayed, state.exercises)
+      : !entryDraftHasInputValues(draft);
+    if (!pristine) {
+      displayedEntryDate = null;
+      setFormMode("new");
+      return;
+    }
+    loadEntryForDate(draft.date);
+  }
+
+  function refreshTodayEntry(today = todayLocal()) {
+    $("date").max = today;
+    if (today === knownToday) return false;
+    const previousToday = knownToday;
+    if (state.editingDate) {
+      knownToday = today;
+      return false;
+    }
+    if (
+      $("date").value !== previousToday &&
+      displayedEntryDate !== previousToday
+    ) {
+      knownToday = today;
+      return false;
+    }
+    const draft = draftFromForm();
+    const displayed = state.entries.find(
+      (entry) => entry.date === displayedEntryDate,
+    );
+    const pristine = displayed
+      ? entryDraftMatchesEntry(draft, displayed, state.exercises)
+      : !entryDraftHasInputValues(draft);
+    if (!pristine) return false;
+    knownToday = today;
+    $("date").value = today;
+    loadEntryForDate(today);
+    clearDraft();
+    return true;
+  }
   
   function startEditing(date) {
     const entry = state.entries.find((item) => item.date === date);
     if (!entry) return;
     clearDraft();
     state.editingDate = date;
+    displayedEntryDate = null;
+    elements.entryForm.reset();
     clearErrors();
     $("date").value = entry.date;
-    for (const key of BODY_METRIC_KEYS) $(key).value = entry[key] ?? "";
-    for (const exercise of state.exercises.filter((item) => item.active)) {
-      if (isCompletionExercise(exercise)) {
-        $(exerciseCheckFieldName(exercise.id)).checked =
-          entryExerciseCompletion(entry, exercise.id) === true;
-        continue;
-      }
-      const values = entryExerciseValues(entry, exercise.id);
-      values.forEach((value, index) => {
-        $(exerciseFieldName(exercise.id, index)).value = value ?? "";
-      });
-    }
-    setFormMode(true);
+    $("date").max = todayLocal();
+    fillEntryValues(entry);
+    setFormMode("editing");
     saveDraft();
     if (openEntryView) openEntryView();
     else $("entry").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -258,6 +386,7 @@ export function createEntryController({
       ? state.entries.find((entry) => entry.date === state.editingDate)
       : existing;
     const editing = Boolean(state.editingDate);
+    const replacing = editing || displayedEntryDate === date;
     const candidate = { date, exerciseSets: [], exerciseChecks: [] };
     for (const exercise of state.exercises) {
       if (isCompletionExercise(exercise)) {
@@ -267,7 +396,7 @@ export function createEntryController({
         let completed = oldCompletion;
         if (exercise.active) {
           const checked = $(exerciseCheckFieldName(exercise.id))?.checked === true;
-          completed = !editing && oldCompletion === true ? true : checked;
+          completed = !replacing && oldCompletion === true ? true : checked;
         }
         if (completed !== null)
           candidate.exerciseChecks.push({ exerciseId: exercise.id, completed });
@@ -277,7 +406,7 @@ export function createEntryController({
       const values = exercise.active
         ? Array.from({ length: SET_COUNT }, (_, index) => {
             const raw = $(exerciseFieldName(exercise.id, index))?.value ?? "";
-            return raw === "" && !editing ? oldValues[index] : raw;
+            return raw === "" && !replacing ? oldValues[index] : raw;
           })
         : oldValues;
       if (values.some((value) => value !== null && value !== ""))
@@ -285,7 +414,7 @@ export function createEntryController({
     }
     for (const key of BODY_METRIC_KEYS) {
       const raw = $(key).value;
-      candidate[key] = raw === "" && !editing ? source?.[key] ?? "" : raw;
+      candidate[key] = raw === "" && !replacing ? source?.[key] ?? "" : raw;
     }
     return { candidate, existing };
   }
@@ -311,6 +440,7 @@ export function createEntryController({
       return;
     }
     const wasEditing = Boolean(state.editingDate);
+    const wasCurrent = !wasEditing && displayedEntryDate === candidate.date;
     const entries = upsertEntry(
       state.entries,
       validation.entry,
@@ -321,7 +451,9 @@ export function createEntryController({
     const message = state.editingDate
       ? "Änderungen gespeichert"
       : existing
-        ? "Tag ergänzt"
+        ? wasCurrent
+          ? "Tagesstand aktualisiert"
+          : "Tag ergänzt"
         : "Eintrag gespeichert";
     resetForm();
     render();
@@ -340,12 +472,13 @@ export function createEntryController({
     const deleted = state.entries.find((entry) => entry.date === date);
     if (!deleted) return;
     if (!persistData(removeEntry(state.entries, date, state.exercises))) return;
-    if (state.editingDate === date) resetForm();
+    if (state.editingDate === date || displayedEntryDate === date) resetForm();
     render();
     showToast(`Eintrag vom ${formatDate(date)} gelöscht`, {
       label: "Rückgängig",
       callback: () => {
         if (persistData(upsertEntry(state.entries, deleted, null, state.exercises))) {
+          if (deleted.date === todayLocal() && !state.editingDate) resetForm();
           render();
           showToast("Eintrag wiederhergestellt");
         }
@@ -361,6 +494,8 @@ export function createEntryController({
     renderEntryProgress,
     resetForm,
     cancelEditing,
+    handleDateChange,
+    refreshTodayEntry,
     startEditing,
     handleSubmit,
     handleHistoryAction,

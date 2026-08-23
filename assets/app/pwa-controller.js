@@ -1,8 +1,9 @@
 import { todayLocal } from "../core.js";
 
-export function createPwaController({ state, elements, $ }) {
+export function createPwaController({ state, elements, $, refreshTodayEntry }) {
   function refreshTodayUi() {
     const today = todayLocal();
+    refreshTodayEntry?.(today);
     $("date").max = today;
     if (!state.editingDate && !$("date").value) $("date").value = today;
     $("todayLabel").textContent = new Intl.DateTimeFormat("de-DE", {

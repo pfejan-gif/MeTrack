@@ -62,6 +62,13 @@ test("erkennt leere und tatsächlich begonnene Entwürfe", () => {
   assert.equal(entryDraftHasContent(empty, "2026-08-09"), false);
   assert.equal(
     entryDraftHasContent(
+      createEntryDraft({ ...empty, baseEntryDate: "2026-08-09" }),
+      "2026-08-09",
+    ),
+    true,
+  );
+  assert.equal(
+    entryDraftHasContent(
       createEntryDraft({ ...empty, date: "2026-08-08" }),
       "2026-08-09",
     ),
@@ -109,7 +116,7 @@ test("zählt nur ausgefüllte Übungen und durchgeführte Status-Einträge", () 
 test("weist beschädigte, unbekannte und übergroße Entwürfe zurück", () => {
   assert.throws(() => parseEntryDraft("{"), /ungültig/);
   assert.throws(
-    () => parseEntryDraft(JSON.stringify({ ...draft(), version: 2 })),
+    () => parseEntryDraft(JSON.stringify({ ...draft(), version: 3 })),
     /ungültig/,
   );
   assert.throws(
@@ -123,6 +130,17 @@ test("weist beschädigte, unbekannte und übergroße Entwürfe zurück", () => {
     /ungültig/,
   );
   assert.throws(() => parseEntryDraft(" ".repeat(20_001)), /ungültig/);
+});
+
+test("übernimmt bestehende v1-Entwürfe ohne erfundenen Tagesstand", () => {
+  const current = draft();
+  const legacy = { ...current, version: 1 };
+  delete legacy.baseEntryDate;
+
+  assert.deepEqual(parseEntryDraft(JSON.stringify(legacy)), {
+    ...current,
+    baseEntryDate: null,
+  });
 });
 
 test("akzeptiert einen Entwurf nur nach erfolgreichem Speicher-Readback", () => {
